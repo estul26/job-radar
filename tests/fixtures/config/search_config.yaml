@@ -43,6 +43,7 @@ ranking:
   remote_score: 5
   good_match_threshold: 65
   possible_match_threshold: 55
+  max_good_matches: 10
   max_possible_matches: 5
   hard_reject_unrelated_titles: true
   hard_reject_title_terms:

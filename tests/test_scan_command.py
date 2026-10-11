@@ -1,6 +1,7 @@
 """radar scan + radar publish-scan on the sample fixture."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from conftest import ROOT
@@ -124,3 +125,15 @@ def test_possible_matches_get_an_unassigned_issue_without_a_resume(settings):
     assert gh.labels_of(number) == {"source:indeed", "match:possible", "status:new"}
     assert gh._issues[number]["assignee"] == ""
     assert "resume:tailor" in gh.comments_of(number)[0]
+
+
+def test_extra_good_matches_wait_for_the_next_scan(settings):
+    settings = replace(settings, good_threshold=55, max_good=1)  # both sample nurse jobs are good
+    report = scan_jobs(settings, FIXTURE)
+    assert [job["title"] for job in matches(settings)] == ["Registered Nurse - Medical/Surgical"]
+    assert "**1** more good matches wait for the next scan" in report
+    assert "## More good matches, for the next scan" in report
+
+    # The held job stays unseen, so the next scan offers it again.
+    scan_jobs(settings, FIXTURE)
+    assert [job["title"] for job in matches(settings)] == ["Telehealth Staff Nurse"]

@@ -9,7 +9,7 @@ same score, and the reasons are listed on every report entry and review comment.
 |---|---:|---|
 | Title | 30 | Contains one of `search.titles` as whole words; otherwise 24 for two or more `matching.related_title_keywords`, 15 for one |
 | Experience | 15 | Minimum years the posting asks for, against your `experience_years`; 10 when it isn't stated |
-| Skills | 35 | Share of the core `matching.skills` it requires that your profile has; 18 when none are detected |
+| Skills | 35 | Share of the core `matching.skills` it requires that your profile has. A posting naming fewer than 3 counts only partly (1 of 1 matched is 24, 2 of 2 is 29); 18 when none are detected |
 | Certifications | 10 | Share of the `matching.certifications` it mentions that you hold; 5 when none are mentioned |
 | Freshness | 5 | Posted within `ranking.fresh_hours` (24 h); less as it ages |
 | Location | 5 | `ranking.remote_score` for a remote job; otherwise the `score` of the best `search.locations` entry whose `match` phrases are in its location; 1 when none match |
@@ -33,8 +33,9 @@ Coordinator" is related to nursing and "Customer Care Agent" isn't.
 | **rejected** | a hard-reject rule | Listed under "Automatically excluded"; a LinkedIn Issue gets `match:rejected` and is closed |
 
 `GOOD_MATCH_THRESHOLD` is a repository variable. Without it, `ranking.good_match_threshold` in
-`config/search_config.yaml` applies. A scan opens Issues for at most `ranking.max_possible_matches`
-possible matches.
+`config/search_config.yaml` applies. A scan opens Issues for at most `ranking.max_good_matches`
+(10) good and `ranking.max_possible_matches` (5) possible matches, best first. Good matches over
+the limit are listed in the report and come up again in the next scan.
 
 ## Hard rejects
 

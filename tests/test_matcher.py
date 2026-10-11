@@ -200,3 +200,11 @@ def test_excluded_titles_are_rejected_however_the_job_arrived():
     }
     scored = score_job(job("Registered Nurse - Float Pool"), PROFILE, config)
     assert scored["hard_reject"] is True and scored["hard_reject_reasons"] == ["float pool"]
+
+
+def test_a_posting_naming_few_skills_counts_them_only_partly():
+    one = score_job(job("Registered Nurse", "Wound care."), PROFILE, CONFIG)
+    three = score_job(job("Registered Nurse", "Wound care, IV therapy and patient assessment."), PROFILE, CONFIG)
+    assert "matched 1/1 core detected skills (few named, so partly counted)" in one["score_reasons"]
+    assert "matched 3/3 core detected skills" in three["score_reasons"]
+    assert three["score"] - one["score"] == 35 - 24

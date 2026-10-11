@@ -77,6 +77,9 @@ ranking:
   good_match_threshold: 65
   # Score for a possible match: a job Issue, but no résumé.
   possible_match_threshold: 55
+  # At most this many good matches get an Issue and a résumé per scan (0 for no limit); the rest
+  # come up again in the next scan, so a broad search doesn't flood you on the first day.
+  max_good_matches: 10
   max_possible_matches: 5
   # Location points for a remote job.
   remote_score: 5
