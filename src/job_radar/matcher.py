@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from .normalize import phrase_found, phrase_pattern, title_matches_exclusion
+from .normalize import phrase_found, phrase_pattern, title_matches_exclusion, word_edge
 
 # English defaults for reading postings. matching.years_words, matching.range_words and
 # matching.optional_section_phrases add the words of other languages.
@@ -120,26 +120,28 @@ def detect_certs(text: str, vocab: Vocabulary) -> set[str]:
 
 
 def _alternatives(words: tuple[str, ...]) -> str:
-    return "|".join(re.escape(word) for word in sorted(words, key=len, reverse=True))
+    """Each word with its own trailing word boundary ("years" needs one; Japanese "年" can't have one)."""
+    ordered = sorted((word for word in words if word), key=len, reverse=True)
+    return "|".join(re.escape(word) + word_edge(word[-1], before=False) for word in ordered)
 
 
 def extract_min_years(text: str, vocab: Vocabulary | None = None) -> int | None:
     """The fewest years of experience the text asks for: "3+ years", "3-5 years", "3 Jahre" with German words."""
     vocab = vocab or Vocabulary()
-    years = rf"(?:{_alternatives(vocab.years_words)})(?!\w)"
-    ranges = rf"(?:-|–|—|(?<!\w)(?:{_alternatives(vocab.range_words)})(?!\w))"
+    years = rf"(?:{_alternatives(vocab.years_words)})"
+    ranges = rf"(?:-|–|—|~|〜|(?:{_alternatives(vocab.range_words)}))"
+    # (?<![0-9]) rather than \b: "経験3年" has no word boundary before the 3.
     found: list[int] = []
-    for match in re.finditer(rf"\b(\d{{1,2}})\s*{ranges}\s*(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
+    for match in re.finditer(rf"(?<![0-9])(\d{{1,2}})\s*{ranges}\s*(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
         found.append(int(match.group(1)))
-    for match in re.finditer(rf"\b(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
+    for match in re.finditer(rf"(?<![0-9])(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
         found.append(int(match.group(1)))
     return min(found) if found else None
 
 
 def title_score(title: str, target_titles: list[str], vocab: Vocabulary | None = None) -> tuple[int, str]:
-    title_l = title.lower()
-    normalized_targets = [t.lower() for t in target_titles]
-    if any(t in title_l for t in normalized_targets):
+    # Whole words, like every other phrase: "Nurse" doesn't match "Nursery Teacher".
+    if phrase_found(title, target_titles):
         return 30, "target-role title"
     hits = vocab.title_hits(title) if vocab else 0
     if hits >= 2:
@@ -207,8 +209,13 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
     title = job.get("title", "")
     text = _text(job)
 
-    reject_terms = ranking.get("hard_reject_title_terms", [])
-    hard_reject_reasons = [term for term in reject_terms if title_matches_exclusion(title, [term])]
+    # search.exclude_title_terms also drops jobs at collection; rejecting them here covers jobs from
+    # LinkedIn and fixtures too.
+    reject_terms = [
+        *(ranking.get("hard_reject_title_terms") or []),
+        *(config["search"].get("exclude_title_terms") or []),
+    ]
+    hard_reject_reasons = list(dict.fromkeys(term for term in reject_terms if title_matches_exclusion(title, [term])))
 
     role_pts, role_reason = title_score(title, config["search"].get("titles") or [], vocab)
     if role_pts == 0 and ranking.get("hard_reject_unrelated_titles", False):

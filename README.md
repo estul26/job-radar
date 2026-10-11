@@ -74,10 +74,12 @@ a Mac.
 | `radar linkedin-import FILE` | Import cards saved by `linkedin-search --export` |
 | `radar scan-slot …`, `radar record-claim …` | Morning/evening deduplication for `daily-jobs.yml` |
 
-Try a scan offline (this changes `data/` and `reports/`, so don't commit the result):
+Check your scoring offline: save a few postings you'd apply for in the format of
+`tests/fixtures/sample_jobs.json`, then run a scan on them (this changes `data/`, `reports/` and
+`resumes/jobs/`, so don't commit the result):
 
 ```bash
-radar scan --fixture tests/fixtures/sample_jobs.json
+radar scan --fixture my_jobs.json
 pytest && ruff check .
 ```
 

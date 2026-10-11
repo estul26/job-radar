@@ -32,13 +32,15 @@ search:
   #  - Accountant
 
   # The job titles you want. A posting whose title contains one of these scores full title
-  # points; others score only through matching.related_title_keywords below.
+  # points; others score only through matching.related_title_keywords below. Titles match
+  # whole words, so use a regex for compound words.
   titles: []
   #  - Buchhalter
-  #  - Finanzbuchhalter
+  #  - 're:buchhalter(in)?'   # also Finanzbuchhalter, Lohnbuchhalterin
   #  - Accountant
 
-  # Titles to drop before scoring, e.g. jobs that share a word with yours but aren't yours.
+  # Titles you never want, e.g. jobs that share a word with yours but aren't yours. They're
+  # dropped from searches and rejected wherever else a job comes from.
   exclude_title_terms: []
   #  - Steuerfachangestellte
   #  - Werkstudent

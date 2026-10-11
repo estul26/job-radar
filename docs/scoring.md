@@ -7,7 +7,7 @@ same score, and the reasons are listed on every report entry and review comment.
 
 | Component | Points | How |
 |---|---:|---|
-| Title | 30 | Contains one of `search.titles`; otherwise 24 for two or more `matching.related_title_keywords`, 15 for one |
+| Title | 30 | Contains one of `search.titles` as whole words; otherwise 24 for two or more `matching.related_title_keywords`, 15 for one |
 | Experience | 15 | Minimum years the posting asks for, against your `experience_years`; 10 when it isn't stated |
 | Skills | 35 | Share of the core `matching.skills` it requires that your profile has; 18 when none are detected |
 | Certifications | 10 | Share of the `matching.certifications` it mentions that you hold; 5 when none are mentioned |
@@ -44,7 +44,8 @@ possible matches.
   `ranking.hard_reject_unrelated_titles` is on.
 - A minimum requirement of `ranking.hard_reject_min_years` (5) or more years.
 
-`search.exclude_title_terms` removes postings even earlier, before they are scored or reported.
+`search.exclude_title_terms` are rejected the same way, wherever the job came from, and job-board
+searches drop them even earlier, before they are scored or reported.
 
 ## Limitations
 

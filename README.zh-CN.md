@@ -64,10 +64,11 @@ LinkedIn Job Review 表单 ────────┘                   │
 | `radar linkedin-import FILE` | 导入 `linkedin-search --export` 保存的卡片 |
 | `radar scan-slot …`、`radar record-claim …` | `daily-jobs.yml` 的早晚扫描去重 |
 
-离线试运行一次扫描（会修改 `data/` 和 `reports/`，不要提交结果）：
+离线检查你的评分：按照 `tests/fixtures/sample_jobs.json` 的格式保存几个你想申请的职位，然后对它们运行一次扫描
+（会修改 `data/`、`reports/` 和 `resumes/jobs/`，不要提交结果）：
 
 ```bash
-radar scan --fixture tests/fixtures/sample_jobs.json
+radar scan --fixture my_jobs.json
 pytest && ruff check .
 ```
 

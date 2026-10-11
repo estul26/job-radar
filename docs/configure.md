@@ -36,8 +36,8 @@ dates and the morning/evening scan slots use it.
 | `sites` | Job boards for JobSpy: `indeed`, and any in [your country and language](#your-country-and-language). |
 | `country_indeed` | The country Indeed and Glassdoor search: `Germany`, `India`, `UK`, `USA`, `Brazil`, … |
 | `queries` | What to type into the job board's search box. Broad is fine. Empty: search the `titles`. |
-| `titles` | The job titles you want. A posting whose title contains one gets full title points. |
-| `exclude_title_terms` | Titles dropped before scoring: jobs that share a word with yours but aren't yours. |
+| `titles` | The job titles you want. A posting whose title contains one (as whole words) gets full title points. For compound words use a regex: `'re:buchhalter'` also finds "Finanzbuchhalter". |
+| `exclude_title_terms` | Titles you never want: jobs that share a word with yours but aren't yours. They're dropped from searches and rejected from LinkedIn too. |
 | `locations` | Where to search, and how much each place is worth (below). |
 | `results_wanted_per_query`, `hours_old`, `fetch_description`, `pause_seconds_between_queries` | How much to fetch per search. The defaults are fine. |
 
@@ -126,7 +126,11 @@ matching:
 ```
 
 Spanish might be `[años, año]`, `[a]` and `[deseable, valorable]`; French `[ans, an]`, `[à]`
-and `[un plus, un atout, souhaité]`.
+and `[un plus, un atout, souhaité]`; Japanese `[年]`, `[から]` and `[歓迎]`.
+
+In Chinese, Japanese, Thai and other languages written without spaces, and in Korean, a phrase is
+found anywhere in the text (`看護師` matches "正看護師"), since there are no word boundaries to
+check. Ranges written with `-`, `–`, `~` or `〜` are always understood.
 
 **Language of your résumé.** The résumé's headings come from `labels` in
 `resumes/master_resume.json`; translate them, and write the facts in the same language. The AI

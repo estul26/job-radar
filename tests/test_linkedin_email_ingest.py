@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from job_radar.linkedin_email_ingest import (
     canonical_linkedin_job_url,
     extract_candidates_from_html,
@@ -226,3 +228,22 @@ def test_senior_titles_are_not_imported(tmp_path):
     )
     assert [job["title"] for job in created] == ["Staff Nurse 2"]
     assert skipped == 2
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "Jobs similar to Charge Nurse at Lakeside Health",
+        "Ähnliche Jobs wie Buchhalter bei Muster GmbH",
+        "Offres similaires à Infirmier chez Exemple",
+        "Empleos similares a Enfermera en Ejemplo",
+        "Vagas semelhantes a Enfermeiro na Exemplo",
+        "Alle anzeigen",
+    ],
+)
+def test_digest_headers_are_not_jobs_in_any_language(header):
+    html = f"""
+    <div><a href="https://www.linkedin.com/comm/jobs/view/900/">{header}</a></div>
+    <div><a href="https://www.linkedin.com/comm/jobs/view/901/">Charge Nurse</a><p>Lakeside · Canada</p></div>
+    """
+    assert [job["title"] for job in extract_candidates_from_html(html)] == ["Charge Nurse"]

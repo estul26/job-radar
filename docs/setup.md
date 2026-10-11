@@ -112,9 +112,11 @@ pytest
 ruff check .
 ```
 
-`radar scan --fixture tests/fixtures/sample_jobs.json` runs a scan on sample jobs without
-contacting job boards or GitHub. It writes `data/` and `reports/` like a real scan, so don't
-commit what it changes. Real scans belong to GitHub Actions; use the trigger above to start one.
+`radar scan --fixture my_jobs.json` scores postings saved in a file (in the format of
+`tests/fixtures/sample_jobs.json`, which holds nursing jobs) against your `config/`, without
+contacting job boards or GitHub. It writes `data/`, `reports/` and `resumes/jobs/` like a real
+scan, so don't commit what it changes. Real scans belong to GitHub Actions; use the trigger above
+to start one.
 
 The tests use a filled-in setup for a made-up person in `tests/fixtures/`, so they pass
 whatever you put in `config/`.

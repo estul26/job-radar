@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from job_radar.matcher import Vocabulary, detect_skills, extract_min_years, location_score, score_job
 from job_radar.normalize import phrase_found
 from job_radar.settings import load_json, load_yaml
@@ -144,7 +146,8 @@ def test_a_skill_without_phrases_is_looked_for_by_name():
 ACCOUNTING_DE = {
     "timezone": "Europe/Berlin",
     "search": {
-        "titles": ["Buchhalter", "Accountant"],
+        # Titles match whole words; a regex also finds German compounds such as "Finanzbuchhalter".
+        "titles": ["re:buchhalter", "Accountant"],
         "locations": [{"name": "Berlin", "query": "Berlin", "score": 5}],
     },
     "ranking": {
@@ -195,3 +198,46 @@ def test_years_in_other_languages_are_added_to_english():
     assert extract_min_years("3+ years", spanish) == 3
     assert extract_min_years("mindestens 3 Jahre") is None  # German isn't known until configured
     assert extract_min_years("in 2024 we grew") is None
+
+
+def test_titles_match_whole_words():
+    assert score_job(job("Registered Nurse II"), PROFILE, CONFIG)["score_reasons"][0] == "target-role title"
+    config = {**CONFIG, "search": {**CONFIG["search"], "titles": ["Nurse"]}}
+    nursery = score_job(job("Nursery Teacher"), PROFILE, config)
+    assert nursery["hard_reject"] is True and "unrelated title" in nursery["hard_reject_reasons"]
+
+
+def test_excluded_titles_are_rejected_however_the_job_arrived():
+    config = {
+        **CONFIG,
+        "search": {**CONFIG["search"], "exclude_title_terms": ["float pool"]},
+        "ranking": {**CONFIG["ranking"], "hard_reject_title_terms": []},
+    }
+    scored = score_job(job("Registered Nurse - Float Pool"), PROFILE, config)
+    assert scored["hard_reject"] is True and scored["hard_reject_reasons"] == ["float pool"]
+
+
+@pytest.mark.parametrize(
+    ("text", "phrase", "found"),
+    [
+        ("正看護師（日勤）", "看護師", True),  # Japanese: no spaces between words
+        ("招聘护士，3年以上经验", "护士", True),  # Chinese
+        ("รับสมัครพยาบาลวิชาชีพ", "พยาบาล", True),  # Thai
+        ("간호사를 모집합니다", "간호사", True),  # Korean: a particle follows the word
+        ("SAP経験3年", "sap", True),  # a Latin word next to Japanese
+        ("Требуется медсестра", "медсестра", True),  # Cyrillic and Arabic use spaces
+        ("медсестрами", "медсестра", False),
+        ("مطلوب ممرضة للعمل", "ممرضة", True),
+        ("Enfermeríasupervisora", "enfermería", False),
+    ],
+)
+def test_phrases_work_in_every_script(text, phrase, found):
+    assert phrase_found(text, [phrase]) is found
+
+
+def test_years_in_languages_without_spaces():
+    japanese = Vocabulary.from_config({"matching": {"years_words": ["年"], "range_words": ["から"]}})
+    assert extract_min_years("実務経験3年以上", japanese) == 3
+    assert extract_min_years("経験2〜5年", japanese) == 2
+    assert extract_min_years("2から4年", japanese) == 2
+    assert extract_min_years("2024年入社", japanese) is None
