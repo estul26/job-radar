@@ -17,11 +17,10 @@ from typing import Any
 from ..github import GitHub, label_names
 from ..ids import job_key
 from ..issue_body import parse_job
-from ..labels import normalize_status
+from ..labels import is_job_title, normalize_status
 from ..resume.pipeline import write_index
 from ..settings import Settings
 
-JOB_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]", "[Indeed Job]")
 EXPORT_FIELDS = "number,title,body,labels,state,url,createdAt,closedAt,comments"
 APPLICATION_FIELDS = [
     "issue_number",
@@ -59,7 +58,7 @@ def application_rows(issues: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     for issue in issues:
         labels = label_names(issue)
         status = _label_value(labels, "status:")
-        if not str(issue.get("title", "")).startswith(JOB_PREFIXES) or not status:
+        if not is_job_title(str(issue.get("title", ""))) or not status:
             continue
         try:
             job = parse_job(str(issue.get("body", "")))

@@ -18,18 +18,18 @@ def test_linkedin_job_id():
     assert linkedin_job_id("https://www.linkedin.com/jobs/view/4471544570/") == "4471544570"
 
 
-def test_tailored_resume_never_adds_missing_python():
+def test_tailored_resume_never_adds_a_missing_skill():
     body = """### LinkedIn job URL
 
 https://www.linkedin.com/jobs/view/4471544570/
 
 ### Job title
 
-SOC Analyst I
+Registered Nurse I
 
 ### Company
 
-Example Security
+Example Health
 
 ### Location
 
@@ -45,18 +45,21 @@ Yes
 
 ### Job description
 
-SOC alert triage using SIEM, Splunk, incident response, networking and documentation.
-Python is preferred.
+Wound care, IV therapy, infection control and charting on a surgical unit.
+Epic is preferred.
 """
     job = parse_job(body)
     scored = score_job(job, PROFILE, CONFIG)
     content = tailor_content(MASTER, job, scored, vocab=Vocabulary.from_config(CONFIG))
     text = markdown_resume(content)
 
-    assert "Splunk" in text
-    assert "incident response" in text.lower()
-    assert "Python" not in text
-    assert "SOC Analyst | Security+ Certified" in text
+    assert "wound care" in text.lower()
+    assert "IV therapy" in text
+    assert "Epic" not in text
+    assert "Registered Nurse | BLS Certified" in text
+    # The Registered Nurse role keeps its three most relevant bullets (max_bullets: 3).
+    assert "Dressed surgical and pressure wounds" in text
+    assert "Assessed and cared for up to six patients" not in text
 
 
 def test_empty_sections_are_left_out_and_company_is_shown():

@@ -87,13 +87,13 @@ on your Mac, and imports the cards it sees. It searches each of `search.queries`
 
 ```yaml
 locations:
-  - name: Toronto
-    query: Toronto, ON
-    linkedin: Toronto, Ontario, Canada   # what LinkedIn's location box gets
+  - name: Bengaluru
+    query: Bengaluru
+    linkedin: Bengaluru, Karnataka, India   # what LinkedIn's location box gets
   - name: Remote
-    query: Canada
-    remote_only: true                    # LinkedIn's "Remote" filter
-    linkedin: Canada
+    query: India
+    remote_only: true                       # LinkedIn's "Remote" filter
+    linkedin: India
 ```
 
 New cards whose titles pass the same filter as alert emails become `[LinkedIn Job]` Issues
@@ -124,6 +124,10 @@ radar linkedin-search --posted 24h       # search and import postings from the l
 
 **Turn Allow JavaScript from Apple Events off again after each search.** While it's on, any app
 allowed to control Chrome can run code in every tab.
+
+The search reads LinkedIn's page layout, which is the same in every language, so any LinkedIn
+display language works. If cards come back without a company or location, switching LinkedIn's
+display language to English helps the fallback that guesses them.
 
 ### Keep your account safe
 

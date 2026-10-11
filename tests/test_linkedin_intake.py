@@ -8,11 +8,11 @@ https://www.linkedin.com/jobs/view/123
 
 ### Job title
 
-SOC Analyst I
+Registered Nurse I
 
 ### Company
 
-Example Security
+Example Health
 
 ### Location
 
@@ -28,20 +28,20 @@ No
 
 ### Job description
 
-1 year experience. Splunk, QRadar, incident response, Active Directory, DNS, Security+.
+1 year experience. Patient assessment, medication administration, wound care, IV therapy. BLS required.
 """
 
 
 def test_parse_linkedin_issue_form():
     fields = parse_sections(ISSUE_BODY)
-    assert fields["job title"] == "SOC Analyst I"
-    assert fields["company"] == "Example Security"
+    assert fields["job title"] == "Registered Nurse I"
+    assert fields["company"] == "Example Health"
 
 
 def test_job_from_issue_creates_linkedin_job():
     job = parse_job(ISSUE_BODY)
     assert job["source"] == "linkedin"
-    assert job["title"] == "SOC Analyst I"
+    assert job["title"] == "Registered Nurse I"
     assert job["is_remote"] is False
     assert job["fingerprint"]
 
@@ -49,20 +49,20 @@ def test_job_from_issue_creates_linkedin_job():
 def test_review_shows_the_recommendation_and_how_to_track_it():
     scored = {
         "score": 82,
-        "title": "SOC Analyst I",
-        "company": "Example Security",
+        "title": "Registered Nurse I",
+        "company": "Example Health",
         "location": "Toronto, ON",
         "job_url": "https://www.linkedin.com/jobs/view/123",
-        "matched_skills": ["splunk"],
+        "matched_skills": ["wound care"],
         "missing_skills": [],
-        "matched_certs": ["CompTIA Security+"],
+        "matched_certs": ["BLS"],
         "missing_certs": [],
         "score_reasons": ["target-role title"],
         "hard_reject": False,
         "hard_reject_reasons": [],
     }
     review = build_review(scored, Verdict.GOOD)
-    assert "## 82% — SOC Analyst I" in review  # the score line the export and board read
+    assert "## 82% — Registered Nurse I" in review  # the score line the export and board read
     assert "GOOD MATCH" in review
     assert "**Tracked:** Yes — status:new" in review
     assert "data/applications.csv" not in review  # the CSV is an export now
@@ -78,11 +78,11 @@ def test_old_alert_issue_splits_company_and_infers_remote():
             "",
             "### Job title",
             "",
-            "SOC Analyst, Entry Level",
+            "Registered Nurse, New Graduate",
             "",
             "### Company",
             "",
-            "Jobright.ai · Canada (Remote)",
+            "Northwind Care · Canada (Remote)",
             "",
             "### Location",
             "",
@@ -94,12 +94,12 @@ def test_old_alert_issue_splits_company_and_infers_remote():
             "",
             "### Job description",
             "",
-            "Monitor SIEM alerts and escalate incidents.",
+            "Assess patients and administer medications.",
             "",
         ]
     )
     job = parse_job(body)
-    assert (job["company"], job["location"], job["is_remote"]) == ("Jobright.ai", "Canada (Remote)", True)
+    assert (job["company"], job["location"], job["is_remote"]) == ("Northwind Care", "Canada (Remote)", True)
 
 
 def test_explicit_no_remote_answer_wins_over_location_text():
@@ -111,7 +111,7 @@ def test_explicit_no_remote_answer_wins_over_location_text():
             "",
             "### Job title",
             "",
-            "SOC Analyst",
+            "Registered Nurse",
             "",
             "### Company",
             "",
@@ -127,7 +127,7 @@ def test_explicit_no_remote_answer_wins_over_location_text():
             "",
             "### Job description",
             "",
-            "Monitor SIEM alerts.",
+            "Assess patients.",
             "",
         ]
     )

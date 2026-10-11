@@ -76,21 +76,20 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
 
     timezone = str(config.get("timezone") or "").strip()
     if not timezone:
-        warn("timezone is not set, so dates use UTC (set it to e.g. America/Toronto or Europe/London)")
+        warn("timezone is not set, so dates use UTC (set it to e.g. Europe/Berlin, Asia/Kolkata or America/Chicago)")
     else:
         try:
             ZoneInfo(timezone)
         except (ZoneInfoNotFoundError, ValueError):
-            problem(f"timezone '{timezone}' is not an IANA timezone name such as America/Toronto")
+            problem(f"timezone '{timezone}' is not an IANA timezone name such as Europe/Berlin or Asia/Kolkata")
 
     search = config.get("search") or {}
-    sites = search.get("sites") or []
+    sites = [str(site).strip().lower() for site in search.get("sites") or []]
     if not sites:
-        problem("search.sites is empty (use [indeed])")
-    if "indeed" in sites and not str(search.get("country_indeed") or "").strip():
-        problem("search.country_indeed is empty: the country Indeed searches, e.g. Canada, USA, UK")
+        problem("search.sites is empty: use [indeed], or a job board for your region (docs/configure.md)")
+    check_sites(sites, str(search.get("country_indeed") or "").strip(), problem, warn)
     if not search.get("titles"):
-        problem("search.titles is empty: list the job titles you want, e.g. Registered Nurse")
+        problem("search.titles is empty: list the job titles you want, e.g. Accountant or Registered Nurse")
     locations = search.get("locations") or []
     if not locations:
         problem("search.locations is empty: add where you want to work (and a remote entry if you want remote)")
@@ -98,7 +97,10 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
         if not isinstance(place, dict) or not str(place.get("name") or "").strip():
             problem(f"search.locations[{index}] needs a name")
         elif not str(place.get("query") or "").strip():
-            problem(f"search.locations[{index}] ({place['name']}) needs a query, e.g. 'Toronto, ON'")
+            problem(
+                f"search.locations[{index}] ({place['name']}) needs a query: "
+                "what you'd type in the job board's location box"
+            )
 
     matching = config.get("matching") or {}
     if not matching.get("skills"):
@@ -106,6 +108,39 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
             "matching.skills is empty, so postings' skill requirements aren't detected and every job gets the "
             "same skill points"
         )
+
+
+def check_sites(sites: list[str], country: str, problem: Any, warn: Any) -> None:
+    """The job boards JobSpy knows, and the country Indeed and Glassdoor need."""
+    try:
+        from jobspy.model import Country, Site
+    except ImportError:  # radar doctor before `pip install`: skip what needs JobSpy.
+        known, check_country = None, None
+    else:
+        known, check_country = {site.value for site in Site}, Country.from_string
+    for site in sites:
+        if known is not None and site not in known:
+            problem(f"search.sites: '{site}' isn't a job board JobSpy knows ({', '.join(sorted(known))})")
+    if {"indeed", "glassdoor"} & set(sites):
+        if not country:
+            problem("search.country_indeed is empty: the country Indeed searches, e.g. Germany, India, UK or USA")
+        elif check_country is not None:
+            try:
+                found = check_country(country)
+            except ValueError:
+                problem(
+                    f"search.country_indeed: Indeed doesn't support '{country}' (docs/configure.md lists the countries)"
+                )
+            else:
+                if "glassdoor" in sites and len(found.value) < 3:
+                    warn(f"search.sites: Glassdoor doesn't cover {country}, so only the other boards are searched")
+    if "linkedin" in sites:
+        warn(
+            "search.sites: LinkedIn blocks searches from GitHub's servers and its terms forbid scraping; use its "
+            "alert emails or radar linkedin-search instead (docs/linkedin.md)"
+        )
+    if "zip_recruiter" in sites:
+        warn("search.sites: ZipRecruiter (USA and Canada only) usually blocks GitHub's servers")
 
 
 def check_profile(profile: dict[str, Any], config: dict[str, Any], path: Path, checkup: Checkup) -> None:

@@ -119,5 +119,5 @@ class GitHub:
         existing = {label["name"] for label in listed}
         for name in names:
             if name not in existing:
-                color, description = LABELS[name]
+                color, description = LABELS.get(name, ("2164F3", ""))
                 _gh(["label", "create", name, "--repo", self.repo, "--color", color, "--description", description])

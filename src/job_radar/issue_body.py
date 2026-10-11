@@ -3,8 +3,9 @@
 - LinkedIn Issues come from the "LinkedIn Job Review" Issue Form
   (.github/ISSUE_TEMPLATE/linkedin-job.yml) or from the email-alert importer,
   which writes the same headings with a placeholder description.
-- Indeed Issues are written by the daily scan, with a hidden fingerprint marker
-  so the Issue can be found again when the job is re-synced.
+- Job-board Issues ("[Indeed Job]", "[Glassdoor Job]", …) are written by the daily
+  scan, with a hidden fingerprint marker so the Issue can be found again when the
+  job is re-synced.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import re
 from typing import Any
 
 from .ids import make_fingerprint
+from .labels import board_name, board_site
 from .models import Job
 from .normalize import split_company_location
 
@@ -55,7 +57,7 @@ def fingerprint_marker(body: str) -> str:
 
 
 def parse_job(body: str) -> Job:
-    """The job described by a LinkedIn or Indeed job Issue."""
+    """The job described by a LinkedIn or job-board Issue."""
     sections = parse_sections(body)
     job_url = _field(sections, "LinkedIn job URL", "Job URL")
     title = _field(sections, "Job title")
@@ -69,7 +71,7 @@ def parse_job(body: str) -> Job:
         title, company, "remote" if is_remote else location, job_url
     )
     return {
-        "source": _field(sections, "Source", required=False).lower() or "linkedin",
+        "source": board_site(_field(sections, "Source", required=False)) or "linkedin",
         "title": title,
         "company": company,
         "location": location,
@@ -163,8 +165,8 @@ def _render_linkedin_card(candidate: dict[str, str], source_heading: str, source
 """
 
 
-def render_indeed(job: dict[str, Any]) -> str:
-    """Body of the Issue the daily scan creates for an Indeed match."""
+def render_board_job(job: dict[str, Any]) -> str:
+    """Body of the Issue the daily scan creates for a job-board match."""
 
     def text(key: str) -> str:
         return str(job.get(key) or "").strip()
@@ -195,7 +197,7 @@ def render_indeed(job: dict[str, Any]) -> str:
             "",
             "### Source",
             "",
-            "Indeed",
+            board_name(text("source")),
             "",
             "### Remote?",
             "",

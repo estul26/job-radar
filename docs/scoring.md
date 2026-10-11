@@ -39,7 +39,7 @@ possible matches.
 ## Hard rejects
 
 - A title containing a `ranking.hard_reject_title_terms` entry (seniority you're not ready for,
-  say), matched on word boundaries, so "guard" doesn't match "Guardium".
+  say), matched on word boundaries, so "lead" doesn't match "Leading".
 - A title that is neither one of `search.titles` nor related through `matching`, when
   `ranking.hard_reject_unrelated_titles` is on.
 - A minimum requirement of `ranking.hard_reject_min_years` (5) or more years.

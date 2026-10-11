@@ -26,12 +26,9 @@ def test_the_shipped_template_lists_what_to_fill_in():
 
 def test_a_filled_in_setup_passes(capsys):
     result = checkup(CONFIG, PROFILE, MASTER)
-    assert result.ok
-    # The fixture profile lists support skills its vocabulary doesn't know, which doctor points out.
-    [warning] = result.warnings
-    assert warning.endswith("never match a posting: ip addressing, microsoft 365, technical support, troubleshooting")
+    assert result.ok and result.warnings == []
     assert main(["doctor", "--config", str(CONFIG), "--profile", str(PROFILE), "--master", str(MASTER)]) == 0
-    assert "0 problem(s), 1 warning(s)" in capsys.readouterr().out
+    assert "everything is set up" in capsys.readouterr().out
 
 
 def test_bad_values_are_named(tmp_path):
@@ -68,7 +65,7 @@ def test_the_blank_template_scans_without_crashing_and_makes_no_resumes(tmp_path
                 "latest_jobs_path": str(tmp_path / "latest_jobs.csv"),
                 "seen_jobs_path": str(tmp_path / "seen.json"),
                 "scan_matches_path": str(tmp_path / "matches.json"),
-                "indeed_manifest_path": str(tmp_path / "manifest.json"),
+                "resume_manifest_path": str(tmp_path / "manifest.json"),
                 "master_resume_path": str(BLANK[2]),
             }
         ),

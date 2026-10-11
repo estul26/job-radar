@@ -6,11 +6,11 @@ https://jobs.example.com/requisition/11921
 
 ### Job title
 
-Cybersecurity Analyst
+Charge Nurse
 
 ### Company
 
-Example School District
+Example Health Region
 
 ### Location
 
@@ -30,18 +30,16 @@ No
 
 ### Job description
 
-Example School District is hiring a Cybersecurity Analyst to protect its schools' systems and data.
+Example Health Region is hiring a Charge Nurse for its community hospital.
 
 Responsibilities
 
-- Monitor SIEM alerts and investigate suspicious activity
-- Support incident response and document findings
-- Maintain endpoint protection and review firewall rules
-- Help staff with security awareness
+- Lead a team of nurses on a medical unit through each shift
+- Assess patients, administer medications and coordinate care plans
+- Keep accurate charting and handover notes
 
 Qualifications
 
-- Diploma or degree in information technology or cybersecurity
-- 1-2 years of experience in IT security or a SOC
-- Knowledge of networking, Windows, Active Directory and Microsoft 365
-- CompTIA Security+ is an asset
+- Registered Nurse in good standing
+- 1-2 years of acute-care experience
+- BLS required; ACLS is an asset

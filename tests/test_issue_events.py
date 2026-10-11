@@ -9,7 +9,7 @@ from job_radar.models import Verdict
 JOB_URL = "https://www.linkedin.com/jobs/view/4471544570/"
 
 
-def linkedin_issue(description: str, title="SOC Analyst I", location="Toronto, ON", **extra) -> dict:
+def linkedin_issue(description: str, title="Registered Nurse I", location="Toronto, ON", **extra) -> dict:
     body = "\n".join(
         [
             "### LinkedIn job URL",
@@ -22,7 +22,7 @@ def linkedin_issue(description: str, title="SOC Analyst I", location="Toronto, O
             "",
             "### Company",
             "",
-            "Example Security",
+            "Example Health",
             "",
             "### Location",
             "",
@@ -38,16 +38,15 @@ def linkedin_issue(description: str, title="SOC Analyst I", location="Toronto, O
             "",
         ]
     )
-    return {"number": 7, "title": "[LinkedIn Job] SOC Analyst I — Example Security", "body": body, **extra}
+    return {"number": 7, "title": "[LinkedIn Job] Registered Nurse I — Example Health", "body": body, **extra}
 
 
-GOOD = "1 year experience. Splunk, QRadar, incident response, Active Directory, DNS. Security+ required."
-# Partly related title, far away, 4 years and only skills the profile lacks: scores ~18.
+GOOD = "1 year experience. Patient assessment, medication administration, wound care, IV therapy. BLS required."
+# Partly related title, far away, 4 years and only skills the profile lacks: scores ~23.
 LOW = {
-    "description": "4 years of experience required. Microsoft Sentinel, CrowdStrike, KQL, PowerShell and Python. "
-    "CISSP required.",
-    "title": "IT Security Specialist",
-    "location": "Toronto, ON",
+    "description": "4 years of experience required. Epic, Meditech, telemetry and triage. ACLS and PALS required.",
+    "title": "Nurse Educator",
+    "location": "Vancouver, BC",
 }
 
 
@@ -63,15 +62,17 @@ def run_event(gh: FakeGitHub, settings, number: int, event: str, label: str = ""
 @pytest.mark.parametrize(
     ("title", "body", "event", "label", "expected"),
     [
-        ("[LinkedIn Job] SOC", "desc", "opened", "", "intake"),
-        ("[LinkedIn Alert] SOC", "desc", "edited", "", "intake"),
-        ("[LinkedIn Alert] SOC", "_Paste full job description here, replacing this line", "edited", "", None),
-        ("[Indeed Job] SOC", "desc", "edited", "", None),
-        ("[Indeed Job] SOC", "desc", "labeled", "resume:tailor", "resume"),
+        ("[LinkedIn Job] Nurse", "desc", "opened", "", "intake"),
+        ("[LinkedIn Alert] Nurse", "desc", "edited", "", "intake"),
+        ("[LinkedIn Alert] Nurse", "_Paste full job description here, replacing this line", "edited", "", None),
+        ("[Indeed Job] Nurse", "desc", "edited", "", None),
+        ("[Indeed Job] Nurse", "desc", "labeled", "resume:tailor", "resume"),
+        ("[Naukri Job] Nurse", "desc", "labeled", "resume:tailor", "resume"),
+        ("[Glassdoor Job] Nurse", "desc", "edited", "", None),
         ("Job Radar: 1 new match", "desc", "labeled", "resume:tailor", None),
-        ("[LinkedIn Job] SOC", "desc", "labeled", "status:applied", "status"),
-        ("[LinkedIn Job] SOC", "desc", "labeled", "status:wishlist", None),
-        ("[LinkedIn Job] SOC", "desc", "labeled", "match:good", None),
+        ("[LinkedIn Job] Nurse", "desc", "labeled", "status:applied", "status"),
+        ("[LinkedIn Job] Nurse", "desc", "labeled", "status:wishlist", None),
+        ("[LinkedIn Job] Nurse", "desc", "labeled", "match:good", None),
     ],
 )
 def test_route(title, body, event, label, expected):
@@ -87,7 +88,7 @@ def test_good_match_is_scored_tracked_and_gets_a_resume(settings):
     assert comments[0].startswith(REVIEW_MARKER) and "GOOD MATCH — APPLY" in comments[0]
     assert comments[1].startswith(RESUME_MARKER) and "/blob/main/" in comments[1]
 
-    assert (settings.paths.resume_dir / "4471544570-example-security-soc-analyst-i" / "resume.md").exists()
+    assert (settings.paths.resume_dir / "4471544570-example-health-registered-nurse-i" / "resume.md").exists()
     # The Issue is the tracker; nothing shared is written outside the résumé folder.
     assert not settings.paths.applications.exists() and not settings.paths.seen_jobs.exists()
 

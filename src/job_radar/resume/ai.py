@@ -290,6 +290,7 @@ FACTUAL RULES:
   remains directly supported by the cited source fact.
 - Do not alter identity/contact information, skills lists, certifications, role titles, or dates;
   those are managed outside this AI step.
+- Write in the same language as the MASTER FACTS, even when the job description is in another language.
 
 OUTPUT:
 Return ONLY a JSON object with exactly these fields:

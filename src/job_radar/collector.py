@@ -29,10 +29,14 @@ def collect_jobs(config: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str
                 location=location["query"],
                 results_wanted=search.get("results_wanted_per_query", 20),
                 hours_old=search.get("hours_old", 72),
-                country_indeed=search.get("country_indeed", "Canada"),
+                # The country Indeed and Glassdoor search; `radar doctor` checks it's set and supported.
+                country_indeed=search.get("country_indeed") or None,
                 verbose=0,
                 fetch_description=search.get("fetch_description", False),
             )
+            if "google" in sites:
+                # Google Jobs takes one free-text search instead of separate fields.
+                kwargs["google_search_term"] = f"{query} jobs near {location['query']}"
             if location.get("remote_only"):
                 kwargs["is_remote"] = True
 

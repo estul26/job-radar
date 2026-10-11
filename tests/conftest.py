@@ -8,7 +8,7 @@ from job_radar.settings import Paths, load_settings
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
 ISSUE_FIXTURES = FIXTURES / "issues"
-# A filled-in cybersecurity setup for a made-up person; the shipped config/ is a blank template.
+# A filled-in setup for a made-up registered nurse; the shipped config/ is a blank template.
 CONFIG = FIXTURES / "config" / "search_config.yaml"
 PROFILE = FIXTURES / "resume_profile.json"
 MASTER = FIXTURES / "master_resume.json"
@@ -36,7 +36,7 @@ def settings(tmp_path, monkeypatch):
             "seen_jobs_path": str(tmp_path / "data/seen_jobs.json"),
             "applications_path": str(tmp_path / "data/applications.csv"),
             "scan_matches_path": str(tmp_path / "reports/scan-matches.json"),
-            "indeed_manifest_path": str(tmp_path / "reports/indeed-resume-manifest.json"),
+            "resume_manifest_path": str(tmp_path / "reports/indeed-resume-manifest.json"),
             "resume_dir": str(tmp_path / "resumes/jobs"),
             "resume_index_path": str(tmp_path / "resumes/index.csv"),
             "master_resume_path": str(MASTER),

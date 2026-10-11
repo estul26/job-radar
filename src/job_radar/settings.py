@@ -40,7 +40,7 @@ class Paths:
     applications: Path
     # Hand-offs between `radar scan` and `radar publish-scan` (not committed).
     scan_matches: Path
-    indeed_manifest: Path
+    resume_manifest: Path
     resume_dir: Path
     resume_index: Path
     master_resume: Path
@@ -58,7 +58,7 @@ class Paths:
             seen_jobs=path("seen_jobs_path", "data/seen_jobs.json"),
             applications=path("applications_path", "data/applications.csv"),
             scan_matches=path("scan_matches_path", "reports/scan-matches.json"),
-            indeed_manifest=path("indeed_manifest_path", "reports/indeed-resume-manifest.json"),
+            resume_manifest=path("resume_manifest_path", "reports/scan-resume-manifest.json"),
             resume_dir=path("resume_dir", "resumes/jobs"),
             resume_index=path("resume_index_path", "resumes/index.csv"),
             master_resume=path("master_resume_path", DEFAULT_MASTER_RESUME),
@@ -85,7 +85,7 @@ class Settings:
 
 
 def config_timezone(config: Mapping[str, Any]) -> ZoneInfo:
-    """The `timezone` in search_config.yaml (an IANA name such as America/Toronto); UTC when unset."""
+    """The `timezone` in search_config.yaml (an IANA name such as Europe/Berlin); UTC when unset."""
     return ZoneInfo(str(config.get("timezone") or "UTC").strip())
 
 

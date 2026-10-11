@@ -2,8 +2,8 @@ from job_radar.ids import make_fingerprint
 
 
 def test_fingerprint_is_stable_for_tracking_url_changes():
-    a = make_fingerprint("SOC Analyst", "Example Inc", "Toronto, ON", "https://example.com/a")
-    b = make_fingerprint("SOC Analyst", "Example Inc", "Toronto, ON", "https://example.com/b")
+    a = make_fingerprint("Registered Nurse", "Example Inc", "Toronto, ON", "https://example.com/a")
+    b = make_fingerprint("Registered Nurse", "Example Inc", "Toronto, ON", "https://example.com/b")
     assert a == b
 
 
@@ -16,7 +16,7 @@ def test_remote_jobs_deduplicate_across_location_labels():
         [
             {
                 "site": "indeed",
-                "title": "SOC Analyst",
+                "title": "Registered Nurse",
                 "company": "Example Inc",
                 "location": "Toronto, ON, CA",
                 "is_remote": True,
@@ -25,7 +25,7 @@ def test_remote_jobs_deduplicate_across_location_labels():
             },
             {
                 "site": "indeed",
-                "title": "SOC Analyst",
+                "title": "Registered Nurse",
                 "company": "Example Inc",
                 "location": "Canada",
                 "is_remote": True,

@@ -1,4 +1,4 @@
-"""Generate and file a tailored résumé for one scored job (LinkedIn or Indeed)."""
+"""Generate and file a tailored résumé for one scored job (from LinkedIn or a job board)."""
 
 from __future__ import annotations
 

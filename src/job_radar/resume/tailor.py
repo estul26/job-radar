@@ -7,6 +7,23 @@ from typing import Any
 
 from ..matcher import Vocabulary, detect_skills
 
+# The résumé's fixed wording, in English unless the master résumé's "labels" say otherwise.
+DEFAULT_LABELS = {
+    "summary": "PROFESSIONAL SUMMARY",
+    "skills": "SKILLS",
+    "experience": "PROFESSIONAL EXPERIENCE",
+    "education": "EDUCATION",
+    "certifications": "CERTIFICATIONS",
+    "more_certifications": "Additional certificates",
+    "capabilities_intro": "Experience includes",
+    "and": "and",
+}
+
+
+def resume_labels(master: dict[str, Any]) -> dict[str, str]:
+    custom = master.get("labels") or {}
+    return {key: str(custom.get(key) or default) for key, default in DEFAULT_LABELS.items()}
+
 
 def slug(value: str, limit: int = 56) -> str:
     text = re.sub(r"[^a-z0-9]+", "-", str(value or "").lower()).strip("-")
@@ -49,15 +66,16 @@ def tailored_summary(master: dict[str, Any], job_text: str, detected: set[str]) 
     else:
         relevant = relevant[:6]
 
+    labels = resume_labels(master)
     capability_text = ", ".join(relevant[:-1])
     if len(relevant) > 1:
-        capability_text += f", and {relevant[-1]}"
+        capability_text += f" {labels['and']} {relevant[-1]}"
     elif relevant:
         capability_text = relevant[0]
 
     parts = [summary.get("experience"), summary.get("credentials")]
     if capability_text:
-        parts.append(f"Experience includes {capability_text}.")
+        parts.append(f"{labels['capabilities_intro']} {capability_text}.")
     return " ".join(str(part).strip() for part in parts if str(part or "").strip())
 
 
@@ -96,6 +114,7 @@ def tailor_content(
         "experience": experiences,
         "education": master.get("education", []),
         "certifications": certifications,
+        "labels": resume_labels(master),
         "matched_skills": scored.get("matched_skills", []),
         "missing_core_skills": scored.get("missing_skills", []),
         "optional_missing_skills": scored.get("optional_missing_skills", []),

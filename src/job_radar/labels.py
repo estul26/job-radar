@@ -2,13 +2,47 @@
 
 from __future__ import annotations
 
+import re
+
+# The job boards the daily scan can search (JobSpy site names), as Issues and the board show them.
+# A job's Issue is titled "[<name> Job] <title> — <company>" and labelled source:<site>.
+BOARDS = {
+    "indeed": "Indeed",
+    "glassdoor": "Glassdoor",
+    "google": "Google",
+    "zip_recruiter": "ZipRecruiter",
+    "naukri": "Naukri",
+    "bayt": "Bayt",
+    "bdjobs": "BDJobs",
+    "hellowork": "HelloWork",
+}
+# Titles of the Issues that are jobs: "[LinkedIn Job] …", "[LinkedIn Alert] …", "[Indeed Job] …", ….
+JOB_TITLE = re.compile(r"^\[(?:LinkedIn Alert|[^\[\]]+ Job)\]")
+
+
+def board_name(site: str) -> str:
+    """ "glassdoor" -> "Glassdoor"; a site this list doesn't know keeps its own name."""
+    site = str(site or "").strip().lower()
+    return BOARDS.get(site) or site.replace("_", " ").title() or "Job board"
+
+
+def board_site(name: str) -> str:
+    """The inverse of board_name: "Glassdoor" -> "glassdoor"."""
+    name = str(name or "").strip().lower()
+    return next((site for site, shown in BOARDS.items() if shown.lower() == name), name.replace(" ", "_"))
+
+
+def is_job_title(title: str) -> bool:
+    return bool(JOB_TITLE.match(str(title or "")))
+
+
 STATUSES = ("New", "Saved", "Applied", "Interview", "Rejected", "Offer", "Skipped")
 _STATUS_BY_KEY = {status.lower(): status for status in STATUSES}
 
 # Name -> (colour, description) for every label the workflows apply.
 LABELS: dict[str, tuple[str, str]] = {
     "source:linkedin": ("0A66C2", "LinkedIn-sourced job"),
-    "source:indeed": ("2164F3", "Indeed-sourced job"),
+    **{f"source:{site}": ("2164F3", f"{name}-sourced job") for site, name in BOARDS.items()},
     "match:good": ("2EA44F", "At or above good-match threshold"),
     "match:possible": ("D4C5F9", "Possible / stretch match"),
     "match:low": ("CFD3D7", "Below tracking threshold"),

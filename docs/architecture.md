@@ -3,14 +3,15 @@
 ## The pipeline
 
 ```text
-Indeed (twice a day) ──────► radar scan ──────────┐
+Job boards (twice a day) ──► radar scan ──────────┐
                                                   ├─► score 0–100 ─► job Issue ─► Job Search board
 LinkedIn alert emails ─────► radar email-ingest ──┤                     │
 Your Chrome (Mac, by hand) ► radar linkedin-search┤                     ├─► résumé for good matches
 LinkedIn Job Review form ─────────────────────────┘                     └─► data/applications.csv (export)
 ```
 
-- **Discovery.** `radar scan` searches Indeed through JobSpy. The workflows never touch
+- **Discovery.** `radar scan` searches the job boards in `search.sites` (Indeed, Glassdoor,
+  Google, Naukri, Bayt, BDJobs, HelloWork) through JobSpy. The workflows never touch
   LinkedIn: its own alert emails become `[LinkedIn Alert]` Issues, `radar linkedin-search`
   (run by hand on your Mac) reads search results in your signed-in Chrome, and anything else
   can be submitted with the **LinkedIn Job Review** Issue form. LinkedIn jobs wait for you to
@@ -43,7 +44,7 @@ src/job_radar/
   issue_body.py     the job Issue body: parse and render (the contract between channels)
   labels.py         statuses and the label catalog
   github.py         the only access to GitHub (gh CLI)
-  collector.py      Indeed search (JobSpy)
+  collector.py      job-board search (JobSpy)
   normalize.py      job-board rows to Job records
   matcher.py        0–100 scoring, and the Vocabulary of your field from config
   report.py         reports/latest.md
@@ -87,4 +88,6 @@ email import only its own state, so concurrent workflows never conflict when the
   deduplicates one posting across searches and job boards.
 - The **job key** (`ids.job_key`) names a job's résumé folder: the LinkedIn job ID for
   LinkedIn jobs, the fingerprint otherwise.
-- `[Indeed Job]` Issues carry their fingerprint in a hidden `<!-- job-fingerprint:… -->` marker.
+- Job-board Issues (`[Indeed Job]`, `[Glassdoor Job]`, `[Naukri Job]`, …, labelled
+  `source:<board>`) carry their fingerprint in a hidden `<!-- job-fingerprint:… -->` marker.
+  `labels.BOARDS` names the boards.

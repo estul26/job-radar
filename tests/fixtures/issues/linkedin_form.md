@@ -4,11 +4,11 @@ https://www.linkedin.com/jobs/view/4471544570/
 
 ### Job title
 
-Entry-Level Cybersecurity Analyst
+Registered Nurse - Medical/Surgical
 
 ### Company
 
-Jobright
+Northwind Health
 
 ### Location
 
@@ -24,20 +24,20 @@ Yes
 
 ### Job description
 
-Our client is hiring an entry-level Cybersecurity Analyst to join a remote security team.
+Northwind Health is hiring a Registered Nurse to join a remote telehealth team.
 
 Responsibilities
 
-- Review security alerts and assist with initial investigation and triage
-- Document incidents, findings, evidence, and remediation actions
-- Support access reviews and vulnerability tracking
+- Assess patients by phone and video, and triage their needs
+- Give advice on medications and follow-up care
+- Document each call accurately
 
 Required
 
-- Foundational understanding of networking, operating systems, and security concepts
-- Strong analytical, documentation, and problem-solving skills
+- Registered Nurse in good standing
+- Strong patient assessment and charting skills
 
 Preferred
 
-- Familiarity with SIEM, endpoint security, identity, or vulnerability-management tools
-- Security+ or a similar entry-level credential
+- Experience with Epic
+- BLS or a similar credential

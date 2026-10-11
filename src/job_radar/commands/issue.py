@@ -16,7 +16,7 @@ from typing import Any
 
 from ..github import GitHub, label_names
 from ..issue_body import PLACEHOLDER_MARKER, parse_job
-from ..labels import LABELS
+from ..labels import LABELS, is_job_title
 from ..matcher import score_job
 from ..models import Verdict, classify
 from ..resume.pipeline import generate_resume
@@ -24,7 +24,6 @@ from ..settings import Settings, load_json
 from .doctor import resume_ready
 
 LINKEDIN_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]")
-JOB_PREFIXES = (*LINKEDIN_PREFIXES, "[Indeed Job]")
 REVIEW_MARKER = "<!-- job-radar:match-review -->"
 RESUME_MARKER = "<!-- job-radar:resume -->"
 MATCH_LABELS = {f"match:{verdict.value}" for verdict in Verdict}
@@ -55,7 +54,7 @@ def route(issue: dict[str, Any], event: str, label: str = "") -> str | None:
         if title.startswith(LINKEDIN_PREFIXES) and PLACEHOLDER_MARKER not in str(issue.get("body", "")):
             return "intake"
     elif event == "labeled":
-        if label == "resume:tailor" and title.startswith(JOB_PREFIXES):
+        if label == "resume:tailor" and is_job_title(title):
             return "resume"
         if label.startswith("status:") and label in LABELS:
             return "status"

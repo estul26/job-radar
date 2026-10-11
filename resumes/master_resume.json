@@ -1,5 +1,15 @@
 {
   "version": "1",
+  "labels": {
+    "summary": "PROFESSIONAL SUMMARY",
+    "skills": "SKILLS",
+    "experience": "PROFESSIONAL EXPERIENCE",
+    "education": "EDUCATION",
+    "certifications": "CERTIFICATIONS",
+    "more_certifications": "Additional certificates",
+    "capabilities_intro": "Experience includes",
+    "and": "and"
+  },
   "identity": {
     "name": "",
     "headline": "",

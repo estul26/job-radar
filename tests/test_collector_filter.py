@@ -1,29 +1,20 @@
 from job_radar.collector import filter_excluded_titles, title_matches_exclusion
 
 
-def test_physical_security_titles_are_excluded():
-    terms = [
-        "security guard",
-        "guard",
-        "loss prevention",
-        "asset protection",
-        "physical security",
-        "security officer",
-    ]
+def test_excluded_titles_are_dropped_before_scoring():
+    terms = ["nursing assistant", "personal support worker", "veterinary"]
     jobs = [
-        {"title": "Security Guard - Casual"},
-        {"title": "Asset Protection Associate"},
-        {"title": "Security and Loss Prevention Specialist"},
-        {"title": "SOC Analyst I"},
-        {"title": "Security Operations Analyst"},
+        {"title": "Nursing Assistant - Casual"},
+        {"title": "Personal Support Worker (Nights)"},
+        {"title": "Veterinary Technician"},
+        {"title": "Registered Nurse"},
+        {"title": "Staff Nurse"},
     ]
 
     filtered = filter_excluded_titles(jobs, terms)
-    assert [job["title"] for job in filtered] == [
-        "SOC Analyst I",
-        "Security Operations Analyst",
-    ]
+    assert [job["title"] for job in filtered] == ["Registered Nurse", "Staff Nurse"]
 
 
-def test_guard_boundary_does_not_block_guardium():
-    assert title_matches_exclusion("IBM Guardium Security Analyst", ["guard"]) is False
+def test_exclusions_match_whole_words_only():
+    assert title_matches_exclusion("Nurse - Aiden Health", ["aide"]) is False
+    assert title_matches_exclusion("Nurse Aide", ["aide"]) is True

@@ -131,14 +131,14 @@ def test_cards_from_every_search_become_issues_once(tmp_path):
     runner = FakeChromeRunner(
         {
             "start": SIGNED_IN,
-            "SOC Analyst": {"jobs": [card("1", "SOC Analyst"), card("2", "Senior SOC Analyst")]},
-            "Security Operations Analyst": {"jobs": [card("1", "SOC Analyst"), card("3", "Line Cook", "Diner")]},
+            "Registered Nurse": {"jobs": [card("1", "Registered Nurse"), card("2", "Senior Registered Nurse")]},
+            "Staff Nurse": {"jobs": [card("1", "Registered Nurse"), card("3", "Line Cook", "Diner")]},
         },
-        scrolled={"jobs": [card("4", "Security Operations Analyst", "Beta", "Canada (Remote)")]},
+        scrolled={"jobs": [card("4", "Staff Nurse", "Beta", "Canada (Remote)")]},
     )
     searches = [
-        Search("SOC Analyst", "Toronto, Ontario, Canada", False, "Toronto"),
-        Search("Security Operations Analyst", "Canada", True, "Remote"),
+        Search("Registered Nurse", "Toronto, Ontario, Canada", False, "Toronto"),
+        Search("Staff Nurse", "Canada", True, "Remote"),
     ]
     jobs, warnings = collect(runner, searches)
 
@@ -157,7 +157,7 @@ def test_cards_from_every_search_become_issues_once(tmp_path):
         known_job_ids=frozenset({"4"}),
         create_issue=lambda title, body: made.append(title) or "#",
     )
-    assert made == ["[LinkedIn Job] SOC Analyst — Acme"]
+    assert made == ["[LinkedIn Job] Registered Nurse — Acme"]
     assert (off_target, already) == (2, 1)
 
 

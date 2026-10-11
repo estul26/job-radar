@@ -1,8 +1,8 @@
 """The twice-daily job scan (workflow: daily-jobs.yml).
 
 - scan_jobs(): collect and score new jobs, update the seen state, write the report
-- generate_scan_resumes(): résumés for the good Indeed matches
-- publish_scan(): after the commit, a job Issue for every good and possible Indeed match
+- generate_scan_resumes(): résumés for the good matches
+- publish_scan(): after the commit, a job Issue for every good and possible match
 """
 
 from __future__ import annotations
@@ -15,7 +15,8 @@ from typing import Any
 import pandas as pd
 
 from ..github import GitHub
-from ..issue_body import fingerprint_marker, parse_job, render_indeed
+from ..issue_body import fingerprint_marker, parse_job, render_board_job
+from ..labels import board_name, is_job_title
 from ..matcher import score_job
 from ..models import Verdict, classify
 from ..normalize import normalize_dataframe
@@ -25,9 +26,8 @@ from ..settings import Settings, load_json
 from ..state import load_seen, prune_seen, save_seen, update_seen
 from .doctor import resume_ready
 
-JOB_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]", "[Indeed Job]")
-INDEED_MARKER = "<!-- job-radar:indeed-match -->"
-INDEED_LABELS = ["source:indeed", "match:good", "match:possible", "status:new", "resume:ready"]
+MATCH_MARKER = "<!-- job-radar:board-match -->"
+MATCH_LABELS = ["match:good", "match:possible", "status:new", "resume:ready"]
 
 
 def load_fixture(path: str | Path) -> list[dict[str, Any]]:
@@ -52,7 +52,7 @@ def issue_fingerprints(issues: Iterable[dict[str, Any]]) -> frozenset[str]:
     fingerprints = set()
     for issue in issues:
         body = str(issue.get("body", ""))
-        if not str(issue.get("title", "")).startswith(JOB_PREFIXES):
+        if not is_job_title(str(issue.get("title", ""))):
             continue
         try:
             fingerprints.add(fingerprint_marker(body) or parse_job(body)["fingerprint"])
@@ -115,25 +115,26 @@ def scan_jobs(
         {**job, "verdict": verdict.value}
         for verdict, group in ((Verdict.GOOD, good), (Verdict.POSSIBLE, possible))
         for job in group
-        if str(job.get("source", "")).strip().lower() == "indeed"
+        # LinkedIn jobs arrive through its alerts and radar linkedin-search, never as scan Issues.
+        if str(job.get("source", "")).strip().lower() != "linkedin"
     ]
     _write_json(paths.scan_matches, matches)
     return report
 
 
 def generate_scan_resumes(settings: Settings, master_path: str | Path | None = None) -> list[dict[str, Any]] | None:
-    """Tailored résumés for the good Indeed matches scan_jobs() handed off; None while the master isn't filled in."""
+    """Tailored résumés for the good matches scan_jobs() handed off; None while the master isn't filled in."""
     paths = settings.paths
     master = load_json(master_path or paths.master_resume)
     if not resume_ready(master):
-        _write_json(paths.indeed_manifest, [])
+        _write_json(paths.resume_manifest, [])
         return None
     results = [
         generate_resume(job, master, vocab=settings.vocab, resume_dir=paths.resume_dir)
         for job in _read_list(paths.scan_matches)
         if job.get("verdict") == Verdict.GOOD
     ]
-    _write_json(paths.indeed_manifest, results)
+    _write_json(paths.resume_manifest, results)
     return results
 
 
@@ -142,11 +143,11 @@ def match_comment(repo: str, job: dict[str, Any], resume: dict[str, Any] | None)
         return str(item.get(key) or "").strip()
 
     lines = [
-        INDEED_MARKER,
+        MATCH_MARKER,
         f"## {int(job.get('score', 0))}% — {text(job, 'title')}",
         "",
         f"**Company:** {text(job, 'company')}",
-        "**Source:** Indeed",
+        f"**Source:** {board_name(text(job, 'source'))}",
     ]
     if resume:
         lines += [
@@ -165,11 +166,12 @@ def match_comment(repo: str, job: dict[str, Any], resume: dict[str, Any] | None)
     return "\n".join([*lines, ""])
 
 
-def sync_indeed_issues(gh: GitHub, matches: list[dict[str, Any]], resumes: dict[str, dict[str, Any]]) -> list[int]:
-    """Create (or update) one [Indeed Job] Issue per match, found again by its fingerprint."""
+def sync_board_issues(gh: GitHub, matches: list[dict[str, Any]], resumes: dict[str, dict[str, Any]]) -> list[int]:
+    """Create (or update) one "[<board> Job]" Issue per match, found again by its fingerprint."""
     if not matches:
         return []
-    gh.ensure_labels(INDEED_LABELS)
+    sources = sorted({f"source:{str(job.get('source') or '').strip().lower()}" for job in matches})
+    gh.ensure_labels([*sources, *MATCH_LABELS])
     existing: dict[str, int] = {}
     for issue in gh.issues():
         fingerprint = fingerprint_marker(str(issue.get("body", "")))
@@ -183,23 +185,25 @@ def sync_indeed_issues(gh: GitHub, matches: list[dict[str, Any]], resumes: dict[
             raise ValueError("A scan match is missing its fingerprint.")
         resume = resumes.get(fingerprint)
         good = job.get("verdict") == Verdict.GOOD
-        title = f"[Indeed Job] {str(job.get('title') or '').strip()} — {str(job.get('company') or '').strip()}"
-        labels = ["source:indeed", "match:good" if good else "match:possible", *(["resume:ready"] if resume else [])]
+        board = board_name(str(job.get("source") or ""))
+        title = f"[{board} Job] {str(job.get('title') or '').strip()} — {str(job.get('company') or '').strip()}"
+        source = f"source:{str(job.get('source') or '').strip().lower()}"
+        labels = [source, "match:good" if good else "match:possible", *(["resume:ready"] if resume else [])]
         number = existing.get(fingerprint)
         if number:
-            gh.edit_issue(number, title=title, body=render_indeed(job), add_labels=labels)
+            gh.edit_issue(number, title=title, body=render_board_job(job), add_labels=labels)
         else:
             # Good matches are assigned to you, which is what notifies you.
             number = gh.create_issue(
-                title, render_indeed(job), labels=[*labels, "status:new"], assignee=gh.owner if good else ""
+                title, render_board_job(job), labels=[*labels, "status:new"], assignee=gh.owner if good else ""
             )
             existing[fingerprint] = number
-        gh.upsert_comment(number, INDEED_MARKER, match_comment(gh.repo, job, resume))
+        gh.upsert_comment(number, MATCH_MARKER, match_comment(gh.repo, job, resume))
         numbers.append(number)
     return numbers
 
 
 def publish_scan(gh: GitHub, settings: Settings) -> list[int]:
-    """After the scan's commit: a job Issue for each good and possible Indeed match."""
-    resumes = {str(item.get("fingerprint", "")).lower(): item for item in _read_list(settings.paths.indeed_manifest)}
-    return sync_indeed_issues(gh, _read_list(settings.paths.scan_matches), resumes)
+    """After the scan's commit: a job Issue for each good and possible match."""
+    resumes = {str(item.get("fingerprint", "")).lower(): item for item in _read_list(settings.paths.resume_manifest)}
+    return sync_board_issues(gh, _read_list(settings.paths.scan_matches), resumes)

@@ -4,11 +4,11 @@ https://www.linkedin.com/jobs/view/4471532081/
 
 ### Job title
 
-SOC Analyst, Entry Level
+Registered Nurse, New Graduate
 
 ### Company
 
-Jobright.ai · Canada (Remote)
+Northwind Care · Canada (Remote)
 
 ### Location
 
@@ -28,10 +28,10 @@ _Paste full job description here, replacing this line, then save the issue._
 
 ### LinkedIn alert source
 
-Email subject: New jobs similar to Cloud Security Analyst at Alignerr
+Email subject: New jobs similar to Charge Nurse at Lakeside Health
 
 Alert-card excerpt:
 
-SOC Analyst, Entry Level
-Jobright.ai · Canada (Remote)
+Registered Nurse, New Graduate
+Northwind Care · Canada (Remote)
 

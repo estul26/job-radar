@@ -18,9 +18,9 @@ def test_extract_candidates_from_alert_html():
     <html><body>
       <div>
         <a href="https://www.linkedin.com/comm/jobs/view/4471544570/?trackingId=abc">
-          Entry-Level Cybersecurity Analyst
+          Registered Nurse - Medical/Surgical
         </a>
-        <div>Jobright</div>
+        <div>Northwind Health</div>
         <div>Canada Remote</div>
       </div>
     </body></html>
@@ -28,17 +28,17 @@ def test_extract_candidates_from_alert_html():
     jobs = extract_candidates_from_html(html)
     assert len(jobs) == 1
     assert jobs[0]["job_id"] == "4471544570"
-    assert jobs[0]["title"] == "Entry-Level Cybersecurity Analyst"
+    assert jobs[0]["title"] == "Registered Nurse - Medical/Surgical"
 
 
 ALERT_HTML = """
 <html><body><table>
   <tr><td>
-    <a href="https://www.linkedin.com/comm/jobs/view/111/?trk=alert">SOC Analyst</a>
-    <p>Jobright.ai · Canada (Remote)</p>
+    <a href="https://www.linkedin.com/comm/jobs/view/111/?trk=alert">Registered Nurse</a>
+    <p>Northwind Care · Canada (Remote)</p>
   </td></tr>
   <tr><td>
-    <a href="https://www.linkedin.com/comm/jobs/view/222/?trk=alert">Security Operations Analyst</a>
+    <a href="https://www.linkedin.com/comm/jobs/view/222/?trk=alert">Staff Nurse</a>
     <p>Example Co · Toronto, ON</p>
   </td></tr>
 </table></body></html>
@@ -48,7 +48,7 @@ ALERT_HTML = """
 def _alert_email(
     html: str,
     sender: str = "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
-    subject: str = "New jobs for you: SOC Analyst",
+    subject: str = "New jobs for you: Registered Nurse",
 ) -> bytes:
     from email.message import EmailMessage
 
@@ -72,16 +72,16 @@ class FakeMailbox:
 
 def test_alert_cards_split_company_and_location():
     jobs = {job["job_id"]: job for job in extract_candidates_from_html(ALERT_HTML)}
-    assert (jobs["111"]["company"], jobs["111"]["location"]) == ("Jobright.ai", "Canada (Remote)")
+    assert (jobs["111"]["company"], jobs["111"]["location"]) == ("Northwind Care", "Canada (Remote)")
     assert (jobs["222"]["company"], jobs["222"]["location"]) == ("Example Co", "Toronto, ON")
 
 
 def test_digest_headers_are_not_jobs():
     html = """
     <div><a href="https://www.linkedin.com/comm/jobs/view/4473586285/">
-      Jobs similar to Cloud Security Analyst at Alignerr</a></div>
+      Jobs similar to Charge Nurse at Lakeside Health</a></div>
     <div>
-      <p>Jobs similar to</p><p>Cloud Security Analyst</p><p>at</p><p>Alignerr</p>
+      <p>Jobs similar to</p><p>Charge Nurse</p><p>at</p><p>Lakeside Health</p>
       <a href="https://www.linkedin.com/comm/jobs/view/4473586285/">View job</a>
     </div>
     """
@@ -97,7 +97,7 @@ def test_failed_issue_creation_keeps_issues_already_created(tmp_path):
 
     state_path = tmp_path / "state.json"
     mailbox = FakeMailbox({7: _alert_email(ALERT_HTML)})
-    titles = ["SOC Analyst", "Security Operations Analyst"]
+    titles = ["Registered Nurse", "Staff Nurse"]
     calls: list[str] = []
 
     def flaky_create(title: str, body: str) -> str:
@@ -132,7 +132,7 @@ def test_jobs_that_already_have_an_issue_are_not_imported(tmp_path):
         FakeMailbox({7: _alert_email(ALERT_HTML)}),
         tmp_path / "state.json",
         exclusions=[],
-        target_titles=["SOC Analyst", "Security Operations Analyst"],
+        target_titles=["Registered Nurse", "Staff Nurse"],
         create_issue=lambda title, body: "https://github.com/example/repo/issues/9",
         known_job_ids=frozenset({"111"}),
     )
@@ -146,19 +146,19 @@ def test_linkedin_alerts_are_read_whatever_the_subject(tmp_path):
     created, _ = ingest(
         FakeMailbox(
             {
-                7: _alert_email(ALERT_HTML, subject="“soc analyst”: Jobright.ai - SOC Analyst and more"),
+                7: _alert_email(ALERT_HTML, subject="“registered nurse”: Northwind Care - Registered Nurse and more"),
                 8: _alert_email(ALERT_HTML, sender="Google <no-reply@accounts.google.com>", subject="Security alert"),
             }
         ),
         tmp_path / "state.json",
         exclusions=[],
-        target_titles=["SOC Analyst", "Security Operations Analyst"],
+        target_titles=["Registered Nurse", "Staff Nurse"],
         create_issue=lambda title, body: "https://github.com/example/repo/issues/1",
         notes=notes,
     )
     assert [job["job_id"] for job in created] == ["111", "222"]
     assert notes == [
-        "UID 7: LinkedIn, ““soc analyst”: Jobright.ai - SOC Analyst and more” — "
+        "UID 7: LinkedIn, ““registered nurse”: Northwind Care - Registered Nurse and more” — "
         "2 job(s): 2 new, 0 off-target title, 0 already imported",
         "UID 8: not from LinkedIn (accounts.google.com)",
     ]
@@ -178,7 +178,7 @@ def test_dry_run_creates_nothing_and_saves_nothing(tmp_path):
         FakeMailbox({7: _alert_email(ALERT_HTML)}),
         state_path,
         exclusions=[],
-        target_titles=["SOC Analyst", "Security Operations Analyst"],
+        target_titles=["Registered Nurse", "Staff Nurse"],
         create_issue=create,
         since_days=7,
         dry_run=True,
@@ -200,7 +200,7 @@ def test_the_newest_email_is_not_reread_every_run(tmp_path):
         FakeMailbox({7: _alert_email(ALERT_HTML)}),
         state_path,
         exclusions=[],
-        target_titles=["SOC Analyst"],
+        target_titles=["Registered Nurse"],
         create_issue=lambda title, body: "https://github.com/example/repo/issues/1",
         notes=notes,
     )
@@ -213,9 +213,9 @@ def test_senior_titles_are_not_imported(tmp_path):
 
     config = load_yaml(FIXTURES / "config/search_config.yaml")
     html = """
-    <div><a href="https://www.linkedin.com/comm/jobs/view/301/">Threat Analyst 2</a><p>Sophos · Canada</p></div>
-    <div><a href="https://www.linkedin.com/comm/jobs/view/302/">Senior Threat Analyst</a><p>Sophos · Canada</p></div>
-    <div><a href="https://www.linkedin.com/comm/jobs/view/303/">SOC Team Lead</a><p>Acme · Toronto, ON</p></div>
+    <div><a href="https://www.linkedin.com/comm/jobs/view/301/">Staff Nurse 2</a><p>Lakeside · Canada</p></div>
+    <div><a href="https://www.linkedin.com/comm/jobs/view/302/">Senior Staff Nurse</a><p>Lakeside · Canada</p></div>
+    <div><a href="https://www.linkedin.com/comm/jobs/view/303/">Nurse Team Lead</a><p>Acme · Toronto, ON</p></div>
     """
     created, skipped = ingest(
         FakeMailbox({7: _alert_email(html)}),
@@ -224,5 +224,5 @@ def test_senior_titles_are_not_imported(tmp_path):
         target_titles=config["search"]["titles"],
         create_issue=lambda title, body: "https://github.com/example/repo/issues/1",
     )
-    assert [job["title"] for job in created] == ["Threat Analyst 2"]
+    assert [job["title"] for job in created] == ["Staff Nurse 2"]
     assert skipped == 2

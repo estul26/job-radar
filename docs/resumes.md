@@ -10,7 +10,7 @@ job or course, scans still run but no résumé is generated (`radar doctor` list
 ## When a résumé is generated
 
 - **Good LinkedIn matches**, when their Issue is scored.
-- **Good Indeed matches**, by the scan, before their Issue is opened.
+- **Good job-board matches** (Indeed, Glassdoor, …), by the scan, before their Issue is opened.
 - **Any job Issue you label `resume:tailor`.** Useful for a possible match, or after you
   update the master. The label is replaced by `resume:ready` when it's done.
 

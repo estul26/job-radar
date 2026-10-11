@@ -1,32 +1,32 @@
 [
   {
     "site": "indeed",
-    "title": "SOC Analyst I",
-    "company": "Northwind Security",
+    "title": "Registered Nurse - Medical/Surgical",
+    "company": "Lakeside Health",
     "location": "Toronto, ON",
     "is_remote": false,
     "date_posted": "2026-10-04T12:00:00+00:00",
-    "job_url": "https://example.com/jobs/soc-1",
-    "description": "Entry-level SOC Analyst role. 1 year of experience preferred. Monitor SIEM alerts using Splunk and QRadar, support incident response, Active Directory investigations, DNS and TCP/IP troubleshooting. CompTIA Security+ preferred."
+    "job_url": "https://example.com/jobs/rn-1",
+    "description": "Registered Nurse for a busy medical-surgical unit. 1 year of acute-care experience preferred. Patient assessment, medication administration, wound care, IV therapy and accurate charting. Current BLS and CNO registration required."
   },
   {
-    "site": "zip_recruiter",
-    "title": "Security Operations Analyst",
-    "company": "Contoso Canada",
+    "site": "glassdoor",
+    "title": "Telehealth Staff Nurse",
+    "company": "Contoso Care",
     "location": "Canada",
     "is_remote": true,
     "date_posted": "2026-10-04T08:00:00+00:00",
-    "job_url": "https://example.com/jobs/secops-2",
-    "description": "2+ years security operations experience. Work with Microsoft Sentinel, CrowdStrike EDR, KQL and incident response. Security+ is an asset."
+    "job_url": "https://example.com/jobs/telehealth-2",
+    "description": "2+ years of nursing experience. Phone triage, Epic charting and telemetry review. ACLS is an asset."
   },
   {
     "site": "indeed",
-    "title": "Senior Security Engineer",
-    "company": "Fabrikam",
+    "title": "Nurse Manager, Emergency",
+    "company": "Fabrikam Hospital",
     "location": "Ottawa, ON",
     "is_remote": false,
     "date_posted": "2026-10-04T10:00:00+00:00",
-    "job_url": "https://example.com/jobs/senior-3",
-    "description": "5+ years of security engineering experience. CISSP required."
+    "job_url": "https://example.com/jobs/manager-3",
+    "description": "5+ years of emergency nursing and leadership experience. ACLS and PALS required."
   }
 ]

@@ -75,13 +75,14 @@ PROJECT_FIELDS = [
     ("Match Score", "NUMBER", ""),
     ("Company", "TEXT", ""),
     ("Location", "TEXT", ""),
-    ("Source", "SINGLE_SELECT", "LinkedIn,Indeed,Company"),
+    ("Source", "SINGLE_SELECT", "LinkedIn,Indeed,Glassdoor,Google,ZipRecruiter,Naukri,Bayt,BDJobs,HelloWork,Company"),
     ("Date Found", "DATE", ""),
     ("Job URL", "TEXT", ""),
 ]
 REST_API_VERSION = "2026-03-10"
 
-JOB_TITLE_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]", "[Indeed Job]")
+# "[LinkedIn Job] …", "[LinkedIn Alert] …", "[Indeed Job] …", "[Glassdoor Job] …": the source is the name.
+JOB_TITLE = re.compile(r"^\[(?P<source>LinkedIn) Alert\]|^\[(?P<board>[^\[\]]+) Job\]")
 
 BOARD_QUERY = """
 query($owner: String!, $number: Int!, $cursor: String, $statusField: String!) {
@@ -229,7 +230,7 @@ def save_sync_state(path: Path, state: dict[str, Any]) -> None:
 
 
 def relevant_issue(issue: dict[str, Any]) -> bool:
-    return str(issue.get("title", "")).startswith(JOB_TITLE_PREFIXES)
+    return bool(JOB_TITLE.match(str(issue.get("title", ""))))
 
 
 def repository_issues() -> list[dict[str, Any]]:
@@ -344,6 +345,11 @@ def latest_score(issue_number: int) -> str:
     return scores[-1] if scores else ""
 
 
+def job_source(title: str) -> str:
+    match = JOB_TITLE.match(title)
+    return (match.group("source") or match.group("board")) if match else ""
+
+
 def item_details(issue: dict[str, Any]) -> dict[str, str]:
     body = str(issue.get("body", ""))
     company = section(body, "Company")
@@ -352,7 +358,7 @@ def item_details(issue: dict[str, Any]) -> dict[str, str]:
     if " · " in company and (not location or location.lower().startswith("unknown")):
         company, _, location = (part.strip() for part in company.partition(" · "))
     return {
-        "Source": "Indeed" if str(issue.get("title", "")).startswith("[Indeed Job]") else "LinkedIn",
+        "Source": job_source(str(issue.get("title", ""))),
         "Company": company,
         "Location": location,
         "Job URL": section(body, "Job URL") or section(body, "LinkedIn job URL"),

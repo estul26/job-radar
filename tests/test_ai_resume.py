@@ -26,11 +26,11 @@ https://www.linkedin.com/jobs/view/4471544570/
 
 ### Job title
 
-SOC Analyst I
+Registered Nurse I
 
 ### Company
 
-Example Security
+Example Health
 
 ### Location
 
@@ -46,8 +46,8 @@ Yes
 
 ### Job description
 
-SOC monitoring using SIEM, Splunk, incident response, networking and documentation.
-Python and SOAR are preferred.
+Patient assessment, medication administration, wound care and charting on a telehealth line.
+Epic and telemetry experience are preferred.
 """
     job = parse_job(body)
     scored = score_job(job, PROFILE, CONFIG)
@@ -75,19 +75,19 @@ def test_rule_validator_accepts_source_preserving_payload():
     assert validate_ai_payload(payload, MASTER, baseline, vocab=VOCAB) == []
 
 
-def test_rule_validator_rejects_new_python_skill():
+def test_rule_validator_rejects_a_skill_the_master_does_not_have():
     _, baseline = _baseline()
     payload = _safe_payload(baseline)
-    payload["bullet_rewrites"][0]["text"] += " Automated analysis with Python."
+    payload["bullet_rewrites"][0]["text"] += " Charted every shift in Epic."
 
     errors = validate_ai_payload(payload, MASTER, baseline, vocab=VOCAB)
-    assert any("python" in error.lower() for error in errors)
+    assert any("epic" in error.lower() for error in errors)
 
 
 def test_rule_validator_rejects_new_metric():
     _, baseline = _baseline()
     payload = _safe_payload(baseline)
-    payload["bullet_rewrites"][0]["text"] += " Reviewed 100 alerts per day."
+    payload["bullet_rewrites"][0]["text"] += " Cared for 100 patients per week."
 
     errors = validate_ai_payload(payload, MASTER, baseline, vocab=VOCAB)
     assert any("numeric claim" in error.lower() for error in errors)
@@ -99,7 +99,7 @@ def test_apply_ai_payload_updates_only_ai_editable_text():
     payload["summary"] = baseline["summary"]
     source_id = payload["bullet_rewrites"][0]["source_id"]
     original = payload["bullet_rewrites"][0]["text"]
-    payload["bullet_rewrites"][0]["text"] = original.replace("Worked with", "Used")
+    payload["bullet_rewrites"][0]["text"] = "Used " + original
 
     enhanced = apply_ai_payload(baseline, payload)
     assert enhanced["identity"] == baseline["identity"]

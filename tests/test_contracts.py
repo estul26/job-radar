@@ -8,7 +8,7 @@ from job_radar.issue_body import (
     fingerprint_marker,
     job_url,
     parse_job,
-    render_indeed,
+    render_board_job,
     render_linkedin_alert,
 )
 from job_radar.labels import LABELS, STATUSES, normalize_status, status_label
@@ -18,22 +18,21 @@ from job_radar.settings import good_match_threshold
 
 def test_linkedin_form_issue(issue_body):
     job = parse_job(issue_body("linkedin_form"))
-    assert (job["source"], job["company"], job["is_remote"]) == ("linkedin", "Jobright", True)
+    assert (job["source"], job["company"], job["is_remote"]) == ("linkedin", "Northwind Health", True)
     assert job["job_url"] == "https://www.linkedin.com/jobs/view/4471544570/"
-    # Matches the row the old parser wrote to data/applications.csv.
-    assert job["fingerprint"] == "c5b64f0850f97296dc1f"
+    assert job["fingerprint"] == "46ef8e7bbe1ada01b935"
 
 
 def test_indeed_issue_keeps_its_fingerprint_marker(issue_body):
     body = issue_body("indeed")
     job = parse_job(body)
-    assert (job["source"], job["company"], job["date_posted"]) == ("indeed", "Example School District", "2026-10-05")
+    assert (job["source"], job["company"], job["date_posted"]) == ("indeed", "Example Health Region", "2026-10-05")
     assert job["fingerprint"] == fingerprint_marker(body) == "f12784e3b632e3b21873"
 
 
 def test_linkedin_alert_issue_awaiting_its_description(issue_body):
     job = parse_job(issue_body("linkedin_alert"))
-    assert (job["company"], job["location"], job["is_remote"]) == ("Jobright.ai", "Canada (Remote)", True)
+    assert (job["company"], job["location"], job["is_remote"]) == ("Northwind Care", "Canada (Remote)", True)
     assert job["description"] == PLACEHOLDER_DESCRIPTION
 
 
@@ -44,27 +43,27 @@ def test_job_url_is_found_in_every_issue_kind(issue_body, name):
 
 def test_indeed_body_round_trips(issue_body):
     job = parse_job(issue_body("indeed"))
-    assert parse_job(render_indeed(job)) == job
+    assert parse_job(render_board_job(job)) == job
 
 
 def test_alert_body_round_trips():
     candidate = {
         "job_id": "4471532081",
         "job_url": "https://www.linkedin.com/jobs/view/4471532081/",
-        "title": "SOC Analyst, Entry Level",
-        "company": "Jobright.ai",
+        "title": "Registered Nurse, New Graduate",
+        "company": "Northwind Care",
         "location": "Canada (Remote)",
-        "card_excerpt": "SOC Analyst, Entry Level\nJobright.ai · Canada (Remote)",
+        "card_excerpt": "Registered Nurse, New Graduate\nNorthwind Care · Canada (Remote)",
     }
     job = parse_job(render_linkedin_alert(candidate, "New jobs for you"))
-    assert (job["title"], job["company"]) == ("SOC Analyst, Entry Level", "Jobright.ai")
+    assert (job["title"], job["company"]) == ("Registered Nurse, New Graduate", "Northwind Care")
     assert job["location"] == "Canada (Remote)"
     assert job["is_remote"] is True
     assert job["description"] == PLACEHOLDER_DESCRIPTION
 
 
 def test_long_indeed_descriptions_are_truncated_for_github():
-    body = render_indeed({"fingerprint": "abc12345", "title": "SOC Analyst", "description": "x" * 50000})
+    body = render_board_job({"fingerprint": "abc12345", "title": "Registered Nurse", "description": "x" * 50000})
     assert len(body) < 65536
     assert "[Description truncated in GitHub Issue.]" in body
 
@@ -73,7 +72,7 @@ def test_long_indeed_descriptions_are_truncated_for_github():
     "url",
     [
         "https://www.linkedin.com/jobs/view/4471544570/",
-        "https://www.linkedin.com/jobs/view/soc-analyst-at-jobright-4471544570?trk=x",
+        "https://www.linkedin.com/jobs/view/registered-nurse-at-northwind-health-4471544570?trk=x",
         "https://www.linkedin.com/comm/jobs/view/4471544570/?trackingId=abc",
         "https://www.linkedin.com/jobs/search-results/?currentJobId=4471544570&keywords=soc",
         "https://www.linkedin.com/jobs/collections/recommended/?foo=1&amp;currentJobId=4471544570",

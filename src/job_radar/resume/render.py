@@ -9,6 +9,8 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt
 
+from .tailor import DEFAULT_LABELS
+
 
 def _joined(*parts: Any) -> str:
     return " | ".join(str(part).strip() for part in parts if str(part or "").strip())
@@ -32,22 +34,27 @@ def skill_line(skill: dict[str, Any]) -> tuple[str, str]:
     return str(skill.get("category") or "").strip(), str(skill.get("text") or "").strip()
 
 
+def _labels(content: dict[str, Any]) -> dict[str, str]:
+    return {**DEFAULT_LABELS, **(content.get("labels") or {})}
+
+
 def markdown_resume(content: dict[str, Any]) -> str:
     identity = content["identity"]
+    labels = _labels(content)
     lines = [f"# {identity['name']}"]
     if identity.get("headline"):
         lines.append(f"**{identity['headline']}**")
-    lines += ["", *contact_lines(identity), "", "## PROFESSIONAL SUMMARY", content["summary"], ""]
+    lines += ["", *contact_lines(identity), "", f"## {labels['summary']}", content["summary"], ""]
 
     if content.get("technical_skills"):
-        lines.append("## SKILLS")
+        lines.append(f"## {labels['skills']}")
         for skill in content["technical_skills"]:
             category, text = skill_line(skill)
             lines.append(f"**{category}:** {text}" if category else f"- {text}")
         lines.append("")
 
     if content.get("experience"):
-        lines.append("## PROFESSIONAL EXPERIENCE")
+        lines.append(f"## {labels['experience']}")
         for experience in content["experience"]:
             lines.append(f"**{experience_heading(experience)}**")
             for bullet in experience.get("bullets", []):
@@ -55,7 +62,7 @@ def markdown_resume(content: dict[str, Any]) -> str:
             lines.append("")
 
     if content.get("education"):
-        lines.append("## EDUCATION")
+        lines.append(f"## {labels['education']}")
         for education in content["education"]:
             lines.append(f"**{education['program']}**")
             if where := _joined(education.get("school"), education.get("dates")):
@@ -65,13 +72,13 @@ def markdown_resume(content: dict[str, Any]) -> str:
             lines.append("")
 
     if content.get("certifications"):
-        lines.append("## CERTIFICATIONS")
+        lines.append(f"## {labels['certifications']}")
         primary = content["certifications"][:4]
         additional = content["certifications"][4:]
         for cert in primary:
             lines.append(f"- {cert['text']}")
         if additional:
-            lines.append("Additional certificates: " + "; ".join(c["text"] for c in additional))
+            lines.append(f"{labels['more_certifications']}: " + "; ".join(c["text"] for c in additional))
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
@@ -145,11 +152,12 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
         r.font.name = "Arial"
         r.font.size = Pt(8.8)
 
-    _section_heading(document, "PROFESSIONAL SUMMARY")
+    labels = _labels(content)
+    _section_heading(document, labels["summary"])
     document.add_paragraph(content["summary"])
 
     if content.get("technical_skills"):
-        _section_heading(document, "SKILLS")
+        _section_heading(document, labels["skills"])
         for skill in content["technical_skills"]:
             category, text = skill_line(skill)
             if not category:
@@ -162,7 +170,7 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
             p.add_run(text)
 
     if content.get("experience"):
-        _section_heading(document, "PROFESSIONAL EXPERIENCE")
+        _section_heading(document, labels["experience"])
         for experience in content["experience"]:
             p = document.add_paragraph()
             p.paragraph_format.space_before = Pt(2)
@@ -173,7 +181,7 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
                 _bullet(document, bullet["text"])
 
     if content.get("education"):
-        _section_heading(document, "EDUCATION")
+        _section_heading(document, labels["education"])
         for education in content["education"]:
             p = document.add_paragraph()
             p.paragraph_format.space_after = Pt(0)
@@ -185,13 +193,13 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
                 _bullet(document, bullet["text"])
 
     if content.get("certifications"):
-        _section_heading(document, "CERTIFICATIONS")
+        _section_heading(document, labels["certifications"])
         primary = content["certifications"][:4]
         additional = content["certifications"][4:]
         for cert in primary:
             _bullet(document, cert["text"])
         if additional:
-            document.add_paragraph("Additional certificates: " + "; ".join(c["text"] for c in additional))
+            document.add_paragraph(f"{labels['more_certifications']}: " + "; ".join(c["text"] for c in additional))
 
     path.parent.mkdir(parents=True, exist_ok=True)
     document.save(path)

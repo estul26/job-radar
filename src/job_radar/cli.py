@@ -1,10 +1,10 @@
 """radar: the command behind every workflow step.
 
 radar doctor                      check that config/ and your master résumé are filled in
-radar scan [--fixture FILE]       collect, score and record jobs; résumés for good Indeed matches
+radar scan [--fixture FILE]       collect, score and record jobs; résumés for good matches
 radar scan-slot ...               should this daily-jobs.yml run scan, and for which slot?
 radar record-claim SLOT DATE      mark a slot's scan as done
-radar publish-scan                a job Issue for each good and possible Indeed match
+radar publish-scan                a job Issue for each good and possible match
 radar export                      rebuild data/applications.csv and resumes/index.csv from the Issues
 radar issue N --event E [--label L] [--publish]
                                   handle an Issue event (prepare before the commit, publish after)
@@ -49,7 +49,7 @@ def _scan(args: argparse.Namespace) -> int:
         print("Skipped résumés: resumes/master_resume.json isn't filled in yet (see radar doctor).")
     else:
         used = sum(1 for item in results if item.get("ai_used"))
-        print(f"Generated {len(results)} Indeed tailored resume(s); AI used for {used}.")
+        print(f"Generated {len(results)} tailored resume(s); AI used for {used}.")
     return 0
 
 
@@ -88,7 +88,7 @@ def _publish_scan(args: argparse.Namespace) -> int:
     from .settings import load_settings
 
     numbers = publish_scan(GitHub(), load_settings())
-    print(f"Synced {len(numbers)} Indeed job Issue(s): {numbers}")
+    print(f"Synced {len(numbers)} job-board Issue(s): {numbers}")
     return 0
 
 
