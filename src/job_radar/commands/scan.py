@@ -93,7 +93,7 @@ def scan_jobs(
     # Keep full descriptions in the short-lived JSON handoff used for resume
     # generation, but avoid committing every scraped description to Git history.
     csv_rows = [{key: value for key, value in job.items() if key != "description"} for job in scored]
-    pd.DataFrame(csv_rows).to_csv(paths.latest_jobs, index=False)
+    pd.DataFrame(csv_rows).to_csv(paths.latest_jobs, index=False, encoding="utf-8-sig")
 
     # Everything collected becomes "seen" so the next report is genuinely new.
     save_seen(paths.seen_jobs, prune_seen(update_seen(seen, jobs)))

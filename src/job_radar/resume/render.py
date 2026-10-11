@@ -7,6 +7,8 @@ from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
 
 from .tailor import DEFAULT_LABELS
@@ -122,6 +124,27 @@ def _bullet(document: Document, text: str) -> None:
     paragraph.add_run(text)
 
 
+# Where <w:bidi> and <w:rtl> sit among their siblings: Word rejects elements out of schema order.
+_AFTER_BIDI = (
+    "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents",
+    "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap", "w:outlineLvl",
+    "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange",
+)  # fmt: skip
+_AFTER_RTL = ("w:cs", "w:em", "w:lang", "w:eastAsianLayout", "w:specVanish", "w:oMath")
+
+
+def _right_to_left(document: Document) -> None:
+    """For Arabic, Hebrew, Persian or Urdu résumés: every paragraph and run reads from the right."""
+    for paragraph in document.paragraphs:
+        p_pr = paragraph._p.get_or_add_pPr()
+        if p_pr.find(qn("w:bidi")) is None:
+            p_pr.insert_element_before(OxmlElement("w:bidi"), *_AFTER_BIDI)
+        for run in paragraph.runs:
+            r_pr = run._r.get_or_add_rPr()
+            if r_pr.find(qn("w:rtl")) is None:
+                r_pr.insert_element_before(OxmlElement("w:rtl"), *_AFTER_RTL)
+
+
 def docx_resume(content: dict[str, Any], path: Path) -> None:
     document = Document()
     _set_cellless_doc_defaults(document)
@@ -201,6 +224,8 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
         if additional:
             document.add_paragraph(f"{labels['more_certifications']}: " + "; ".join(c["text"] for c in additional))
 
+    if str(content.get("direction") or "").lower() == "rtl":
+        _right_to_left(document)
     path.parent.mkdir(parents=True, exist_ok=True)
     document.save(path)
 

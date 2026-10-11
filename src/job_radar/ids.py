@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import unicodedata
 
 # /jobs/view/<id>, /jobs/view/<slug>-<id>, /comm/jobs/view/<id>, and search or
 # collection pages that select a job with ?currentJobId=<id>.
@@ -14,7 +15,8 @@ _LINKEDIN_JOB_ID_PATTERNS = [
 
 
 def _slug(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+    """Letters and digits of any script, lower-cased, with everything else as single spaces."""
+    return re.sub(r"[\W_]+", " ", unicodedata.normalize("NFKC", value).casefold()).strip()
 
 
 def make_fingerprint(title: str, company: str, location: str, job_url: str = "") -> str:

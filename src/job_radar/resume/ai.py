@@ -70,7 +70,8 @@ def selected_bullet_catalog(content: dict[str, Any]) -> dict[str, str]:
 
 
 def _number_tokens(text: str) -> set[str]:
-    return set(re.findall(r"\b\d+(?:[.,]\d+)?%?\b", text.lower()))
+    # Digit boundaries rather than \b, so "3年" and "100名" count too.
+    return set(re.findall(r"(?<![0-9])\d+(?:[.,]\d+)?(?![0-9])", text.lower()))
 
 
 def _number_words(text: str) -> set[str]:

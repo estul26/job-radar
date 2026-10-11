@@ -47,7 +47,7 @@ a Mac.
 3. Check it:
 
    ```bash
-   python -m venv .venv && source .venv/bin/activate
+   python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
    pip install -e ".[dev]"
    radar doctor
    ```

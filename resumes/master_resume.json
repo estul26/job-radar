@@ -1,5 +1,6 @@
 {
   "version": "1",
+  "direction": "ltr",
   "labels": {
     "summary": "PROFESSIONAL SUMMARY",
     "skills": "SKILLS",

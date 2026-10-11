@@ -40,7 +40,7 @@ def tag_relevance(tags: list[str], job_text: str, detected: set[str]) -> int:
         elif tag_l and tag_l in lower:
             score += 3
         else:
-            words = [w for w in re.split(r"[^a-z0-9+#]+", tag_l) if len(w) >= 4]
+            words = [w for w in re.split(r"[^\w+#]+", tag_l) if len(w) >= 4]
             score += sum(1 for word in words if word in lower)
     return score
 
@@ -115,6 +115,7 @@ def tailor_content(
         "education": master.get("education", []),
         "certifications": certifications,
         "labels": resume_labels(master),
+        "direction": "rtl" if str(master.get("direction") or "").lower() == "rtl" else "ltr",
         "matched_skills": scored.get("matched_skills", []),
         "missing_core_skills": scored.get("missing_skills", []),
         "optional_missing_skills": scored.get("optional_missing_skills", []),

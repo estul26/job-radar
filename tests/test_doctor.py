@@ -74,3 +74,55 @@ def test_the_blank_template_scans_without_crashing_and_makes_no_resumes(tmp_path
     assert "Collected **3** unique jobs" in report
     assert generate_scan_resumes(settings) is None
     assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8")) == []
+
+
+def test_a_job_issue_waits_for_the_setup_instead_of_being_rejected(tmp_path, monkeypatch):
+    from fake_github import FakeGitHub
+    from job_radar.commands.issue import SETUP_MARKER, prepare, publish, route
+
+    monkeypatch.setenv("AI_RESUME_ENABLED", "false")
+    settings = load_settings(BLANK[0], BLANK[1])
+    settings = replace(settings, paths=Paths.from_config({"pending_resume_path": str(tmp_path / "pending.json")}))
+    body = "\n\n".join(
+        [
+            "### LinkedIn job URL",
+            "https://www.linkedin.com/jobs/view/1/",
+            "### Job title",
+            "Registered Nurse",
+            "### Company",
+            "Example",
+            "### Location",
+            "Toronto",
+            "### Job description",
+            "Wound care.",
+        ]
+    )
+    gh = FakeGitHub([{"number": 1, "title": "[LinkedIn Job] Registered Nurse — Example", "body": body}])
+    kind = route(gh.issue(1), "opened")
+    prepare(settings, gh.issue(1), kind)
+    publish(gh, settings, gh.issue(1), kind)
+
+    assert gh.state_of(1) == "OPEN" and gh.labels_of(1) == set()
+    [comment] = gh.comments_of(1)
+    assert comment.startswith(SETUP_MARKER) and "search.titles is empty" in comment
+
+
+def test_alert_emails_wait_for_the_setup(tmp_path, monkeypatch, capsys):
+    import shutil
+
+    from job_radar import linkedin_email_ingest
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "config").mkdir()
+    shutil.copy(BLANK[0], tmp_path / "config/search_config.yaml")
+    shutil.copy(BLANK[1], tmp_path / "config/resume_profile.json")
+    for name in ("LINKEDIN_IMAP_HOST", "LINKEDIN_IMAP_USER", "LINKEDIN_IMAP_PASSWORD"):
+        monkeypatch.setenv(name, "set")
+
+    def no_mailbox(*args, **kwargs):
+        raise AssertionError("the mailbox must not be opened before setup")
+
+    monkeypatch.setattr(linkedin_email_ingest.imaplib, "IMAP4_SSL", no_mailbox)
+    assert linkedin_email_ingest.main() == 0
+    assert "isn't set up yet" in capsys.readouterr().out
+    assert not (tmp_path / "data").exists()

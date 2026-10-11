@@ -40,7 +40,7 @@ LinkedIn Job Review 表单 ────────┘                   │
 3. 检查配置：
 
    ```bash
-   python -m venv .venv && source .venv/bin/activate
+   python -m venv .venv && source .venv/bin/activate   # Windows：.venv\Scripts\activate
    pip install -e ".[dev]"
    radar doctor
    ```

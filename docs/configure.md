@@ -133,7 +133,8 @@ found anywhere in the text (`看護師` matches "正看護師"), since there are
 check. Ranges written with `-`, `–`, `~` or `〜` are always understood.
 
 **Language of your résumé.** The résumé's headings come from `labels` in
-`resumes/master_resume.json`; translate them, and write the facts in the same language. The AI
+`resumes/master_resume.json`; translate them, and write the facts in the same language. For
+Arabic, Hebrew, Persian or Urdu, also set `"direction": "rtl"`. The AI
 step keeps the résumé's language even when a posting is in another one.
 
 ## `resume_profile.json`

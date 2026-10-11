@@ -106,7 +106,7 @@ between 12:00 and 15:00 skips, because there is no scan to back up. Logs are in
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 pytest
 ruff check .

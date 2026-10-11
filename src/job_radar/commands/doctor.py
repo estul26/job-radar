@@ -157,6 +157,14 @@ def check_profile(profile: dict[str, Any], config: dict[str, Any], path: Path, c
         )
 
 
+def setup_problems(config: dict[str, Any], profile: dict[str, Any]) -> list[str]:
+    """What stops scoring, for loaded settings: empty until config/ is filled in."""
+    result = Checkup()
+    check_config(config, Path(DEFAULT_CONFIG), result)
+    check_profile(profile, config, Path(DEFAULT_PROFILE), result)
+    return result.problems
+
+
 def checkup(
     config_path: str | Path = DEFAULT_CONFIG,
     profile_path: str | Path = DEFAULT_PROFILE,

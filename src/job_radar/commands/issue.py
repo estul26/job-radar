@@ -21,10 +21,11 @@ from ..matcher import score_job
 from ..models import Verdict, classify
 from ..resume.pipeline import generate_resume
 from ..settings import Settings, load_json
-from .doctor import resume_ready
+from .doctor import resume_ready, setup_problems
 
 LINKEDIN_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]")
 REVIEW_MARKER = "<!-- job-radar:match-review -->"
+SETUP_MARKER = "<!-- job-radar:setup-needed -->"
 RESUME_MARKER = "<!-- job-radar:resume -->"
 MATCH_LABELS = {f"match:{verdict.value}" for verdict in Verdict}
 # The statuses scoring sets itself. Any other status was your choice and is kept.
@@ -122,6 +123,8 @@ def prepare(settings: Settings, issue: dict[str, Any], kind: str, label: str = "
     Status changes need no files: the label is the status.
     """
     settings.paths.pending_resume.unlink(missing_ok=True)
+    if kind in ("intake", "resume") and setup_problems(settings.config, settings.profile):
+        return  # publish() explains; nothing is scored against an unfinished setup.
     if kind == "intake":
         scored, verdict = _score(settings, issue)
         if verdict is Verdict.GOOD:
@@ -134,6 +137,14 @@ def prepare(settings: Settings, issue: dict[str, Any], kind: str, label: str = "
 def publish(gh: GitHub, settings: Settings, issue: dict[str, Any], kind: str, label: str = "") -> None:
     """GitHub changes for the event, made after prepare()'s changes are committed."""
     number = int(issue["number"])
+    problems = setup_problems(settings.config, settings.profile) if kind in ("intake", "resume") else []
+    if problems:
+        # Scoring against an empty setup would reject and close every job; wait instead.
+        lines = [SETUP_MARKER, "Job Radar isn't set up yet, so this job wasn't scored.", ""]
+        lines += [f"- {problem}" for problem in problems]
+        lines += ["", "Fill in `config/` (see `radar doctor` and docs/configure.md), then edit this Issue to score it."]
+        gh.upsert_comment(number, SETUP_MARKER, "\n".join(lines))
+        return
     if kind == "intake":
         scored, verdict = _score(settings, issue)
         gh.upsert_comment(number, REVIEW_MARKER, f"{REVIEW_MARKER}\n{build_review(scored, verdict)}")

@@ -120,7 +120,8 @@ def export(gh: GitHub, settings: Settings) -> tuple[int, int]:
     paths = settings.paths
     applications = application_rows(gh.issues(fields=EXPORT_FIELDS))
     paths.applications.parent.mkdir(parents=True, exist_ok=True)
-    with paths.applications.open("w", encoding="utf-8", newline="") as handle:
+    # utf-8-sig: Excel only reads non-English text correctly from a CSV that starts with a BOM.
+    with paths.applications.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=APPLICATION_FIELDS)
         writer.writeheader()
         writer.writerows(applications)

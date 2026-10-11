@@ -34,7 +34,8 @@ INDEX_FIELDS = [
 def write_index(index_path: Path, rows: list[dict[str, str]]) -> None:
     """resumes/index.csv: one row per résumé folder, newest first."""
     index_path.parent.mkdir(parents=True, exist_ok=True)
-    with index_path.open("w", encoding="utf-8", newline="") as handle:
+    # utf-8-sig: Excel only reads non-English text correctly from a CSV that starts with a BOM.
+    with index_path.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=INDEX_FIELDS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(sorted(rows, key=lambda row: row.get("generated_at", ""), reverse=True))

@@ -14,13 +14,14 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
+from .commands.doctor import setup_problems
 from .github import GitHub
 from .ids import linkedin_job_id, linkedin_job_url
 from .issue_body import job_url, render_linkedin_alert
 from .matcher import Vocabulary, title_score
 from .normalize import split_company_location, title_matches_exclusion
 from .report import write_report
-from .settings import load_yaml
+from .settings import load_json, load_yaml
 
 GENERIC_LINK_TEXT = {
     "view job",
@@ -362,6 +363,13 @@ def main(*, dry_run: bool = False, since_days: int | None = None) -> int:
         )
 
     config = load_yaml("config/search_config.yaml")
+    problems = setup_problems(config or {}, load_json("config/resume_profile.json"))
+    if problems:
+        # Importing now would file every alert as off-target and move past it for good.
+        print("Job Radar isn't set up yet, so no alert email was read:")
+        print("\n".join(f"- {problem}" for problem in problems))
+        return 0
+
     gh = GitHub()
     known_job_ids = frozenset(
         job_id for issue in gh.issues() if (job_id := linkedin_job_id(job_url(str(issue.get("body", "")))))

@@ -113,13 +113,13 @@ def test_export_rebuilds_the_tracker_and_resume_index_from_issues(settings, issu
 
     assert export(gh, settings) == (2, 1)
 
-    rows = list(csv.DictReader(settings.paths.applications.open(encoding="utf-8")))
+    rows = list(csv.DictReader(settings.paths.applications.open(encoding="utf-8-sig")))
     assert [(r["issue_number"], r["status"], r["match"], r["score"], r["source"]) for r in rows] == [
         ("1", "Applied", "good", "92", "linkedin"),
         ("5", "Rejected", "good", "81", "indeed"),
     ]
     assert rows[0]["job_key"] == "4471544570"
 
-    [index] = list(csv.DictReader(settings.paths.resume_index.open(encoding="utf-8")))
+    [index] = list(csv.DictReader(settings.paths.resume_index.open(encoding="utf-8-sig")))
     assert (index["job_key"], index["issue_number"]) == ("abc12345", "5")  # matched to its Issue by fingerprint
     assert (index["status"], index["ai_used"]) == ("Rejected", "Yes")

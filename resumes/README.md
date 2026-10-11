@@ -16,6 +16,7 @@ nothing is ever added.
 | Field | What goes in it |
 |---|---|
 | `version` | Any label; change it when you edit the file, so each résumé records which version it came from. |
+| `direction` | `ltr`, or `rtl` for a résumé in Arabic, Hebrew, Persian or Urdu, so the Word file reads from the right. |
 | `labels` | The résumé's headings and fixed words, in English to start with. Translate them for a résumé in another language, e.g. `"summary": "PROFIL"`, `"experience": "BERUFSERFAHRUNG"`, `"capabilities_intro": "Erfahrung in"`, `"and": "und"`. |
 | `identity` | Name, headline (e.g. "Registered Nurse \| BLS, ACLS"), location, phone (with your country code if you apply abroad), email, and optional `linkedin`, `github`, `website`. Empty fields are left off the résumé. |
 | `summary.experience` | One sentence on your experience, e.g. "Registered Nurse with three years of acute-care experience." |
