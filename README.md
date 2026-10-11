@@ -53,7 +53,8 @@ a Mac.
    ```
 
    Until `radar doctor` reports no problems, the scheduled scans skip themselves with a
-   warning.
+   warning. No Python on your computer? Edit the files on GitHub instead and run the workflow
+   in step 5: its summary shows the same `radar doctor` report.
 4. Optionally add the secrets in [docs/setup.md](docs/setup.md): an OpenAI key for AI résumé
    wording, a mailbox for LinkedIn alerts.
 5. **Actions → Daily Job Radar → Run workflow** to scan once, then read `reports/latest.md`.

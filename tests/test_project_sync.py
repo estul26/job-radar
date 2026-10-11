@@ -104,7 +104,7 @@ class FakeGitHub:
         monkeypatch.setattr(sync, "load_board", lambda: ("P", FIELDS, {u: dict(i) for u, i in self.items.items()}))
         monkeypatch.setattr(sync, "graphql", self.graphql)
         monkeypatch.setattr(sync, "run", self.run)
-        monkeypatch.setattr(sync, "run_json", lambda args, **kw: {"comments": [{"body": "## 72% — SOC Analyst"}]})
+        monkeypatch.setattr(sync, "run_json", lambda args, **kw: {"comments": [{"body": "## 72% — Registered Nurse"}]})
 
     def graphql(self, query, variables):
         if "addProjectV2ItemById" in query:
@@ -123,7 +123,7 @@ def _issue(number=1, labels=("status:applied",)):
     return {
         "id": f"I_{number}",
         "number": number,
-        "title": "[LinkedIn Job] SOC Analyst — Acme",
+        "title": "[LinkedIn Job] Registered Nurse — Acme",
         "url": f"https://github.com/o/r/issues/{number}",
         "body": BODY,
         "labels": [{"name": name} for name in labels],

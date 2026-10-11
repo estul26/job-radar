@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        # 3.11 is what the production workflows run today.
+        # 3.11 is the oldest supported version (pyproject.toml); the workflows run 3.12.
         python-version: ['3.11', '3.12']
 
     steps:

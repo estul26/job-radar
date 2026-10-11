@@ -9,7 +9,10 @@ from job_radar.commands.doctor import checkup, resume_ready
 from job_radar.commands.scan import generate_scan_resumes, scan_jobs
 from job_radar.settings import Paths, load_json, load_settings
 
-BLANK = (ROOT / "config/search_config.yaml", ROOT / "config/resume_profile.json", ROOT / "resumes/master_resume.json")
+# A copy of the template as it ships: config/ itself is yours to fill in, and the tests must
+# pass either way.
+BLANK_DIR = ROOT / "tests/fixtures/blank"
+BLANK = (BLANK_DIR / "search_config.yaml", BLANK_DIR / "resume_profile.json", BLANK_DIR / "master_resume.json")
 
 
 def test_the_shipped_template_lists_what_to_fill_in():
@@ -126,3 +129,10 @@ def test_alert_emails_wait_for_the_setup(tmp_path, monkeypatch, capsys):
     assert linkedin_email_ingest.main() == 0
     assert "isn't set up yet" in capsys.readouterr().out
     assert not (tmp_path / "data").exists()
+
+
+def test_your_config_files_load():
+    """config/ and your master résumé parse, whether still blank or filled in."""
+    settings = load_settings(ROOT / "config/search_config.yaml", ROOT / "config/resume_profile.json")
+    assert isinstance(settings.config.get("search"), dict)
+    assert isinstance(load_json(ROOT / "resumes/master_resume.json").get("identity"), dict)

@@ -45,7 +45,8 @@ LinkedIn Job Review 表单 ────────┘                   │
    radar doctor
    ```
 
-   在 `radar doctor` 报告没有问题之前，定时扫描会带着警告自动跳过。
+   在 `radar doctor` 报告没有问题之前，定时扫描会带着警告自动跳过。电脑上没有 Python？可以直接在 GitHub 上编辑这些文件，
+   然后运行第 5 步的工作流：它的运行摘要会显示同样的 `radar doctor` 报告。
 4. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
 5. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描，然后查看 `reports/latest.md`。
 6. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。

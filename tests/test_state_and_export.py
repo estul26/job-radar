@@ -12,9 +12,9 @@ NOW = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
 
 
 def test_seen_entries_are_added_once_and_never_rewritten():
-    seen = update_seen({}, [{"fingerprint": "a", "title": "SOC"}], now=NOW - timedelta(days=3))
+    seen = update_seen({}, [{"fingerprint": "a", "title": "Nurse"}], now=NOW - timedelta(days=3))
     before = json.dumps(seen, sort_keys=True)
-    update_seen(seen, [{"fingerprint": "a", "title": "SOC (reposted)"}], now=NOW)
+    update_seen(seen, [{"fingerprint": "a", "title": "Nurse (reposted)"}], now=NOW)
     assert json.dumps(seen, sort_keys=True) == before
 
 
@@ -94,7 +94,7 @@ def test_export_rebuilds_the_tracker_and_resume_index_from_issues(settings, issu
             {"number": 13, "title": "Job Radar: 1 new match", "body": "summary", "labels": {"status:new"}},
         ]
     )
-    folder = settings.paths.resume_dir / "abc12345-example-soc-analyst"
+    folder = settings.paths.resume_dir / "abc12345-example-staff-nurse"
     folder.mkdir(parents=True)
     (folder / "metadata.json").write_text(
         json.dumps(

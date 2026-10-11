@@ -74,7 +74,7 @@ def test_long_indeed_descriptions_are_truncated_for_github():
         "https://www.linkedin.com/jobs/view/4471544570/",
         "https://www.linkedin.com/jobs/view/registered-nurse-at-northwind-health-4471544570?trk=x",
         "https://www.linkedin.com/comm/jobs/view/4471544570/?trackingId=abc",
-        "https://www.linkedin.com/jobs/search-results/?currentJobId=4471544570&keywords=soc",
+        "https://www.linkedin.com/jobs/search-results/?currentJobId=4471544570&keywords=nurse",
         "https://www.linkedin.com/jobs/collections/recommended/?foo=1&amp;currentJobId=4471544570",
     ],
 )
@@ -91,8 +91,8 @@ def test_job_keys():
 
 
 def test_fingerprint_needs_url_only_without_company():
-    assert make_fingerprint("SOC", "Acme", "Toronto", "a") == make_fingerprint("SOC", "Acme", "Toronto", "b")
-    assert make_fingerprint("SOC", "", "Toronto", "a") != make_fingerprint("SOC", "", "Toronto", "b")
+    assert make_fingerprint("Nurse", "Acme", "Toronto", "a") == make_fingerprint("Nurse", "Acme", "Toronto", "b")
+    assert make_fingerprint("Nurse", "", "Toronto", "a") != make_fingerprint("Nurse", "", "Toronto", "b")
 
 
 def test_statuses_and_labels():
