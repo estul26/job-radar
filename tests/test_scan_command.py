@@ -131,9 +131,22 @@ def test_extra_good_matches_wait_for_the_next_scan(settings):
     settings = replace(settings, good_threshold=55, max_good=1)  # both sample nurse jobs are good
     report = scan_jobs(settings, FIXTURE)
     assert [job["title"] for job in matches(settings)] == ["Registered Nurse - Medical/Surgical"]
-    assert "**1** more good matches wait for the next scan" in report
+    assert "**1** more good match waits for the next scan" in report
     assert "## More good matches, for the next scan" in report
 
     # The held job stays unseen, so the next scan offers it again.
     scan_jobs(settings, FIXTURE)
     assert [job["title"] for job in matches(settings)] == ["Telehealth Staff Nurse"]
+
+
+def test_report_counts_read_as_english():
+    from job_radar.report import build_report
+
+    one = {"title": "Registered Nurse", "score": 90, "job_url": "", "company": "Example"}
+    report = build_report(
+        good=[one], possible=[], rejected=[], errors=[], total_collected=1, unseen_count=1,
+        good_threshold=65, possible_threshold=55, held=[one],
+    )  # fmt: skip
+    assert "Collected **1** unique job; **1** was new to the tracker." in report
+    assert "Shortlist: **1** good match and **0** possible matches." in report
+    assert "**1** more good match waits for the next scan." in report
