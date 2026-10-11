@@ -11,7 +11,7 @@ LinkedIn Job Review form ──────────────────�
 ```
 
 - **Discovery.** `radar scan` searches the job boards in `search.sites` (Indeed, Glassdoor,
-  Google, Naukri, Bayt, BDJobs, HelloWork) through JobSpy. The workflows never touch
+  Google, Naukri, Bayt, BDJobs) through JobSpy. The workflows never touch
   LinkedIn: its own alert emails become `[LinkedIn Alert]` Issues, `radar linkedin-search`
   (run by hand on your Mac) reads search results in your signed-in Chrome, and anything else
   can be submitted with the **LinkedIn Job Review** Issue form. LinkedIn jobs wait for you to

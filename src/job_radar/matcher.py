@@ -6,34 +6,23 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from .normalize import phrase_found, phrase_pattern, title_matches_exclusion, word_edge
+from .normalize import phrase_found, title_matches_exclusion
 
-# English defaults for reading postings. matching.years_words, matching.range_words and
-# matching.optional_section_phrases add the words of other languages.
-YEARS_WORDS = ("years", "year", "yrs", "yr")
-RANGE_WORDS = ("to",)
-OPTIONAL_SECTION_PHRASES = (
-    "nice to have",
-    "nice-to-have",
-    "preferred qualification",
-    "preferred qualifications",
-    "preferred skill",
-    "preferred skills",
-    "bonus qualification",
-    "bonus qualifications",
-    "desired qualification",
-    "desired qualifications",
-)
+# Job postings are read in English: these headings start the nice-to-have part of a posting.
+OPTIONAL_SECTION_PATTERNS = [
+    r"\bnice\s+to\s+have\b",
+    r"\bnice-to-have\b",
+    r"\bpreferred\s+qualifications?\b",
+    r"\bpreferred\s+skills?\b",
+    r"\bbonus\s+qualifications?\b",
+    r"\bdesired\s+qualifications?\b",
+]
 
 
 def _phrases(value: Any) -> tuple[str, ...]:
     if isinstance(value, str):
         value = [value]
     return tuple(str(item) for item in (value or []) if str(item).strip())
-
-
-def _with_defaults(defaults: tuple[str, ...], extra: Any) -> tuple[str, ...]:
-    return tuple(dict.fromkeys([*defaults, *(phrase.lower() for phrase in _phrases(extra))]))
 
 
 @dataclass(frozen=True)
@@ -54,10 +43,6 @@ class Vocabulary:
     # (with "care" needing "patient", "Customer Care Agent" isn't a nursing job).
     context_title_keywords: tuple[str, ...] = ()
     context_words: tuple[str, ...] = ()
-    # How postings say "5 years", "3 to 5 years" and "nice to have", in every language you search.
-    years_words: tuple[str, ...] = YEARS_WORDS
-    range_words: tuple[str, ...] = RANGE_WORDS
-    optional_section_phrases: tuple[str, ...] = OPTIONAL_SECTION_PHRASES
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> Vocabulary:
@@ -74,9 +59,6 @@ class Vocabulary:
             related_title_keywords=_phrases(matching.get("related_title_keywords")),
             context_title_keywords=_phrases(matching.get("context_title_keywords")),
             context_words=_phrases(matching.get("context_words")),
-            years_words=_with_defaults(YEARS_WORDS, matching.get("years_words")),
-            range_words=_with_defaults(RANGE_WORDS, matching.get("range_words")),
-            optional_section_phrases=_with_defaults(OPTIONAL_SECTION_PHRASES, matching.get("optional_section_phrases")),
         )
 
     def title_hits(self, title: str) -> int:
@@ -90,14 +72,13 @@ def _text(job: dict[str, Any]) -> str:
     return f"{job.get('title', '')}\n{job.get('description', '')}".lower()
 
 
-def split_required_optional_text(job: dict[str, Any], vocab: Vocabulary | None = None) -> tuple[str, str]:
+def split_required_optional_text(job: dict[str, Any]) -> tuple[str, str]:
     """Split optional sections so nice-to-have gaps do not lower core fit."""
     title = str(job.get("title", ""))
     description = str(job.get("description", ""))
     positions: list[int] = []
-    for phrase in (vocab or Vocabulary()).optional_section_phrases:
-        pattern = phrase_pattern(phrase)
-        match = re.search(pattern, description, flags=re.IGNORECASE) if pattern else None
+    for pattern in OPTIONAL_SECTION_PATTERNS:
+        match = re.search(pattern, description, flags=re.IGNORECASE)
         if match:
             positions.append(match.start())
 
@@ -119,22 +100,12 @@ def detect_certs(text: str, vocab: Vocabulary) -> set[str]:
     return {cert for cert, phrases in vocab.certifications.items() if phrase_found(text, phrases)}
 
 
-def _alternatives(words: tuple[str, ...]) -> str:
-    """Each word with its own trailing word boundary ("years" needs one; Japanese "年" can't have one)."""
-    ordered = sorted((word for word in words if word), key=len, reverse=True)
-    return "|".join(re.escape(word) + word_edge(word[-1], before=False) for word in ordered)
-
-
-def extract_min_years(text: str, vocab: Vocabulary | None = None) -> int | None:
-    """The fewest years of experience the text asks for: "3+ years", "3-5 years", "3 Jahre" with German words."""
-    vocab = vocab or Vocabulary()
-    years = rf"(?:{_alternatives(vocab.years_words)})"
-    ranges = rf"(?:-|–|—|~|〜|(?:{_alternatives(vocab.range_words)}))"
-    # (?<![0-9]) rather than \b: "経験3年" has no word boundary before the 3.
+def extract_min_years(text: str) -> int | None:
+    """The fewest years of experience the text asks for: "3+ years", "3-5 years", "2 to 4 yrs"."""
     found: list[int] = []
-    for match in re.finditer(rf"(?<![0-9])(\d{{1,2}})\s*{ranges}\s*(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
+    for match in re.finditer(r"\b(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})\s*(?:years?|yrs?)\b", text, re.I):
         found.append(int(match.group(1)))
-    for match in re.finditer(rf"(?<![0-9])(\d{{1,2}})\s*\+?\s*{years}", text, re.I):
+    for match in re.finditer(r"\b(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b", text, re.I):
         found.append(int(match.group(1)))
     return min(found) if found else None
 
@@ -151,10 +122,8 @@ def title_score(title: str, target_titles: list[str], vocab: Vocabulary | None =
     return 0, "title is outside target role family"
 
 
-def experience_score(
-    text: str, profile_years: int, hard_reject_min_years: int, vocab: Vocabulary | None = None
-) -> tuple[int, str, bool]:
-    years = extract_min_years(text, vocab)
+def experience_score(text: str, profile_years: int, hard_reject_min_years: int) -> tuple[int, str, bool]:
+    years = extract_min_years(text)
     if years is None:
         return 10, "experience requirement not clearly stated", False
     if years >= hard_reject_min_years:
@@ -225,12 +194,11 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
         text,
         int(profile.get("experience_years", 0)),
         int(ranking.get("hard_reject_min_years", 5)),
-        vocab,
     )
     if exp_reject:
         hard_reject_reasons.append(exp_reason)
 
-    required_text, optional_text = split_required_optional_text(job, vocab)
+    required_text, optional_text = split_required_optional_text(job)
     required_skills = detect_skills(required_text, vocab)
     optional_skills = detect_skills(optional_text, vocab) - required_skills
     profile_skills = {s.lower() for s in profile.get("skills", [])}

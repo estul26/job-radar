@@ -76,12 +76,12 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
 
     timezone = str(config.get("timezone") or "").strip()
     if not timezone:
-        warn("timezone is not set, so dates use UTC (set it to e.g. Europe/Berlin, Asia/Kolkata or America/Chicago)")
+        warn("timezone is not set, so dates use UTC (set it to e.g. Europe/London, Asia/Kolkata or America/Chicago)")
     else:
         try:
             ZoneInfo(timezone)
         except (ZoneInfoNotFoundError, ValueError):
-            problem(f"timezone '{timezone}' is not an IANA timezone name such as Europe/Berlin or Asia/Kolkata")
+            problem(f"timezone '{timezone}' is not an IANA timezone name such as Europe/London or Asia/Kolkata")
 
     search = config.get("search") or {}
     sites = [str(site).strip().lower() for site in search.get("sites") or []]

@@ -2,9 +2,9 @@
 
 [English](README.md) | **简体中文**
 
-每天两次为**任何行业、任何国家、任何语言**搜索职位。它根据你的技能和经验为每个职位评分，并把有希望的职位作为
+每天两次为**任何行业、任何国家**搜索职位。它根据你的技能和经验为每个职位评分，并把有希望的职位作为
 GitHub Issue 跟踪；每个高匹配职位都会获得一份经过事实核查的定制简历（CV）。你只需在三个文件里描述你的行业、
-所在地和你自己，代码中没有任何只针对某一类职位、某个国家或某种语言的内容。
+所在地和你自己，代码中没有任何只针对某一类职位或某个国家的内容。职位发布和简历均为英文。
 
 ```text
 招聘网站（每天两次） ────────────┐
@@ -15,10 +15,10 @@ LinkedIn Job Review 表单 ────────┘                   │
 ```
 
 - **发现职位。** GitHub Actions 按你的时区每天两次搜索招聘网站：覆盖约 70 个国家的 Indeed，以及 Glassdoor、
-  Google Jobs 和地区性网站，如 Naukri（印度）、Bayt（中东）、BDJobs（孟加拉国）和 HelloWork（法国）。
+  Google Jobs 和地区性网站，如 Naukri（印度）、Bayt（中东）和 BDJobs（孟加拉国）。
   LinkedIn 职位来自 LinkedIn 自己的提醒邮件、`radar linkedin-search`（在你的 Mac 上、在你已登录的 Chrome 中手动运行），
   或 **LinkedIn Job Review** Issue 表单。
-- **评分。** 确定性且可解释：根据你配置的职位名称、技能、地点和语言，比对职位名称、经验、技能、证书、发布时间和地点。
+- **评分。** 确定性且可解释：根据你配置的职位名称、技能和地点，比对职位名称、经验、技能、证书、发布时间和地点。
   详见 [docs/scoring.md](docs/scoring.md)。
 - **跟踪。** 每个高匹配和可能匹配的职位都是一个 Issue，高匹配的会指派给你。Issue 的 `status:*` 标签就是申请状态：
   修改标签或在看板上拖动卡片即可。每次扫描后，`data/applications.csv` 会从这些 Issue 导出。
@@ -33,9 +33,9 @@ LinkedIn Job Review 表单 ────────┘                   │
 1. 点击 **Use this template → Create a new repository**，并设为 **私有（Private）**。你的副本会保存你的简历和求职记录。
    不要 Fork：公开仓库的 Fork 必须保持公开。
 2. 填写你的配置（[docs/configure.md](docs/configure.md)）：
-   - `config/search_config.yaml`：时区、国家、招聘网站、职位名称、地点，以及你所在行业的技能（使用职位发布所用的语言）
+   - `config/search_config.yaml`：时区、国家、招聘网站、职位名称、地点，以及你所在行业的技能（英文）
    - `config/resume_profile.json`：你的工作年限、技能和证书
-   - `resumes/master_resume.json`：生成简历所依据的事实，使用你简历的语言（[填写说明](resumes/README.md)）
+   - `resumes/master_resume.json`：生成简历所依据的事实，用英文填写（[填写说明](resumes/README.md)）
    - `.github/workflows/daily-jobs.yml` 和 `linkedin-email-alerts.yml` 中的 `timezone:` 行
 3. 检查配置：
 
@@ -77,8 +77,7 @@ pytest && ruff check .
 | 内容 | 位置 |
 |---|---|
 | 时区、国家、招聘网站、搜索词、地点、职位过滤、阈值 | `config/search_config.yaml` |
-| 你所在行业的技能、证书、职位关键词，以及你所用语言的表述 | `config/search_config.yaml` 中的 `matching` |
-| 用你的语言书写的简历标题 | `resumes/master_resume.json` 中的 `labels` |
+| 你所在行业的技能、证书和职位关键词 | `config/search_config.yaml` 中的 `matching` |
 | 你真正具备的技能和证书 | `config/resume_profile.json` |
 | 每份简历所依据的事实 | `resumes/master_resume.json` |
 | 高匹配阈值 | 仓库变量 `GOOD_MATCH_THRESHOLD` |
@@ -88,7 +87,7 @@ pytest && ruff check .
 
 ## 文档
 
-- [配置](docs/configure.md)：每项设置、你的国家和语言、完整示例
+- [配置](docs/configure.md)：每项设置、你的国家、完整示例
 - [安装设置](docs/setup.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器
 - [LinkedIn](docs/linkedin.md)：提醒导入、Chrome 搜索、Issue 表单、评分流程
 - [简历](docs/resumes.md)：生成、AI 防护措施、审计、隐私
@@ -108,7 +107,7 @@ pytest && ruff check .
 - 招聘网站会更改页面结构并限制访问频率；某次搜索失败不会中断整个扫描。
 - 评分基于关键词，因此可解释但不理解语义，并且只认识你在 `matching` 中列出的技能。
 - 自动搜索覆盖 JobSpy 支持的招聘网站。ZipRecruiter（美国和加拿大）会屏蔽 GitHub 的运行器，LinkedIn 则通过提醒邮件和 Chrome 搜索覆盖。
-- 经验年限和"加分项"的表述默认只识别英语，以及你为自己的语言添加的词语。
+- 仅支持英文：其他语言的职位发布无法得到准确评分，简历标题为英文。
 
 ## 许可证
 

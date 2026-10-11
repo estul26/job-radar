@@ -7,7 +7,7 @@ folder per job. See **[docs/resumes.md](../docs/resumes.md)** for how they are g
 
 ## Filling in `master_resume.json`
 
-Your résumé (or CV) can be in any language. The file ships empty, and no résumé is generated
+Write your résumé (or CV) in English. The file ships empty, and no résumé is generated
 until `identity.name`, `identity.email`, `summary.experience` and at least one experience or
 education entry are filled in (`radar doctor` lists what's missing). Write only what is true:
 tailoring reorders and selects these facts, and the optional AI step may reword them, but
@@ -16,13 +16,11 @@ nothing is ever added.
 | Field | What goes in it |
 |---|---|
 | `version` | Any label; change it when you edit the file, so each résumé records which version it came from. |
-| `direction` | `ltr`, or `rtl` for a résumé in Arabic, Hebrew, Persian or Urdu, so the Word file reads from the right. |
-| `labels` | The résumé's headings and fixed words, in English to start with. Translate them for a résumé in another language, e.g. `"summary": "PROFIL"`, `"experience": "BERUFSERFAHRUNG"`, `"capabilities_intro": "Erfahrung in"`, `"and": "und"`. |
 | `identity` | Name, headline (e.g. "Registered Nurse \| BLS, ACLS"), location, phone (with your country code if you apply abroad), email, and optional `linkedin`, `github`, `website`. Empty fields are left off the résumé. |
 | `summary.experience` | One sentence on your experience, e.g. "Registered Nurse with three years of acute-care experience." |
 | `summary.credentials` | One sentence on licences or certifications, or empty. |
 | `summary.capabilities` | Short phrases with `tags`; the ones most relevant to a job finish the summary. |
-| `technical_skills` | Skill lines: `category` (optional), `text`, `tags` and `priority` (lower comes first when no tag matches the job). The section heading is `labels.skills`. |
+| `technical_skills` | Skill lines: `category` (optional), `text`, `tags` and `priority` (lower comes first when no tag matches the job). The section is titled "Skills". |
 | `experience` | Jobs: `role`, optional `company`, `dates`, optional `max_bullets` (default 4), and `bullets`, each with `text` and `tags`. |
 | `education` | `program`, `school`, `dates`, optional `bullets`. |
 | `certifications` | `text`, `tags`, `priority`. The first four are listed; the rest go on one line. |

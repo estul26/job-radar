@@ -85,7 +85,7 @@ class Settings:
 
 
 def config_timezone(config: Mapping[str, Any]) -> ZoneInfo:
-    """The `timezone` in search_config.yaml (an IANA name such as Europe/Berlin); UTC when unset."""
+    """The `timezone` in search_config.yaml (an IANA name such as Europe/London); UTC when unset."""
     return ZoneInfo(str(config.get("timezone") or "UTC").strip())
 
 

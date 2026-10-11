@@ -8,38 +8,16 @@ import pandas as pd
 
 from .ids import make_fingerprint
 
-# Scripts written without spaces between words (Chinese, Japanese, Thai, Lao, Khmer, Burmese), and
-# Korean, whose particles attach to words: no word boundary is needed next to these letters.
-_UNSPACED_RANGES = (
-    "\u0e00-\u0eff\u1000-\u109f\u1100-\u11ff\u1780-\u17ff\u3040-\u30ff\u3130-\u318f"
-    "\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\uf900-\ufaff\uff66-\uff9f"
-)
-_UNSPACED = re.compile(f"[{_UNSPACED_RANGES}]")
-# A letter or digit of a script that does separate words with spaces.
-_SPACED_WORD_CHAR = f"[^\\W{_UNSPACED_RANGES}]"
-
-
-def word_edge(char: str, *, before: bool) -> str:
-    """The word-boundary check for a phrase that starts (before=True) or ends with char.
-
-    "nurse" mustn't match inside "Nursery", but "SAP" may be followed by Japanese ("SAP経験"), and
-    a Japanese phrase needs no boundary at all.
-    """
-    if _UNSPACED.match(char):
-        return ""
-    return f"(?<!{_SPACED_WORD_CHAR})" if before else f"(?!{_SPACED_WORD_CHAR})"
-
 
 def phrase_pattern(phrase: str) -> str:
     """The regex for one config phrase: "re:" then a raw regex, or else words matched on word boundaries."""
     phrase = str(phrase or "").strip()
     if phrase.startswith("re:"):
         return phrase[3:].strip()
-    parts = [part for part in phrase.lower().split() if part]
-    if not parts:
+    words = [re.escape(part) for part in phrase.lower().split() if part]
+    if not words:
         return ""
-    body = r"\s+".join(re.escape(part) for part in parts)
-    return word_edge(parts[0][0], before=True) + body + word_edge(parts[-1][-1], before=False)
+    return r"(?<!\w)" + r"\s+".join(words) + r"(?!\w)"
 
 
 def phrase_found(text: str, phrases: list[str] | tuple[str, ...]) -> bool:

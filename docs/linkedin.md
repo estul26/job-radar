@@ -125,9 +125,7 @@ radar linkedin-search --posted 24h       # search and import postings from the l
 **Turn Allow JavaScript from Apple Events off again after each search.** While it's on, any app
 allowed to control Chrome can run code in every tab.
 
-The search reads LinkedIn's page layout, which is the same in every language, so any LinkedIn
-display language works. If cards come back without a company or location, switching LinkedIn's
-display language to English helps the fallback that guesses them.
+Use LinkedIn with its display language set to English, like the rest of Job Radar.
 
 ### Keep your account safe
 

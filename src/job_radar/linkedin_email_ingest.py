@@ -37,17 +37,10 @@ GENERIC_LINK_TEXT = {
 
 UNKNOWN = "Unknown — edit before scoring"
 
-# Section headers in alert digests link to a job but are not job cards, e.g. "Jobs similar to
-# Staff Nurse at Example Health", in the languages LinkedIn writes alerts in.
+# Section headers in alert digests link to a job but are not job cards,
+# e.g. "Jobs similar to Staff Nurse at Example Health".
 DIGEST_HEADER = re.compile(
-    r"^(?:new\s+)?jobs?\s+similar\s+to\b|^(?:see|view|show)\s+(?:all|more)\b|^your\s+job\s+alerts?\b"
-    # German, French, Spanish, Portuguese, Italian, Dutch
-    r"|^(?:neue\s+)?ähnliche\s+(?:jobs|stellen(?:angebote)?)\b|^(?:alle|mehr)\s+anzeigen\b"
-    r"|^(?:offres|emplois)\s+similaires\b|^voir\s+(?:tout|plus)\b"
-    r"|^empleos\s+similares\b|^ver\s+(?:todos?|más|tudo|mais)\b"
-    r"|^vagas\s+(?:semelhantes|parecidas)\b"
-    r"|^(?:offerte|lavori)\s+simili\b|^(?:visualizza|mostra)\s+(?:tutt[eio]|altro)\b"
-    r"|^vergelijkbare\s+vacatures\b|^(?:alles|meer)\s+(?:bekijken|weergeven)\b",
+    r"^(?:new\s+)?jobs?\s+similar\s+to\b|^(?:see|view|show)\s+(?:all|more)\b|^your\s+job\s+alerts?\b",
     flags=re.IGNORECASE,
 )
 

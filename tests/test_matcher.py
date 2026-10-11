@@ -2,9 +2,7 @@
 
 from pathlib import Path
 
-import pytest
-
-from job_radar.matcher import Vocabulary, detect_skills, extract_min_years, location_score, score_job
+from job_radar.matcher import Vocabulary, detect_skills, location_score, score_job
 from job_radar.normalize import phrase_found
 from job_radar.settings import load_json, load_yaml
 
@@ -143,61 +141,48 @@ def test_a_skill_without_phrases_is_looked_for_by_name():
     assert Vocabulary.from_config({}).skills == {}
 
 
-ACCOUNTING_DE = {
-    "timezone": "Europe/Berlin",
+ACCOUNTING = {
+    "timezone": "Europe/London",
     "search": {
-        # Titles match whole words; a regex also finds German compounds such as "Finanzbuchhalter".
-        "titles": ["re:buchhalter", "Accountant"],
-        "locations": [{"name": "Berlin", "query": "Berlin", "score": 5}],
+        "titles": ["Accountant", "Management Accountant"],
+        "locations": [{"name": "London", "query": "London", "score": 5}],
     },
     "ranking": {
         "hard_reject_unrelated_titles": True,
-        "hard_reject_title_terms": ["leiter", "head of"],
+        "hard_reject_title_terms": ["head of", "director"],
         "hard_reject_min_years": 5,
     },
     "matching": {
         "skills": {
-            "datev": [],
-            "sap fi": [],
-            "month-end close": ["monatsabschluss", "monatsabschlüsse", "month-end close"],
-            "financial statements": ["jahresabschluss", "financial statements"],
+            "xero": [],
+            "sap": [],
+            "month-end close": ["month-end close", "month end"],
+            "financial statements": ["financial statements", "statutory accounts"],
         },
-        "certifications": {"ACCA": ["acca"]},
-        "related_title_keywords": ["buchhaltung", "accounting", "finanz"],
-        "years_words": ["jahre", "jahren"],
-        "range_words": ["bis"],
-        "optional_section_phrases": ["von vorteil", "wünschenswert"],
+        "certifications": {"ACCA": ["acca"], "CIMA": ["cima"]},
+        "related_title_keywords": ["accounting", "accounts", "finance"],
     },
 }
-ACCOUNTANT = {"experience_years": 3, "skills": ["datev", "month-end close", "financial statements"]}
+ACCOUNTANT = {"experience_years": 3, "skills": ["xero", "month-end close", "financial statements"]}
 
 
-def test_any_field_and_language_scores_from_config_alone():
+def test_another_field_scores_from_config_alone():
     posting = job(
-        "Finanzbuchhalter (m/w/d)",
-        "Ihre Aufgaben: Monatsabschlüsse und Jahresabschluss nach HGB. Mindestens 2 bis 4 Jahre "
-        "Berufserfahrung. Sehr gute Kenntnisse in DATEV. Von Vorteil: SAP FI und ACCA.",
-        "Berlin",
+        "Management Accountant",
+        "You'll own the month-end close and prepare financial statements in Xero. 2 to 4 years of "
+        "experience. Nice to have: SAP and CIMA.",
+        "London",
     )
-    scored = score_job(posting, ACCOUNTANT, ACCOUNTING_DE)
+    scored = score_job(posting, ACCOUNTANT, ACCOUNTING)
     assert scored["hard_reject"] is False and scored["score"] >= 80
-    assert scored["matched_skills"] == ["datev", "financial statements", "month-end close"]
-    assert scored["optional_missing_skills"] == ["sap fi"]
+    assert scored["matched_skills"] == ["financial statements", "month-end close", "xero"]
+    assert scored["optional_missing_skills"] == ["sap"]
     assert "requires 2 year(s), within profile" in scored["score_reasons"]
-    assert "Berlin location" in scored["score_reasons"]
+    assert "London location" in scored["score_reasons"]
 
-    assert score_job(job("Leiter Buchhaltung", location="Berlin"), ACCOUNTANT, ACCOUNTING_DE)["hard_reject"]
-    assert score_job(job("Sachbearbeiter Buchhaltung", location="Berlin"), ACCOUNTANT, ACCOUNTING_DE)["score_reasons"][
-        0
-    ] == ("partially related title")
-
-
-def test_years_in_other_languages_are_added_to_english():
-    spanish = Vocabulary.from_config({"matching": {"years_words": ["años", "año"], "range_words": ["a"]}})
-    assert extract_min_years("de 2 a 4 años de experiencia", spanish) == 2
-    assert extract_min_years("3+ years", spanish) == 3
-    assert extract_min_years("mindestens 3 Jahre") is None  # German isn't known until configured
-    assert extract_min_years("in 2024 we grew") is None
+    assert score_job(job("Head of Finance", location="London"), ACCOUNTANT, ACCOUNTING)["hard_reject"]
+    related = score_job(job("Accounts Payable Assistant", location="London"), ACCOUNTANT, ACCOUNTING)
+    assert related["score_reasons"][0] == "partially related title"
 
 
 def test_titles_match_whole_words():
@@ -215,29 +200,3 @@ def test_excluded_titles_are_rejected_however_the_job_arrived():
     }
     scored = score_job(job("Registered Nurse - Float Pool"), PROFILE, config)
     assert scored["hard_reject"] is True and scored["hard_reject_reasons"] == ["float pool"]
-
-
-@pytest.mark.parametrize(
-    ("text", "phrase", "found"),
-    [
-        ("正看護師（日勤）", "看護師", True),  # Japanese: no spaces between words
-        ("招聘护士，3年以上经验", "护士", True),  # Chinese
-        ("รับสมัครพยาบาลวิชาชีพ", "พยาบาล", True),  # Thai
-        ("간호사를 모집합니다", "간호사", True),  # Korean: a particle follows the word
-        ("SAP経験3年", "sap", True),  # a Latin word next to Japanese
-        ("Требуется медсестра", "медсестра", True),  # Cyrillic and Arabic use spaces
-        ("медсестрами", "медсестра", False),
-        ("مطلوب ممرضة للعمل", "ممرضة", True),
-        ("Enfermeríasupervisora", "enfermería", False),
-    ],
-)
-def test_phrases_work_in_every_script(text, phrase, found):
-    assert phrase_found(text, [phrase]) is found
-
-
-def test_years_in_languages_without_spaces():
-    japanese = Vocabulary.from_config({"matching": {"years_words": ["年"], "range_words": ["から"]}})
-    assert extract_min_years("実務経験3年以上", japanese) == 3
-    assert extract_min_years("経験2〜5年", japanese) == 2
-    assert extract_min_years("2から4年", japanese) == 2
-    assert extract_min_years("2024年入社", japanese) is None

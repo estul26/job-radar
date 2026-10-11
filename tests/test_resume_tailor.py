@@ -76,26 +76,3 @@ def test_empty_sections_are_left_out_and_company_is_shown():
     assert "**Registered Nurse | Example General | 2023 - Present**" in text
     assert "- Patient assessment, wound care" in text
     assert "## EDUCATION" not in text and "## CERTIFICATIONS" not in text
-
-
-def test_a_right_to_left_resume_reads_from_the_right(tmp_path):
-    import zipfile
-
-    from job_radar.resume.render import docx_resume
-
-    content = {
-        "identity": {"name": "سارة أحمد", "headline": "ممرضة مسجلة", "email": "sara@example.com"},
-        "summary": "ممرضة مسجلة بخبرة ثلاث سنوات.",
-        "technical_skills": [{"text": "تقييم المرضى"}],
-        "experience": [{"role": "ممرضة", "dates": "2022", "bullets": [{"text": "رعاية المرضى."}]}],
-        "education": [],
-        "certifications": [],
-        "direction": "rtl",
-    }
-    docx_resume(content, tmp_path / "rtl.docx")
-    docx_resume({**content, "direction": "ltr"}, tmp_path / "ltr.docx")
-
-    rtl = zipfile.ZipFile(tmp_path / "rtl.docx").read("word/document.xml").decode()
-    assert rtl.count("<w:bidi/>") == rtl.count("<w:p>") + rtl.count("<w:p ")
-    assert "<w:rtl/>" in rtl
-    assert "<w:bidi/>" not in zipfile.ZipFile(tmp_path / "ltr.docx").read("word/document.xml").decode()

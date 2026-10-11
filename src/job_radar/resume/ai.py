@@ -70,8 +70,7 @@ def selected_bullet_catalog(content: dict[str, Any]) -> dict[str, str]:
 
 
 def _number_tokens(text: str) -> set[str]:
-    # Digit boundaries rather than \b, so "3年" and "100名" count too.
-    return set(re.findall(r"(?<![0-9])\d+(?:[.,]\d+)?(?![0-9])", text.lower()))
+    return set(re.findall(r"\b\d+(?:[.,]\d+)?%?\b", text.lower()))
 
 
 def _number_words(text: str) -> set[str]:
@@ -291,7 +290,6 @@ FACTUAL RULES:
   remains directly supported by the cited source fact.
 - Do not alter identity/contact information, skills lists, certifications, role titles, or dates;
   those are managed outside this AI step.
-- Write in the same language as the MASTER FACTS, even when the job description is in another language.
 
 OUTPUT:
 Return ONLY a JSON object with exactly these fields:

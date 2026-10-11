@@ -15,28 +15,28 @@ Then match the workflows to your timezone: set the `timezone:` lines in
 
 ## How phrases match
 
-Titles, skills, keywords and location `match` entries are **phrases**, in any language. A phrase
-matches whole words, ignoring case and extra spaces: `nurse` matches "Registered Nurse" but not
+Job postings are read in **English**. Titles, skills, keywords and location `match` entries are
+**phrases**. A phrase matches whole words, ignoring case and extra spaces: `nurse` matches "Registered Nurse" but not
 "Nursery", and `c++` matches "C++ developer". A phrase starting with `re:` is a Python regular
 expression instead; put it in single quotes so YAML leaves backslashes alone:
-`'re:buchhalter(in)?'`, `'re:tcp/?ip'`, `'re:escalat'` (escalate, escalation, escalating).
+`'re:accounts?'`, `'re:tcp/?ip'`, `'re:escalat'` (escalate, escalation, escalating).
 
 ## `search_config.yaml`
 
 ### `timezone`
 
 An [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) such as
-`Europe/Berlin`, `Asia/Kolkata`, `America/Chicago`, `Africa/Lagos` or `Australia/Sydney`. Report
+`Europe/London`, `Asia/Kolkata`, `America/Chicago`, `Africa/Lagos` or `Australia/Sydney`. Report
 dates and the morning/evening scan slots use it.
 
 ### `search`
 
 | Key | Meaning |
 |---|---|
-| `sites` | Job boards for JobSpy: `indeed`, and any in [your country and language](#your-country-and-language). |
-| `country_indeed` | The country Indeed and Glassdoor search: `Germany`, `India`, `UK`, `USA`, `Brazil`, … |
+| `sites` | Job boards for JobSpy: `indeed`, and any in [your country](#your-country). |
+| `country_indeed` | The country Indeed and Glassdoor search: `UK`, `USA`, `Canada`, `India`, `Australia`, … |
 | `queries` | What to type into the job board's search box. Broad is fine. Empty: search the `titles`. |
-| `titles` | The job titles you want. A posting whose title contains one (as whole words) gets full title points. For compound words use a regex: `'re:buchhalter'` also finds "Finanzbuchhalter". |
+| `titles` | The job titles you want. A posting whose title contains one (as whole words) gets full title points. Use a regex for variants: `'re:accounts? assistant'`. |
 | `exclude_title_terms` | Titles you never want: jobs that share a word with yours but aren't yours. They're dropped from searches and rejected from LinkedIn too. |
 | `locations` | Where to search, and how much each place is worth (below). |
 | `results_wanted_per_query`, `hours_old`, `fetch_description`, `pause_seconds_between_queries` | How much to fetch per search. The defaults are fine. |
@@ -79,27 +79,24 @@ The words of your field. Scoring finds them in postings and compares them with y
 | `certifications` | Each certification or licence, and the phrases that mean a posting asks for it. |
 | `related_title_keywords` | Words that make a title related when it isn't one of your `titles`. |
 | `context_title_keywords`, `context_words` | Words that count as related only next to a context word. |
-| `years_words`, `range_words`, `optional_section_phrases` | How postings in your language say "5 years", "3 to 5 years" and "nice to have" ([below](#your-country-and-language)). |
 
 **Choosing skills.** Read ten postings you'd apply for and list the tools, techniques and
 knowledge they ask for, including ones you don't have yet. A skill you lack still belongs in
 `matching.skills`: that's how a posting's requirement shows up as missing. Then put the ones
 you truly have in `resume_profile.json`, using the same names.
 
-## Your country and language
+## Your country
 
-Nothing in Job Radar is tied to one country or language. Three things depend on where you are.
-
-**Job boards.** Indeed covers the most countries, and works from GitHub's servers. Set
-`country_indeed` to one of: Argentina, Australia, Austria, Bahrain, Bangladesh, Belgium,
-Bulgaria, Brazil, Canada, Chile, China, Colombia, Costa Rica, Croatia, Cyprus, Czech Republic,
-Denmark, Ecuador, Egypt, Estonia, Finland, France, Germany, Greece, Hong Kong, Hungary, India,
-Indonesia, Ireland, Israel, Italy, Japan, Kuwait, Latvia, Lithuania, Luxembourg, Malaysia,
-Malta, Mexico, Morocco, Netherlands, New Zealand, Nigeria, Norway, Oman, Pakistan, Panama,
-Peru, Philippines, Poland, Portugal, Qatar, Romania, Saudi Arabia, Singapore, Slovakia,
-Slovenia, South Africa, South Korea, Spain, Sweden, Switzerland, Taiwan, Thailand, Türkiye,
-Ukraine, United Arab Emirates, UK, USA, Uruguay, Venezuela or Vietnam. Add to `sites`, if you
-like:
+Job Radar works in any country whose job postings are in English. Indeed covers the most
+countries, and works from GitHub's servers. Set `country_indeed` to one of: Argentina,
+Australia, Austria, Bahrain, Bangladesh, Belgium, Bulgaria, Brazil, Canada, Chile, China,
+Colombia, Costa Rica, Croatia, Cyprus, Czech Republic, Denmark, Ecuador, Egypt, Estonia, Finland,
+France, Germany, Greece, Hong Kong, Hungary, India, Indonesia, Ireland, Israel, Italy, Japan,
+Kuwait, Latvia, Lithuania, Luxembourg, Malaysia, Malta, Mexico, Morocco, Netherlands, New
+Zealand, Nigeria, Norway, Oman, Pakistan, Panama, Peru, Philippines, Poland, Portugal, Qatar,
+Romania, Saudi Arabia, Singapore, Slovakia, Slovenia, South Africa, South Korea, Spain, Sweden,
+Switzerland, Taiwan, Thailand, Türkiye, Ukraine, United Arab Emirates, UK, USA, Uruguay,
+Venezuela or Vietnam. Add to `sites`, if you like:
 
 | Site | Where |
 |---|---|
@@ -108,34 +105,14 @@ like:
 | `naukri` | India |
 | `bayt` | The Gulf and the Middle East |
 | `bdjobs` | Bangladesh |
-| `hellowork` | France |
+
+Write `queries`, `titles`, skills and certifications in English. Where most postings are in
+another language, only the English ones will match well: experience ("3+ years") and "nice to
+have" sections are recognised in English only, and résumés are written with English headings.
 
 Job boards change what they allow; if one keeps failing, the scan report's "Collector warnings"
 say so, and the other boards still run. LinkedIn is never searched from GitHub: use its alert
 emails or `radar linkedin-search` ([linkedin.md](linkedin.md)).
-
-**Language of the postings.** Write `queries`, `titles`, skills and certifications in the
-language the postings use, or in several (`[buchhaltung, accounting]`). English experience and
-"nice to have" wording is always understood; add your language's:
-
-```yaml
-matching:
-  years_words: [jahre, jahren]          # "mindestens 3 Jahre"
-  range_words: [bis]                    # "2 bis 4 Jahre"
-  optional_section_phrases: [von vorteil, wünschenswert]   # what follows is nice to have
-```
-
-Spanish might be `[años, año]`, `[a]` and `[deseable, valorable]`; French `[ans, an]`, `[à]`
-and `[un plus, un atout, souhaité]`; Japanese `[年]`, `[から]` and `[歓迎]`.
-
-In Chinese, Japanese, Thai and other languages written without spaces, and in Korean, a phrase is
-found anywhere in the text (`看護師` matches "正看護師"), since there are no word boundaries to
-check. Ranges written with `-`, `–`, `~` or `〜` are always understood.
-
-**Language of your résumé.** The résumé's headings come from `labels` in
-`resumes/master_resume.json`; translate them, and write the facts in the same language. For
-Arabic, Hebrew, Persian or Urdu, also set `"direction": "rtl"`. The AI
-step keeps the résumé's language even when a posting is in another one.
 
 ## `resume_profile.json`
 
@@ -151,9 +128,8 @@ behind.
 
 ## An example
 
-`config/search_config.yaml` ships with a commented example for an accountant in Berlin who reads
-postings in German and English. Here is another: a registered nurse in Toronto, looking locally
-and remotely across Canada:
+`config/search_config.yaml` ships with a commented example for an accountant in London. Here is
+another: a registered nurse in Toronto, looking locally and remotely across Canada:
 
 ```yaml
 timezone: America/Toronto

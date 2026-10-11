@@ -7,11 +7,7 @@ from typing import Any
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
 from docx.shared import Inches, Pt
-
-from .tailor import DEFAULT_LABELS
 
 
 def _joined(*parts: Any) -> str:
@@ -36,27 +32,22 @@ def skill_line(skill: dict[str, Any]) -> tuple[str, str]:
     return str(skill.get("category") or "").strip(), str(skill.get("text") or "").strip()
 
 
-def _labels(content: dict[str, Any]) -> dict[str, str]:
-    return {**DEFAULT_LABELS, **(content.get("labels") or {})}
-
-
 def markdown_resume(content: dict[str, Any]) -> str:
     identity = content["identity"]
-    labels = _labels(content)
     lines = [f"# {identity['name']}"]
     if identity.get("headline"):
         lines.append(f"**{identity['headline']}**")
-    lines += ["", *contact_lines(identity), "", f"## {labels['summary']}", content["summary"], ""]
+    lines += ["", *contact_lines(identity), "", "## PROFESSIONAL SUMMARY", content["summary"], ""]
 
     if content.get("technical_skills"):
-        lines.append(f"## {labels['skills']}")
+        lines.append("## SKILLS")
         for skill in content["technical_skills"]:
             category, text = skill_line(skill)
             lines.append(f"**{category}:** {text}" if category else f"- {text}")
         lines.append("")
 
     if content.get("experience"):
-        lines.append(f"## {labels['experience']}")
+        lines.append("## PROFESSIONAL EXPERIENCE")
         for experience in content["experience"]:
             lines.append(f"**{experience_heading(experience)}**")
             for bullet in experience.get("bullets", []):
@@ -64,7 +55,7 @@ def markdown_resume(content: dict[str, Any]) -> str:
             lines.append("")
 
     if content.get("education"):
-        lines.append(f"## {labels['education']}")
+        lines.append("## EDUCATION")
         for education in content["education"]:
             lines.append(f"**{education['program']}**")
             if where := _joined(education.get("school"), education.get("dates")):
@@ -74,13 +65,13 @@ def markdown_resume(content: dict[str, Any]) -> str:
             lines.append("")
 
     if content.get("certifications"):
-        lines.append(f"## {labels['certifications']}")
+        lines.append("## CERTIFICATIONS")
         primary = content["certifications"][:4]
         additional = content["certifications"][4:]
         for cert in primary:
             lines.append(f"- {cert['text']}")
         if additional:
-            lines.append(f"{labels['more_certifications']}: " + "; ".join(c["text"] for c in additional))
+            lines.append("Additional certificates: " + "; ".join(c["text"] for c in additional))
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
@@ -124,27 +115,6 @@ def _bullet(document: Document, text: str) -> None:
     paragraph.add_run(text)
 
 
-# Where <w:bidi> and <w:rtl> sit among their siblings: Word rejects elements out of schema order.
-_AFTER_BIDI = (
-    "w:adjustRightInd", "w:snapToGrid", "w:spacing", "w:ind", "w:contextualSpacing", "w:mirrorIndents",
-    "w:suppressOverlap", "w:jc", "w:textDirection", "w:textAlignment", "w:textboxTightWrap", "w:outlineLvl",
-    "w:divId", "w:cnfStyle", "w:rPr", "w:sectPr", "w:pPrChange",
-)  # fmt: skip
-_AFTER_RTL = ("w:cs", "w:em", "w:lang", "w:eastAsianLayout", "w:specVanish", "w:oMath")
-
-
-def _right_to_left(document: Document) -> None:
-    """For Arabic, Hebrew, Persian or Urdu résumés: every paragraph and run reads from the right."""
-    for paragraph in document.paragraphs:
-        p_pr = paragraph._p.get_or_add_pPr()
-        if p_pr.find(qn("w:bidi")) is None:
-            p_pr.insert_element_before(OxmlElement("w:bidi"), *_AFTER_BIDI)
-        for run in paragraph.runs:
-            r_pr = run._r.get_or_add_rPr()
-            if r_pr.find(qn("w:rtl")) is None:
-                r_pr.insert_element_before(OxmlElement("w:rtl"), *_AFTER_RTL)
-
-
 def docx_resume(content: dict[str, Any], path: Path) -> None:
     document = Document()
     _set_cellless_doc_defaults(document)
@@ -175,12 +145,11 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
         r.font.name = "Arial"
         r.font.size = Pt(8.8)
 
-    labels = _labels(content)
-    _section_heading(document, labels["summary"])
+    _section_heading(document, "PROFESSIONAL SUMMARY")
     document.add_paragraph(content["summary"])
 
     if content.get("technical_skills"):
-        _section_heading(document, labels["skills"])
+        _section_heading(document, "SKILLS")
         for skill in content["technical_skills"]:
             category, text = skill_line(skill)
             if not category:
@@ -193,7 +162,7 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
             p.add_run(text)
 
     if content.get("experience"):
-        _section_heading(document, labels["experience"])
+        _section_heading(document, "PROFESSIONAL EXPERIENCE")
         for experience in content["experience"]:
             p = document.add_paragraph()
             p.paragraph_format.space_before = Pt(2)
@@ -204,7 +173,7 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
                 _bullet(document, bullet["text"])
 
     if content.get("education"):
-        _section_heading(document, labels["education"])
+        _section_heading(document, "EDUCATION")
         for education in content["education"]:
             p = document.add_paragraph()
             p.paragraph_format.space_after = Pt(0)
@@ -216,16 +185,14 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
                 _bullet(document, bullet["text"])
 
     if content.get("certifications"):
-        _section_heading(document, labels["certifications"])
+        _section_heading(document, "CERTIFICATIONS")
         primary = content["certifications"][:4]
         additional = content["certifications"][4:]
         for cert in primary:
             _bullet(document, cert["text"])
         if additional:
-            document.add_paragraph(f"{labels['more_certifications']}: " + "; ".join(c["text"] for c in additional))
+            document.add_paragraph("Additional certificates: " + "; ".join(c["text"] for c in additional))
 
-    if str(content.get("direction") or "").lower() == "rtl":
-        _right_to_left(document)
     path.parent.mkdir(parents=True, exist_ok=True)
     document.save(path)
 

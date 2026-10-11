@@ -40,12 +40,10 @@ def test_remote_jobs_deduplicate_across_location_labels():
     assert jobs[0]["description"] == "Longer description"
 
 
-def test_fingerprints_keep_every_script():
-    # Different jobs in Japanese or Russian must not collapse into one.
-    tokyo = make_fingerprint("看護師（日勤）", "東京中央病院", "東京都")
-    osaka = make_fingerprint("経理スタッフ", "株式会社サンプル", "大阪府")
-    assert tokyo != osaka
-    assert make_fingerprint("Медсестра", "Больница", "Москва") != make_fingerprint("Бухгалтер", "ООО", "Казань")
-    assert make_fingerprint("Enfermería", "X", "Y") != make_fingerprint("Enfermera", "X", "Y")
+def test_fingerprints_keep_accented_and_non_latin_letters():
+    # Job boards return company and place names with accents or in other scripts; different jobs
+    # must not collapse into one fingerprint.
+    assert make_fingerprint("Accountant", "Nestlé", "Zürich") != make_fingerprint("Accountant", "Nestle", "Zurich")
+    assert make_fingerprint("Accountant", "東京商事", "Tokyo") != make_fingerprint("Accountant", "大阪商事", "Tokyo")
     # Full-width and half-width letters are the same job.
-    assert make_fingerprint("ＳＡＰ担当", "Ａ社", "東京") == make_fingerprint("SAP担当", "A社", "東京")
+    assert make_fingerprint("ＳＡＰ Analyst", "Ａ Ltd", "Tokyo") == make_fingerprint("SAP Analyst", "A Ltd", "Tokyo")
