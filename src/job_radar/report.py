@@ -6,6 +6,11 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 
+def _count(n: int, singular: str, plural: str) -> str:
+    """ "**1** good match", "**3** good matches"."""
+    return f"**{n}** {singular if n == 1 else plural}"
+
+
 def _fmt_list(values: list[str]) -> str:
     return ", ".join(values) if values else "—"
 
@@ -38,9 +43,15 @@ def build_report(
     lines = [
         f"# Job Radar — {today}",
         "",
-        f"Collected **{total_collected}** unique jobs; **{unseen_count}** were new to the tracker.",
-        f"Shortlist: **{len(good)} good matches** and **{len(possible)} possible matches**."
-        + (f" **{len(held)}** more good matches wait for the next scan." if held else ""),
+        f"Collected {_count(total_collected, 'unique job', 'unique jobs')}; "
+        f"{_count(unseen_count, 'was', 'were')} new to the tracker.",
+        f"Shortlist: {_count(len(good), 'good match', 'good matches')} and "
+        f"{_count(len(possible), 'possible match', 'possible matches')}."
+        + (
+            f" {_count(len(held), 'more good match waits', 'more good matches wait')} for the next scan."
+            if held
+            else ""
+        ),
         "",
     ]
 
