@@ -31,6 +31,7 @@ def build_report(
     good_threshold: int,
     possible_threshold: int,
     tz: ZoneInfo | None = None,
+    held: list[dict[str, Any]] | None = None,
 ) -> str:
     # Runners use UTC, so an evening scan west of UTC would otherwise be dated tomorrow.
     today = datetime.now(tz or ZoneInfo("UTC")).strftime("%Y-%m-%d")
@@ -38,7 +39,8 @@ def build_report(
         f"# Job Radar — {today}",
         "",
         f"Collected **{total_collected}** unique jobs; **{unseen_count}** were new to the tracker.",
-        f"Shortlist: **{len(good)} good matches** and **{len(possible)} possible matches**.",
+        f"Shortlist: **{len(good)} good matches** and **{len(possible)} possible matches**."
+        + (f" **{len(held)}** more good matches wait for the next scan." if held else ""),
         "",
     ]
 
@@ -53,6 +55,21 @@ def build_report(
             "No new jobs reached the configured good-match threshold today.",
             "",
         ]
+
+    if held:
+        lines += [
+            "## More good matches, for the next scan",
+            "",
+            "Only `ranking.max_good_matches` good matches get an Issue per scan; these come up again next time:",
+            "",
+        ]
+        for job in held:
+            url = job.get("job_url") or ""
+            title = job.get("title", "Untitled")
+            lines.append(
+                f"- {job.get('score', 0)}% — {f'[{title}]({url})' if url else title} — {job.get('company', '')}"
+            )
+        lines.append("")
 
     if possible:
         lines += ["## Possible matches", ""]

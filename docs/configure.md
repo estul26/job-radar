@@ -61,6 +61,7 @@ and 1 point if it matches none.
 |---|---|---|
 | `good_match_threshold` | 65 | A good match: an Issue assigned to you and a tailored résumé. The `GOOD_MATCH_THRESHOLD` variable overrides it. |
 | `possible_match_threshold` | 55 | A possible match: an Issue, but no résumé. |
+| `max_good_matches` | 10 | Good matches per scan that get an Issue and a résumé (0 for no limit). The rest are listed in the report and come up again in the next scan. |
 | `max_possible_matches` | 5 | Possible matches per scan that get an Issue. |
 | `fresh_hours` | 24 | Postings this new get full freshness points. |
 | `remote_score` | 5 | Location points for a remote job. |

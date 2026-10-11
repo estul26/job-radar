@@ -73,6 +73,8 @@ class Settings:
     good_threshold: int
     possible_threshold: int
     max_possible: int
+    # Good matches that get an Issue per scan; 0 means no limit.
+    max_good: int
     paths: Paths
 
     @property
@@ -110,5 +112,6 @@ def load_settings(
         good_threshold=good_match_threshold(config, env),
         possible_threshold=int(ranking.get("possible_match_threshold", 55)),
         max_possible=int(ranking.get("max_possible_matches", 5)),
+        max_good=int(ranking.get("max_good_matches", 10)),
         paths=Paths.from_config(config.get("output") or {}),
     )

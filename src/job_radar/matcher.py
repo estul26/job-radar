@@ -8,6 +8,13 @@ from typing import Any
 
 from .normalize import phrase_found, title_matches_exclusion
 
+# Skill points: 35 when the posting names enough of your field's skills to judge by, and the
+# neutral 18 when it names none. Fewer than SKILL_EVIDENCE core skills count only partly, so
+# "matched 1/1" isn't worth as much as "matched 4/4".
+SKILL_POINTS = 35
+NEUTRAL_SKILL_POINTS = 18
+SKILL_EVIDENCE = 3
+
 # Job postings are read in English: these headings start the nice-to-have part of a posting.
 OPTIONAL_SECTION_PATTERNS = [
     r"\bnice\s+to\s+have\b",
@@ -214,13 +221,17 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
         # Nice-to-have skills are reported separately and do not reduce
         # the core fit score.
         matched_core = [s for s in matched_required_skills if s.lower() not in vocab.soft_skills]
-        skill_pts = round(35 * len(matched_core) / len(core_required))
+        share = len(matched_core) / len(core_required)
+        evidence = min(1.0, len(core_required) / SKILL_EVIDENCE)
+        skill_pts = round(NEUTRAL_SKILL_POINTS + (SKILL_POINTS * share - NEUTRAL_SKILL_POINTS) * evidence)
         skill_reason = f"matched {len(matched_core)}/{len(core_required)} core detected skills"
+        if evidence < 1:
+            skill_reason += " (few named, so partly counted)"
     elif any(s.lower() not in vocab.soft_skills for s in optional_skills):
-        skill_pts = 18
+        skill_pts = NEUTRAL_SKILL_POINTS
         skill_reason = "only optional skill requirements detected"
     else:
-        skill_pts = 18
+        skill_pts = NEUTRAL_SKILL_POINTS
         skill_reason = "few explicit skill requirements detected"
 
     detected_certs = detect_certs(text, vocab)

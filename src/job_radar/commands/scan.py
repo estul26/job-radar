@@ -85,7 +85,12 @@ def scan_jobs(
     by_verdict: dict[Verdict, list[dict]] = {verdict: [] for verdict in Verdict}
     for job in scored:
         by_verdict[classify(job, settings.good_threshold, settings.possible_threshold)].append(job)
+    # A broad search can find dozens of good matches at once. The best max_good get an Issue and a
+    # résumé now; the rest stay unseen, so the next scan offers them again.
     good = by_verdict[Verdict.GOOD]
+    held: list[dict] = []
+    if settings.max_good > 0:
+        good, held = good[: settings.max_good], good[settings.max_good :]
     possible = by_verdict[Verdict.POSSIBLE][: settings.max_possible]
 
     # Persist a reviewable CSV for all new scored jobs, not only the shortlist.
@@ -95,12 +100,15 @@ def scan_jobs(
     csv_rows = [{key: value for key, value in job.items() if key != "description"} for job in scored]
     pd.DataFrame(csv_rows).to_csv(paths.latest_jobs, index=False, encoding="utf-8-sig")
 
-    # Everything collected becomes "seen" so the next report is genuinely new.
-    save_seen(paths.seen_jobs, prune_seen(update_seen(seen, jobs)))
+    # Everything else collected becomes "seen" so the next report is genuinely new.
+    held_fingerprints = {job["fingerprint"] for job in held}
+    collected = [job for job in jobs if job["fingerprint"] not in held_fingerprints]
+    save_seen(paths.seen_jobs, prune_seen(update_seen(seen, collected)))
 
     report = build_report(
         good=good,
         possible=possible,
+        held=held,
         rejected=by_verdict[Verdict.REJECTED],
         errors=errors,
         total_collected=len(jobs),
