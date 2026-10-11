@@ -34,7 +34,58 @@ It never applies for you or messages anyone. Everything runs on GitHub Actions, 
 any computer (Windows, Linux or Mac); only the optional Chrome search and backup scan trigger need
 a Mac.
 
-## Get started
+## Quick start (no coding)
+
+Everything below happens on the GitHub website. It takes about 20 minutes.
+
+1. **Make your own copy.** [Sign up for GitHub](https://github.com/signup) (free), then on this
+   page click **Use this template → Create a new repository**. Give it a name, choose
+   **Private**, and click **Create repository**. Work in your copy from now on.
+2. **Describe the jobs you want.** In your copy, open `config/search_config.yaml` and click the
+   pencil icon (**Edit this file**). Lines starting with `#` are notes, and the indented ones right
+   under each setting are examples, like `#  - Accountant`. To use an example, delete its `#` only
+   (keep the spaces), and delete the `[]` or `{}` after that setting's name. Then:
+   - set `timezone`, e.g. `timezone: Europe/London` ([list of names](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones));
+   - set your country, e.g. `country_indeed: "UK"`;
+   - under `titles`, list the job titles you want, one per line starting with `- `;
+   - under `locations`, add where you want to work, copying the example's layout;
+   - under `matching` → `skills`, list the skills job ads in your field ask for.
+
+   Click **Commit changes**, then **Commit changes** again.
+3. **Describe yourself.** Edit `config/resume_profile.json` the same way. Keep the quotes and
+   commas exactly as shown; skill names must match the ones you listed under `skills`:
+
+   ```json
+   {
+     "profile_name": "Accountant",
+     "experience_years": 3,
+     "certifications": ["AAT"],
+     "skills": ["xero", "excel", "month-end close"]
+   }
+   ```
+
+4. **Add your résumé facts (optional).** Fill in `resumes/master_resume.json` to get a tailored
+   résumé for each good match ([how](resumes/README.md)). Skip this and you still get the job
+   matches.
+5. **Run it.** Open the **Actions** tab, click **Daily Job Radar** on the left, then
+   **Run workflow → Run workflow**. After a few minutes, open the run and read its **Summary**:
+   - "Set up Job Radar first" lists what is still missing. Fix those lines and run it again.
+   - Otherwise it shows the jobs it found, and the **Issues** tab has one Issue per match. Good
+     matches are assigned to you, so GitHub emails you about them.
+6. **Track your applications.** On each job Issue, change its `status:` label (for example to
+   `status:applied`) as you go. From now on the radar scans twice a day by itself.
+
+If GitHub emails you that **CI failed** after you edit a file, there's a typo in it (often a
+missing quote, comma or space). Open the failed run to see which file.
+
+Optional: scans run at about 7 am and 4 pm UTC. To run them at those times in your own timezone,
+change the four `'UTC'` in `.github/workflows/daily-jobs.yml` to your timezone, e.g.
+`'Europe/London'`. For AI-polished résumé wording, add an OpenAI key as described in
+[docs/setup.md](docs/setup.md).
+
+## Get started (on your computer)
+
+For developers, or to check your setup before you push it.
 
 1. **Use this template → Create a new repository**, and make it **Private**. Your copy will hold
    your résumés and job search. Don't fork: a fork of a public repository has to stay public.
@@ -53,8 +104,8 @@ a Mac.
    ```
 
    Until `radar doctor` reports no problems, the scheduled scans skip themselves with a
-   warning. No Python on your computer? Edit the files on GitHub instead and run the workflow
-   in step 5: its summary shows the same `radar doctor` report.
+   warning. No Python on your computer? Follow the [quick start](#quick-start-no-coding) instead:
+   the workflow's summary shows the same `radar doctor` report.
 4. Optionally add the secrets in [docs/setup.md](docs/setup.md): an OpenAI key for AI résumé
    wording, a mailbox for LinkedIn alerts.
 5. **Actions → Daily Job Radar → Run workflow** to scan once, then read `reports/latest.md`.

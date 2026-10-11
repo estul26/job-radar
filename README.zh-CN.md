@@ -28,7 +28,55 @@ LinkedIn Job Review 表单 ────────┘                   │
 它不会替你投递，也不会给任何人发消息。所有流程都在 GitHub Actions 上运行，因此任何电脑（Windows、Linux 或 Mac）都能使用；
 只有可选的 Chrome 搜索和备用扫描触发器需要 Mac。
 
-## 开始使用
+## 快速上手（无需编程）
+
+以下操作全部在 GitHub 网站上完成，大约需要 20 分钟。
+
+1. **创建你自己的副本。** [注册 GitHub](https://github.com/signup)（免费），然后在本页面点击
+   **Use this template → Create a new repository**。填写名称，选择 **Private（私有）**，点击 **Create repository**。
+   之后都在你自己的副本中操作。
+2. **描述你想要的职位。** 在你的副本中打开 `config/search_config.yaml`，点击铅笔图标（**Edit this file**）。
+   以 `#` 开头的行是说明，每个设置下方缩进的那几行是示例，例如 `#  - Accountant`。要使用某个示例，只删除它的
+   `#`（保留空格），并删除该设置名称后面的 `[]` 或 `{}`。然后：
+   - 设置 `timezone`，例如 `timezone: Europe/London`（[时区名称列表](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)）；
+   - 设置国家，例如 `country_indeed: "UK"`；
+   - 在 `titles` 下列出你想要的职位名称（英文），每行一个，以 `- ` 开头；
+   - 在 `locations` 下按照示例的格式添加你想工作的地点；
+   - 在 `matching` → `skills` 下列出你所在行业的职位广告常要求的技能（英文）。
+
+   点击 **Commit changes**，再点一次 **Commit changes**。
+3. **描述你自己。** 用同样的方式编辑 `config/resume_profile.json`。引号和逗号请严格按示例保留；
+   技能名称必须与你在 `skills` 下列出的名称一致：
+
+   ```json
+   {
+     "profile_name": "Accountant",
+     "experience_years": 3,
+     "certifications": ["AAT"],
+     "skills": ["xero", "excel", "month-end close"]
+   }
+   ```
+
+4. **填写简历信息（可选）。** 填写 `resumes/master_resume.json`，即可为每个高匹配职位生成定制简历
+   （[填写说明](resumes/README.md)）。跳过这一步也能收到匹配的职位。
+5. **运行。** 打开 **Actions** 标签页，点击左侧的 **Daily Job Radar**，然后点击 **Run workflow → Run workflow**。
+   几分钟后打开这次运行，查看它的 **Summary（摘要）**：
+   - 如果显示 "Set up Job Radar first"，里面会列出还缺少的内容。改好后再运行一次。
+   - 否则它会显示找到的职位，**Issues** 标签页里每个匹配职位都有一个 Issue。高匹配职位会指派给你，GitHub 会发邮件通知你。
+6. **跟踪你的申请。** 在每个职位 Issue 上随进度修改 `status:` 标签（例如改为 `status:applied`）。
+   之后雷达会每天自动扫描两次。
+
+如果编辑文件后 GitHub 发邮件说 **CI failed**，说明文件里有输入错误（通常是缺少引号、逗号或空格）。
+打开失败的运行即可看到是哪个文件。
+
+可选：扫描默认在 UTC 时间早上约 7 点和下午约 4 点运行。若想按你所在时区的这些时间运行，把
+`.github/workflows/daily-jobs.yml` 中的四处 `'UTC'` 改成你的时区，例如 `'Europe/London'`。
+如需 AI 润色简历措辞，请按照 [docs/setup.md](docs/setup.md) 添加 OpenAI 密钥。
+
+## 开始使用（在你的电脑上）
+
+适合开发者，或想在推送前检查配置的用户。
+
 
 1. 点击 **Use this template → Create a new repository**，并设为 **私有（Private）**。你的副本会保存你的简历和求职记录。
    不要 Fork：公开仓库的 Fork 必须保持公开。
@@ -45,8 +93,8 @@ LinkedIn Job Review 表单 ────────┘                   │
    radar doctor
    ```
 
-   在 `radar doctor` 报告没有问题之前，定时扫描会带着警告自动跳过。电脑上没有 Python？可以直接在 GitHub 上编辑这些文件，
-   然后运行第 5 步的工作流：它的运行摘要会显示同样的 `radar doctor` 报告。
+   在 `radar doctor` 报告没有问题之前，定时扫描会带着警告自动跳过。电脑上没有 Python？请改为按照
+   [快速上手](#快速上手无需编程)操作：工作流的运行摘要会显示同样的 `radar doctor` 报告。
 4. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
 5. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描，然后查看 `reports/latest.md`。
 6. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。
