@@ -1,0 +1,32 @@
+[
+  {
+    "site": "indeed",
+    "title": "SOC Analyst I",
+    "company": "Northwind Security",
+    "location": "Toronto, ON",
+    "is_remote": false,
+    "date_posted": "2026-10-04T12:00:00+00:00",
+    "job_url": "https://example.com/jobs/soc-1",
+    "description": "Entry-level SOC Analyst role. 1 year of experience preferred. Monitor SIEM alerts using Splunk and QRadar, support incident response, Active Directory investigations, DNS and TCP/IP troubleshooting. CompTIA Security+ preferred."
+  },
+  {
+    "site": "zip_recruiter",
+    "title": "Security Operations Analyst",
+    "company": "Contoso Canada",
+    "location": "Canada",
+    "is_remote": true,
+    "date_posted": "2026-10-04T08:00:00+00:00",
+    "job_url": "https://example.com/jobs/secops-2",
+    "description": "2+ years security operations experience. Work with Microsoft Sentinel, CrowdStrike EDR, KQL and incident response. Security+ is an asset."
+  },
+  {
+    "site": "indeed",
+    "title": "Senior Security Engineer",
+    "company": "Fabrikam",
+    "location": "Ottawa, ON",
+    "is_remote": false,
+    "date_posted": "2026-10-04T10:00:00+00:00",
+    "job_url": "https://example.com/jobs/senior-3",
+    "description": "5+ years of security engineering experience. CISSP required."
+  }
+]

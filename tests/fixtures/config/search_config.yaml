@@ -1,0 +1,203 @@
+# Test fixture: a cybersecurity search, kept so the scoring tests have a realistic vocabulary.
+timezone: America/Toronto
+
+search:
+  # LinkedIn is intentionally excluded. Use LinkedIn's native job alerts separately.
+  # ZipRecruiter remains disabled because it returned HTTP 403 from GitHub-hosted runners.
+  sites:
+    - indeed
+  country_indeed: Canada
+
+  # Broad discovery queries. Indeed also searches job descriptions, so these collect
+  # candidates; our own title filter below decides whether a role is actually relevant.
+  queries:
+    - SOC Analyst
+    - Security Operations
+    - Cybersecurity Analyst
+    - Information Security
+    - Incident Response
+    - Security Monitoring
+    - Cyber Defense
+    - SIEM Analyst
+    - MDR Analyst
+    - Blue Team
+    - Vulnerability Analyst
+    - IT Security
+    - Security Specialist
+    - Security Administrator
+    - Threat Analyst
+    - IAM Analyst
+
+  # Remove clearly physical-security jobs before scoring, tracking, or CSV output.
+  # Phrase/word matching is boundary-aware, so "guard" will not match words like "Guardium".
+  exclude_title_terms:
+    - security guard
+    - guard
+    - loss prevention
+    - asset protection
+    - physical security
+    - security officer
+    - security supervisor
+    - protective services
+    - patrol officer
+    - patrol guard
+
+  # These titles/phrases drive relevance scoring after collection.
+  titles:
+    - SOC Analyst
+    - SOC Analyst I
+    - Junior SOC Analyst
+    - Tier 1 SOC Analyst
+    - Security Operations Analyst
+    - Security Operations Center Analyst
+    - Cybersecurity Analyst
+    - Cyber Security Analyst
+    - Security Analyst
+    - Information Security Analyst
+    - Cyber Defense Analyst
+    - Cyber Defense Engineer
+    - Security Monitoring Analyst
+    - MDR Analyst
+    - Incident Response Analyst
+    - SIEM Analyst
+    - Detection and Response Analyst
+    - Threat Detection Analyst
+    - Blue Team Analyst
+    - IT Security Analyst
+    - Junior Security Engineer
+    - Vulnerability Analyst
+    - Vulnerability Management Analyst
+    - Endpoint Security Analyst
+    - Network Security Analyst
+    - Cloud Security Analyst
+    - Cybersecurity Specialist
+    - Information Security Specialist
+    # Entry-level adjacent roles. Avoid a bare "Security Specialist": it would also match
+    # physical-security titles such as "Corporate Security Specialist".
+    - IT Security Specialist
+    - Network Security Specialist
+    - Product Security Specialist
+    - Security Operations Specialist
+    - Security Administrator
+    - Threat Analyst
+    - Threat Intelligence Analyst
+    - IAM Analyst
+    - Access Management Analyst
+    - Cyber Analyst
+    - Cybersecurity Associate
+    - Cyber Security Associate
+    - Associate Security Engineer
+    - Junior Cybersecurity Engineer
+    - Junior Cyber Security Engineer
+
+  locations:
+    - name: Toronto
+      query: Toronto, ON
+      remote_only: false
+      score: 5
+      match: [toronto]
+    - name: Ontario
+      query: Ontario
+      remote_only: false
+      score: 4
+      match: [ontario, 're:,\s*on\b']
+    - name: Canada
+      query: Canada
+      remote_only: true
+      score: 3
+      match: [canada]
+
+  results_wanted_per_query: 35
+  # Search a wider baseline; ranking still gives a freshness bonus to <=24h postings.
+  hours_old: 168
+  fetch_description: true
+  pause_seconds_between_queries: 1.25
+
+ranking:
+  fresh_hours: 24
+  remote_score: 5
+  good_match_threshold: 65
+  possible_match_threshold: 55
+  max_possible_matches: 5
+  hard_reject_unrelated_titles: true
+  hard_reject_title_terms:
+    - security guard
+    - guard
+    - loss prevention
+    - asset protection
+    - physical security
+    - security officer
+    - security supervisor
+    - protective services
+    - patrol
+    - senior
+    - sr.
+    - lead
+    - manager
+    - director
+    - principal
+    - architect
+  hard_reject_min_years: 5
+
+matching:
+  skills:
+    siem: [siem, security information and event management]
+    splunk: [splunk]
+    qradar: [qradar]
+    wazuh: [wazuh]
+    microsoft sentinel: [microsoft sentinel, azure sentinel, sentinel]
+    incident response: [incident response, incident handling, incident investigation]
+    detection engineering: [detection engineering, detection rule, detection rules, detection content]
+    threat hunting: [threat hunt, threat hunting]
+    edr: [edr, endpoint detection and response]
+    crowdstrike: [crowdstrike, falcon]
+    defender xdr: [defender xdr, microsoft defender]
+    fortigate: [fortigate, fortinet]
+    active directory: [active directory]
+    aws: [aws, amazon web services]
+    azure: [azure]
+    networking: [networking, network security]
+    tcp/ip: ["re:tcp/?ip"]
+    dns: [dns]
+    dhcp: [dhcp]
+    windows: [windows]
+    linux: [linux]
+    powershell: [powershell]
+    python: [python]
+    kql: [kql, kusto query language]
+    soar: [soar, security orchestration]
+    servicenow: [servicenow, service now]
+    documentation: [documentation, document findings, "re:write.*report"]
+    escalation: ["re:escalat"]
+  soft_skills: [documentation, escalation]
+  certifications:
+    CompTIA Security+: [security+, comptia security]
+    CompTIA A+: [comptia a+, a+ certification]
+    CISSP: [cissp]
+    CySA+: [cysa+]
+    GCIH: [gcih]
+    OSCP: [oscp]
+  related_title_keywords:
+    - soc
+    - cybersecurity
+    - cyber security
+    - information security
+    - security operations
+    - security analyst
+    - cyber defense
+    - siem
+    - incident response
+    - blue team
+    - mdr
+    - endpoint security
+    - it security
+    - network security
+  # "K9 Handler (Detection Services)" isn't a security job; "Threat Analyst" is.
+  context_title_keywords: [threat, detection, vulnerability]
+  context_words: [security, cyber, analyst, engineer, intelligence, hunt, hunter, hunting]
+
+output:
+  report_path: reports/latest.md
+  latest_jobs_path: data/latest_jobs.csv
+  seen_jobs_path: data/seen_jobs.json
+  applications_path: data/applications.csv

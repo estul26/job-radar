@@ -1,0 +1,34 @@
+{
+  "profile_name": "Early-career SOC / Cybersecurity Analyst",
+  "experience_years": 1,
+  "certifications": [
+    "CompTIA Security+",
+    "CompTIA A+",
+    "Microsoft Cybersecurity Analyst Professional Certificate",
+    "Google Cybersecurity Professional Certificate",
+    "IBM Cybersecurity Analyst"
+  ],
+  "skills": [
+    "siem",
+    "splunk",
+    "qradar",
+    "wazuh",
+    "detection engineering",
+    "incident response",
+    "fortigate",
+    "active directory",
+    "aws",
+    "windows",
+    "linux",
+    "networking",
+    "tcp/ip",
+    "dhcp",
+    "dns",
+    "ip addressing",
+    "microsoft 365",
+    "documentation",
+    "escalation",
+    "technical support",
+    "troubleshooting"
+  ]
+}

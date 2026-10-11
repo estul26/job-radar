@@ -1,0 +1,70 @@
+name: Job Issue Events
+
+# Scores LinkedIn job Issues when they are opened or edited, regenerates résumés
+# on `resume:tailor`, and keeps one `status:*` label per Issue (closing it for
+# rejected/offer/skipped). The labels are the tracker: the scan exports them
+# to data/applications.csv.
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  # One run at a time per Issue and kind of event, like the three workflows it replaces.
+  group: >-
+    issue-${{ github.event.issue.number }}-${{
+      github.event.action != 'labeled' && 'intake' ||
+      startsWith(github.event.label.name, 'status:') && 'status' || 'resume' }}
+  cancel-in-progress: false
+
+jobs:
+  handle:
+    if: >-
+      (github.event.action != 'labeled' &&
+       (startsWith(github.event.issue.title, '[LinkedIn Job]') ||
+        startsWith(github.event.issue.title, '[LinkedIn Alert]')) &&
+       !contains(github.event.issue.body, '_Paste full job description here')) ||
+      (github.event.action == 'labeled' &&
+       (startsWith(github.event.label.name, 'status:') || github.event.label.name == 'resume:tailor'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up radar
+        uses: ./.github/actions/setup
+
+      - name: Prepare résumé files
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          AI_RESUME_ENABLED: ${{ vars.AI_RESUME_ENABLED }}
+          EVENT: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+        run: radar issue "${{ github.event.issue.number }}" --event "$EVENT" --label "$LABEL"
+
+      - name: Commit résumé files
+        if: steps.prepare.outputs.kind != ''
+        uses: ./.github/actions/commit-state
+        with:
+          # Only this job's résumé folder, so it never conflicts with the scan's commits.
+          paths: resumes/jobs
+          message: ${{ steps.prepare.outputs.commit_message }}
+
+      - name: Update the Issue
+        if: steps.prepare.outputs.kind != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
+          EVENT: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+        run: radar issue "${{ github.event.issue.number }}" --event "$EVENT" --label "$LABEL" --publish

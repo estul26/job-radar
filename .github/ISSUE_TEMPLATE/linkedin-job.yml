@@ -1,0 +1,66 @@
+name: LinkedIn Job Review
+description: Paste a LinkedIn job here to score it against your profile.
+title: "[LinkedIn Job] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Paste the job details from LinkedIn. This form does not scrape or log into LinkedIn.
+
+  - type: input
+    id: linkedin_url
+    attributes:
+      label: LinkedIn job URL
+      placeholder: https://www.linkedin.com/jobs/view/...
+    validations:
+      required: true
+
+  - type: input
+    id: job_title
+    attributes:
+      label: Job title
+      placeholder: Registered Nurse
+    validations:
+      required: true
+
+  - type: input
+    id: company
+    attributes:
+      label: Company
+      placeholder: Example Company
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      placeholder: Toronto, ON or Remote
+    validations:
+      required: true
+
+  - type: dropdown
+    id: remote
+    attributes:
+      label: Remote?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: true
+
+  - type: input
+    id: date_posted
+    attributes:
+      label: Date posted (optional)
+      description: Use YYYY-MM-DD when known.
+      placeholder: "2026-10-04"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Job description
+      description: Paste the full LinkedIn job description here for the best match score.
+      placeholder: Paste responsibilities, requirements, qualifications, and preferred skills.
+    validations:
+      required: true

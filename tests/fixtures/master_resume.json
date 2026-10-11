@@ -1,0 +1,302 @@
+{
+  "version": "fixture-1",
+  "identity": {
+    "name": "ALEX EXAMPLE",
+    "headline": "SOC Analyst | Security+ Certified",
+    "location": "Toronto, Ontario",
+    "phone": "555-0100",
+    "email": "alex@example.com",
+    "linkedin": "linkedin.com/in/alex-example",
+    "github": "github.com/alex-example"
+  },
+  "summary": {
+    "experience": "SOC Analyst with one year of professional experience and four years of IT support experience.",
+    "credentials": "CompTIA Security+ and A+ certified.",
+    "capabilities": [
+      {
+        "text": "SIEM platforms (Splunk, IBM QRadar, Wazuh)",
+        "tags": [
+          "siem",
+          "splunk",
+          "qradar",
+          "wazuh"
+        ]
+      },
+      {
+        "text": "detection engineering",
+        "tags": [
+          "detection engineering",
+          "detection"
+        ]
+      },
+      {
+        "text": "incident response",
+        "tags": [
+          "incident response"
+        ]
+      },
+      {
+        "text": "FortiGate",
+        "tags": [
+          "fortigate",
+          "network security"
+        ]
+      },
+      {
+        "text": "Active Directory",
+        "tags": [
+          "active directory",
+          "identity"
+        ]
+      },
+      {
+        "text": "AWS",
+        "tags": [
+          "aws",
+          "cloud"
+        ]
+      },
+      {
+        "text": "Windows",
+        "tags": [
+          "windows"
+        ]
+      },
+      {
+        "text": "networking",
+        "tags": [
+          "networking",
+          "tcp/ip",
+          "dhcp",
+          "dns"
+        ]
+      }
+    ]
+  },
+  "technical_skills": [
+    {
+      "category": "SIEM",
+      "text": "Splunk, IBM QRadar, Wazuh",
+      "tags": [
+        "siem",
+        "splunk",
+        "qradar",
+        "wazuh"
+      ],
+      "priority": 1
+    },
+    {
+      "category": "Security operations",
+      "text": "Detection engineering, incident response",
+      "tags": [
+        "detection engineering",
+        "incident response",
+        "detection"
+      ],
+      "priority": 2
+    },
+    {
+      "category": "Network, identity and cloud",
+      "text": "FortiGate, Active Directory, AWS",
+      "tags": [
+        "fortigate",
+        "active directory",
+        "aws",
+        "network security",
+        "cloud"
+      ],
+      "priority": 3
+    },
+    {
+      "category": "Windows and software",
+      "text": "Windows 10/11; installation, updates, troubleshooting",
+      "tags": [
+        "windows",
+        "troubleshooting"
+      ],
+      "priority": 5
+    },
+    {
+      "category": "Networking",
+      "text": "Wi-Fi, Ethernet, TCP/IP, DHCP, DNS, IP addressing",
+      "tags": [
+        "networking",
+        "tcp/ip",
+        "dhcp",
+        "dns",
+        "ip addressing"
+      ],
+      "priority": 4
+    },
+    {
+      "category": "Platforms and CLI",
+      "text": "macOS/Linux fundamentals; Windows/Linux command line; Microsoft 365 fundamentals",
+      "tags": [
+        "linux",
+        "windows",
+        "microsoft 365"
+      ],
+      "priority": 6
+    },
+    {
+      "category": "Hardware",
+      "text": "RAM, SSD/HDD, CPU, motherboard, BIOS/UEFI",
+      "tags": [
+        "hardware"
+      ],
+      "priority": 8
+    },
+    {
+      "category": "User support",
+      "text": "Printers, peripherals, email, account support; documentation and escalation",
+      "tags": [
+        "technical support",
+        "documentation",
+        "escalation"
+      ],
+      "priority": 7
+    }
+  ],
+  "experience": [
+    {
+      "role": "SOC Analyst",
+      "dates": "2024 - Present",
+      "bullets": [
+        {
+          "text": "Worked with SIEM platforms including Splunk, IBM QRadar, and Wazuh.",
+          "tags": [
+            "siem",
+            "splunk",
+            "qradar",
+            "wazuh"
+          ]
+        },
+        {
+          "text": "Experience in detection engineering and incident response.",
+          "tags": [
+            "detection engineering",
+            "incident response",
+            "detection"
+          ]
+        },
+        {
+          "text": "Worked with FortiGate, Active Directory, and AWS.",
+          "tags": [
+            "fortigate",
+            "active directory",
+            "aws",
+            "network security",
+            "cloud"
+          ]
+        }
+      ],
+      "max_bullets": 3,
+      "company": "Example Security Co."
+    },
+    {
+      "role": "IT Support Technician",
+      "dates": "2020 - 2024",
+      "bullets": [
+        {
+          "text": "Provided technical support for computer, software, network, printer, and peripheral issues.",
+          "tags": [
+            "technical support",
+            "networking",
+            "hardware"
+          ]
+        },
+        {
+          "text": "Diagnosed Windows and application problems using structured troubleshooting and step-by-step testing.",
+          "tags": [
+            "windows",
+            "troubleshooting"
+          ]
+        },
+        {
+          "text": "Set up computers, operating systems, applications, user settings, storage, and common peripherals.",
+          "tags": [
+            "windows",
+            "hardware",
+            "technical support"
+          ]
+        },
+        {
+          "text": "Troubleshot Wi-Fi and Internet connectivity involving routers, IP configuration, DHCP, and DNS.",
+          "tags": [
+            "networking",
+            "dhcp",
+            "dns",
+            "ip addressing"
+          ]
+        },
+        {
+          "text": "Explained solutions clearly to non-technical users and documented troubleshooting steps and outcomes.",
+          "tags": [
+            "documentation",
+            "technical support",
+            "communication"
+          ]
+        }
+      ],
+      "company": "Example Services"
+    }
+  ],
+  "education": [
+    {
+      "program": "IT Support Certificate",
+      "school": "Example College, Toronto",
+      "dates": "2023 - 2024",
+      "bullets": [
+        {
+          "text": "Training in hardware, Windows, networking, troubleshooting, documentation, and customer communication.",
+          "tags": [
+            "hardware",
+            "windows",
+            "networking",
+            "troubleshooting",
+            "documentation"
+          ]
+        }
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "text": "CompTIA Security+",
+      "tags": [
+        "security+",
+        "comptia security+"
+      ],
+      "priority": 1
+    },
+    {
+      "text": "CompTIA A+",
+      "tags": [
+        "a+",
+        "comptia a+"
+      ],
+      "priority": 2
+    },
+    {
+      "text": "Microsoft Cybersecurity Analyst Professional Certificate",
+      "tags": [
+        "microsoft cybersecurity"
+      ],
+      "priority": 3
+    },
+    {
+      "text": "Google Cybersecurity Professional Certificate",
+      "tags": [
+        "google cybersecurity"
+      ],
+      "priority": 4
+    },
+    {
+      "text": "IBM Cybersecurity Analyst",
+      "tags": [
+        "ibm cybersecurity"
+      ],
+      "priority": 5
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+name: Sync Project Dashboard
+
+on:
+  workflow_dispatch:
+  # Cloud mode needs a PROJECTS_TOKEN secret; the Mac agent is the default sync.
+  # To enable cloud mode, add the secret and restore a schedule such as:
+  # schedule:
+  #   - cron: '*/15 * * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: project-dashboard-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check cloud sync credential
+        id: credential
+        env:
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: |
+          if [ -z "$PROJECTS_TOKEN" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "PROJECTS_TOKEN is not configured; local Mac sync remains the recommended default."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.credential.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Restore last-synced statuses
+        # The sync compares each side with its last-synced status to tell a
+        # dragged card from a changed label, so keep that file between runs.
+        if: steps.credential.outputs.enabled == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .project-sync-state.json
+          key: project-sync-state-${{ github.run_id }}
+          restore-keys: project-sync-state-
+
+      - name: Sync Project status to Issue labels
+        if: steps.credential.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          JOB_PROJECT_SYNC_STATE: .project-sync-state.json
+          JOB_PROJECT_OWNER: ${{ github.repository_owner }}
+          JOB_REPOSITORY: ${{ github.repository }}
+          JOB_PROJECT_NUMBER: '1'
+        run: python3 tools/project_sync.py sync

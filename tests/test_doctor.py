@@ -1,0 +1,79 @@
+"""radar doctor on the shipped blank template and on a filled-in setup."""
+
+import json
+from dataclasses import replace
+
+from conftest import CONFIG, MASTER, PROFILE, ROOT
+from job_radar.cli import main
+from job_radar.commands.doctor import checkup, resume_ready
+from job_radar.commands.scan import generate_scan_resumes, scan_jobs
+from job_radar.settings import Paths, load_json, load_settings
+
+BLANK = (ROOT / "config/search_config.yaml", ROOT / "config/resume_profile.json", ROOT / "resumes/master_resume.json")
+
+
+def test_the_shipped_template_lists_what_to_fill_in():
+    result = checkup(*BLANK)
+    assert not result.ok
+    problems = "\n".join(result.problems)
+    for missing in ("search.country_indeed", "search.titles", "search.locations"):
+        assert missing in problems
+    warnings = "\n".join(result.warnings)
+    assert "matching.skills is empty" in warnings
+    assert "identity.name is empty" in warnings
+    assert not resume_ready(load_json(BLANK[2]))
+
+
+def test_a_filled_in_setup_passes(capsys):
+    result = checkup(CONFIG, PROFILE, MASTER)
+    assert result.ok
+    # The fixture profile lists support skills its vocabulary doesn't know, which doctor points out.
+    [warning] = result.warnings
+    assert warning.endswith("never match a posting: ip addressing, microsoft 365, technical support, troubleshooting")
+    assert main(["doctor", "--config", str(CONFIG), "--profile", str(PROFILE), "--master", str(MASTER)]) == 0
+    assert "0 problem(s), 1 warning(s)" in capsys.readouterr().out
+
+
+def test_bad_values_are_named(tmp_path):
+    config = tmp_path / "search_config.yaml"
+    config.write_text(
+        "timezone: Mars/Olympus\nsearch:\n  sites: [indeed]\n  country_indeed: Canada\n  titles: [Nurse]\n"
+        "  locations: [{name: Toronto}]\nmatching:\n  skills: {wound care: []}\n",
+        encoding="utf-8",
+    )
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"experience_years": "2", "skills": ["wound care", "phlebotomy"]}), encoding="utf-8")
+
+    result = checkup(config, profile, MASTER)
+
+    problems = "\n".join(result.problems)
+    assert "'Mars/Olympus' is not an IANA timezone" in problems
+    assert "search.locations[0] (Toronto) needs a query" in problems
+    assert "experience_years must be a whole number" in problems
+    assert "can never match a posting: phlebotomy" in "\n".join(result.warnings)
+
+
+def test_missing_files_are_problems(tmp_path):
+    result = checkup(tmp_path / "nope.yaml", tmp_path / "nope.json", tmp_path / "nope2.json")
+    assert len(result.problems) == 3 and all("file not found" in item for item in result.problems)
+
+
+def test_the_blank_template_scans_without_crashing_and_makes_no_resumes(tmp_path):
+    settings = load_settings(BLANK[0], BLANK[1])
+    settings = replace(
+        settings,
+        paths=Paths.from_config(
+            {
+                "report_path": str(tmp_path / "latest.md"),
+                "latest_jobs_path": str(tmp_path / "latest_jobs.csv"),
+                "seen_jobs_path": str(tmp_path / "seen.json"),
+                "scan_matches_path": str(tmp_path / "matches.json"),
+                "indeed_manifest_path": str(tmp_path / "manifest.json"),
+                "master_resume_path": str(BLANK[2]),
+            }
+        ),
+    )
+    report = scan_jobs(settings, ROOT / "tests/fixtures/sample_jobs.json")
+    assert "Collected **3** unique jobs" in report
+    assert generate_scan_resumes(settings) is None
+    assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8")) == []
