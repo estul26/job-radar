@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.DS_Store
+.env
+*.pdf
+*.docx
+# Generated application resumes are linked from Issues, so they must be committed.
+!resumes/jobs/**/resume.docx
+# Hand-offs between radar commands within one workflow run.
+reports/*.json

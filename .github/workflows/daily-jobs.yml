@@ -1,0 +1,130 @@
+name: Daily Job Radar
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_if_done:
+        description: 'Skip if this morning/evening scan already completed (used by the Mac launchd trigger)'
+        type: boolean
+        default: false
+  schedule:
+    # Morning and evening scans, each with a 30-minute fallback. A schedule before noon is the
+    # morning scan, any other the evening scan. CHANGE ME: set every `timezone:` below to the
+    # `timezone` in config/search_config.yaml, and the hours if you like.
+    # GitHub can delay or drop scheduled events, so the Mac launchd trigger
+    # (tools/mac/install-radar-trigger.sh) backs these up.
+    # Non-round minutes help avoid peak scheduler congestion.
+    - cron: '13 7 * * *'
+      timezone: 'UTC'
+    - cron: '43 7 * * *'
+      timezone: 'UTC'
+    - cron: '13 16 * * *'
+      timezone: 'UTC'
+    - cron: '43 16 * * *'
+      timezone: 'UTC'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: job-radar
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decide scan slot
+        id: slot
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          REF: ${{ github.ref }}
+          SKIP_IF_DONE: ${{ inputs.skip_if_done }}
+          # Standard library only, so duplicate triggers skip before installing anything.
+          PYTHONPATH: src
+        run: >-
+          python3 -m job_radar.cli scan-slot --refresh-main
+          --event "$EVENT_NAME" --schedule "$SCHEDULE" --ref "$REF" --skip-if-done "$SKIP_IF_DONE"
+
+      - name: Set up radar
+        if: steps.slot.outputs.skip != 'true'
+        uses: ./.github/actions/setup
+
+      # Until config/ is filled in, skip the scan with a warning instead of failing twice a day.
+      - name: Check the setup
+        id: doctor
+        if: steps.slot.outputs.skip != 'true'
+        run: |
+          if radar doctor > doctor.txt; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Job Radar isn't set up yet, so the scan was skipped. See this run's summary."
+          fi
+          cat doctor.txt
+
+      - name: Scan job boards
+        if: steps.doctor.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          AI_RESUME_ENABLED: ${{ vars.AI_RESUME_ENABLED }}
+        run: radar scan
+
+      - name: Add report to workflow summary
+        if: always()
+        env:
+          SKIP: ${{ steps.slot.outputs.skip }}
+          READY: ${{ steps.doctor.outputs.ready }}
+        run: |
+          if [ "$READY" = "false" ]; then
+            { echo "## Set up Job Radar first"; echo; echo '```text'; cat doctor.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$SKIP" = "true" ]; then
+            echo "This morning/evening scan already ran (or the backup trigger fired outside a scan window); skipped duplicate trigger." >> "$GITHUB_STEP_SUMMARY"
+          elif [ -f reports/latest.md ]; then
+            cat reports/latest.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save daily state and report
+        if: steps.doctor.outputs.ready == 'true'
+        uses: ./.github/actions/commit-state
+        with:
+          paths: data/seen_jobs.json data/latest_jobs.csv reports/latest.md resumes/jobs
+          message: 'chore: update daily job radar'
+
+      - name: Open Issues for new matches
+        if: success() && steps.doctor.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: radar publish-scan
+
+      - name: Export the job tracker from the Issues
+        if: success() && steps.doctor.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: radar export
+
+      # The claim is only written once the scan succeeds, so a failed run leaves
+      # the window open for the fallback schedule or the Mac trigger.
+      - name: Record completed scan slot
+        if: success() && steps.doctor.outputs.ready == 'true' && steps.slot.outputs.slot != ''
+        env:
+          SLOT: ${{ steps.slot.outputs.slot }}
+          SLOT_DATE: ${{ steps.slot.outputs.date }}
+        run: radar record-claim "$SLOT" "$SLOT_DATE"
+
+      - name: Commit tracker export and scan slot claim
+        if: success() && steps.doctor.outputs.ready == 'true'
+        uses: ./.github/actions/commit-state
+        with:
+          paths: data/applications.csv resumes/index.csv data/radar_morning_claim.txt data/radar_evening_claim.txt
+          message: "chore: export job tracker after the ${{ steps.slot.outputs.slot || 'manual' }} scan"

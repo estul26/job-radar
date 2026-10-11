@@ -1,0 +1,91 @@
+# Test fixture: a registered nurse in Toronto, searching locally and remotely across Canada.
+timezone: America/Toronto
+
+search:
+  sites:
+    - indeed
+  country_indeed: Canada
+  queries:
+    - Registered Nurse
+    - RN
+  titles:
+    - Registered Nurse
+    - Staff Nurse
+    - Charge Nurse
+    - Clinical Nurse
+  exclude_title_terms:
+    - nursing assistant
+    - personal support worker
+    - veterinary
+  locations:
+    - name: Toronto
+      query: Toronto, ON
+      remote_only: false
+      score: 5
+      match: [toronto]
+    - name: Ontario
+      query: Ontario
+      remote_only: false
+      score: 4
+      match: [ontario, 're:,\s*on\b']
+    - name: Canada
+      query: Canada
+      remote_only: true
+      score: 3
+      match: [canada]
+  results_wanted_per_query: 35
+  hours_old: 168
+  fetch_description: true
+  pause_seconds_between_queries: 1.25
+
+ranking:
+  fresh_hours: 24
+  remote_score: 5
+  good_match_threshold: 65
+  possible_match_threshold: 55
+  max_possible_matches: 5
+  hard_reject_unrelated_titles: true
+  hard_reject_title_terms:
+    - nursing assistant
+    - personal support worker
+    - veterinary
+    - senior
+    - lead
+    - manager
+    - director
+  hard_reject_min_years: 5
+
+matching:
+  skills:
+    patient assessment: [patient assessment, assess patients, patient assessments]
+    medication administration: [medication administration, administer medication, administering medications]
+    wound care: []
+    iv therapy: [iv therapy, iv starts, 're:\biv\b']
+    charting: [charting, documentation]
+    infection control: [infection control, infection prevention]
+    triage: []
+    telemetry: []
+    epic: [epic, epic emr]
+    meditech: []
+    communication: []
+    teamwork: []
+  soft_skills: [communication, teamwork]
+  certifications:
+    BLS: [bls, basic life support]
+    ACLS: [acls, advanced cardiac life support]
+    PALS: [pals]
+    CNO registration: [cno, college of nurses of ontario]
+  related_title_keywords:
+    - nurse
+    - nursing
+    - rn
+    - rpn
+  # "Customer Care Agent" isn't nursing; "Patient Care Coordinator" is.
+  context_title_keywords: [care, clinical, health]
+  context_words: [patient, patients, hospital, ward, unit]
+
+output:
+  report_path: reports/latest.md
+  latest_jobs_path: data/latest_jobs.csv
+  seen_jobs_path: data/seen_jobs.json
+  applications_path: data/applications.csv

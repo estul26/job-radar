@@ -1,0 +1,69 @@
+{
+  "version": "fixture-1",
+  "identity": {
+    "name": "ALEX EXAMPLE",
+    "headline": "Registered Nurse | BLS Certified",
+    "location": "Toronto, Ontario",
+    "phone": "555-0100",
+    "email": "alex@example.com",
+    "linkedin": "linkedin.com/in/alex-example",
+    "github": "",
+    "website": ""
+  },
+  "summary": {
+    "experience": "Registered Nurse with two years of acute-care experience and three years as a personal support worker.",
+    "credentials": "BLS certified and registered with the College of Nurses of Ontario.",
+    "capabilities": [
+      {"text": "patient assessment", "tags": ["patient assessment"]},
+      {"text": "medication administration", "tags": ["medication administration"]},
+      {"text": "wound care", "tags": ["wound care"]},
+      {"text": "IV therapy", "tags": ["iv therapy"]},
+      {"text": "infection control", "tags": ["infection control"]},
+      {"text": "clear charting", "tags": ["charting"]}
+    ]
+  },
+  "technical_skills": [
+    {"category": "Clinical", "text": "Patient assessment, medication administration, wound care, IV therapy",
+     "tags": ["patient assessment", "medication administration", "wound care", "iv therapy"], "priority": 1},
+    {"category": "Safety", "text": "Infection prevention and control", "tags": ["infection control"], "priority": 2},
+    {"category": "Documentation", "text": "Charting and handover notes", "tags": ["charting"], "priority": 3},
+    {"category": "People", "text": "Communication with patients and families, teamwork", "tags": ["communication", "teamwork"], "priority": 4}
+  ],
+  "experience": [
+    {
+      "role": "Registered Nurse",
+      "company": "Example General Hospital",
+      "dates": "2024 - Present",
+      "max_bullets": 3,
+      "bullets": [
+        {"text": "Assessed and cared for up to six patients per shift on a medical-surgical unit.", "tags": ["patient assessment"]},
+        {"text": "Administered medications and IV therapy following hospital protocols.", "tags": ["medication administration", "iv therapy"]},
+        {"text": "Dressed surgical and pressure wounds and documented healing progress.", "tags": ["wound care", "charting"]},
+        {"text": "Followed infection prevention and control practices on an isolation ward.", "tags": ["infection control"]}
+      ]
+    },
+    {
+      "role": "Personal Support Worker",
+      "company": "Example Care Home",
+      "dates": "2021 - 2024",
+      "bullets": [
+        {"text": "Helped residents with daily living and mobility.", "tags": ["patient care"]},
+        {"text": "Reported changes in residents' condition to the nursing team.", "tags": ["communication", "teamwork"]}
+      ]
+    }
+  ],
+  "education": [
+    {
+      "program": "Bachelor of Science in Nursing",
+      "school": "Example University, Toronto",
+      "dates": "2020 - 2024",
+      "bullets": [
+        {"text": "Clinical placements in medicine, surgery and long-term care.", "tags": ["patient assessment"]}
+      ]
+    }
+  ],
+  "certifications": [
+    {"text": "Basic Life Support (BLS)", "tags": ["bls"], "priority": 1},
+    {"text": "Registered Nurse, College of Nurses of Ontario", "tags": ["cno"], "priority": 2}
+  ]
+}

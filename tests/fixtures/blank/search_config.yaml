@@ -1,0 +1,134 @@
+# Job Radar settings. Fill in the empty values, then run `radar doctor`.
+# docs/configure.md explains every setting. Lines starting with # are examples or notes; the
+# examples are for an accountant in London, but any job in any country works. Job postings are
+# read in English.
+#
+# Phrases (titles, skills, keywords, locations) match whole words and ignore case:
+# "accountant" matches "Senior Accountant" but not "Accountants' Office". Start a phrase with
+# "re:" to use a regular expression instead, in single quotes: 're:c\+\+' or 're:accounts?'.
+
+# Your timezone, as an IANA name (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+# Report dates and the morning/evening scans use it. Also change the `timezone:` lines in
+# .github/workflows/daily-jobs.yml and linkedin-email-alerts.yml to match.
+timezone: UTC # e.g. Europe/London, America/Chicago, Asia/Kolkata, Africa/Lagos, Australia/Sydney
+
+search:
+  # Job boards (searched by JobSpy). indeed covers about 70 countries; glassdoor and google
+  # work in many too. Regional boards: naukri (India), bayt (Gulf / Middle East),
+  # bdjobs (Bangladesh). LinkedIn is covered by its alert emails and `radar linkedin-search`
+  # instead (docs/linkedin.md).
+  sites:
+    - indeed
+  # The country Indeed and Glassdoor search, e.g. UK, USA, Canada, India, Australia, Nigeria.
+  # `radar doctor` tells you if Indeed doesn't cover it (docs/configure.md has the list).
+  country_indeed: ""
+
+  # What to type into the job board's search box, one search per line. Broad is fine:
+  # `titles` below decides which results are actually relevant.
+  # Leave empty to search for each of the `titles` instead.
+  queries: []
+  #  - Accountant
+  #  - Assistant Accountant
+
+  # The job titles you want. A posting whose title contains one of these (as whole words)
+  # scores full title points; others score only through matching.related_title_keywords below.
+  titles: []
+  #  - Accountant
+  #  - Management Accountant
+  #  - Financial Accountant
+
+  # Titles you never want, e.g. jobs that share a word with yours but aren't yours. They're
+  # dropped from searches and rejected wherever else a job comes from.
+  exclude_title_terms: []
+  #  - accounts payable clerk
+  #  - trainee
+
+  # Where to search, and how many location points (out of 5) each place is worth.
+  # name:        shown in reports
+  # query:       what the job board's location box gets
+  # remote_only: true to ask the job board for remote jobs only
+  # score:       location points when a job's location matches (default 5)
+  # match:       phrases that mean a job is in this place (default: the name)
+  # linkedin:    the location text `radar linkedin-search` gives LinkedIn (optional)
+  locations: []
+  #  - name: London
+  #    query: London
+  #    score: 5
+  #    match: [london]
+  #    linkedin: London, England, United Kingdom
+  #  - name: Remote
+  #    query: United Kingdom
+  #    remote_only: true
+  #    score: 4
+  #    match: [united kingdom, uk]
+  #    linkedin: United Kingdom
+
+  results_wanted_per_query: 35
+  # Only postings from the last this-many hours.
+  hours_old: 168
+  fetch_description: true
+  pause_seconds_between_queries: 1.25
+
+ranking:
+  # Postings at most this many hours old get the full freshness points.
+  fresh_hours: 24
+  # Score (0-100) for a good match: a job Issue assigned to you and a tailored résumé.
+  # The GOOD_MATCH_THRESHOLD repository variable overrides it.
+  good_match_threshold: 65
+  # Score for a possible match: a job Issue, but no résumé.
+  possible_match_threshold: 55
+  max_possible_matches: 5
+  # Location points for a remote job.
+  remote_score: 5
+  # Reject titles that are neither in `titles` nor related through matching.related_title_keywords.
+  hard_reject_unrelated_titles: true
+  # Reject titles containing any of these (seniority you're not ready for, say).
+  hard_reject_title_terms: []
+  #  - senior
+  #  - head of
+  #  - director
+  # Reject postings that ask for at least this many years of experience.
+  hard_reject_min_years: 5
+
+# The words of your field. Scoring finds these in postings and compares them with
+# config/resume_profile.json.
+matching:
+  # Each skill, and the phrases that mean a posting asks for it. A skill with no phrases
+  # (`xero: []`) is looked for by its own name. Use the same names in resume_profile.json.
+  skills: {}
+  #  xero: []
+  #  sage: []
+  #  excel: [excel, spreadsheets]
+  #  month-end close: [month-end close, month end, monthly close]
+  #  financial statements: [financial statements, statutory accounts]
+  #  reconciliations: [reconciliations, bank reconciliation, reconciling]
+  #  communication: []
+
+  # Skills that nearly every posting mentions: they're reported, but don't count as core
+  # requirements.
+  soft_skills: []
+  #  - communication
+
+  # Each certification or licence, and the phrases that mean a posting asks for it.
+  certifications: {}
+  #  ACCA: [acca]
+  #  CIMA: [cima]
+  #  AAT: [aat]
+
+  # Words that make a title related to yours when it isn't one of `titles`: one word earns
+  # some title points, two or more earn more.
+  related_title_keywords: []
+  #  - accounting
+  #  - accounts
+  #  - finance
+
+  # Words that only count as related next to one of the context_words (so a common word
+  # doesn't make an unrelated title look like yours).
+  context_title_keywords: []
+  context_words: []
+
+output:
+  report_path: reports/latest.md
+  latest_jobs_path: data/latest_jobs.csv
+  seen_jobs_path: data/seen_jobs.json
+  applications_path: data/applications.csv

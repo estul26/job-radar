@@ -1,0 +1,34 @@
+name: Commit state
+description: Commit the given paths to main as github-actions[bot], rebasing and retrying when another workflow pushed first.
+
+inputs:
+  paths:
+    description: Space-separated files or folders to commit; missing ones are ignored.
+    required: true
+  message:
+    description: Commit message.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Commit and push
+      shell: bash
+      env:
+        PATHS: ${{ inputs.paths }}
+        MESSAGE: ${{ inputs.message }}
+      run: |
+        set -euo pipefail
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        for path in $PATHS; do
+          if [ -e "$path" ]; then
+            git add -- "$path"
+          fi
+        done
+        if git diff --cached --quiet; then
+          echo "Nothing to commit."
+          exit 0
+        fi
+        git commit -m "$MESSAGE"
+        bash "$GITHUB_ACTION_PATH/push-with-retry.sh"

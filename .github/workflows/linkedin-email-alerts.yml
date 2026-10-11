@@ -1,0 +1,64 @@
+name: Import LinkedIn Job Alerts
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only report what each email would import; create no Issues and save nothing'
+        type: boolean
+        default: false
+      days:
+        description: 'Re-read this many days of mail instead of only new mail (0 = only new mail)'
+        type: number
+        default: 0
+  schedule:
+    - cron: '23 */4 * * *'
+      # CHANGE ME: the `timezone` in config/search_config.yaml.
+      timezone: 'UTC'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: linkedin-email-intake
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    if: github.event_name == 'workflow_dispatch' || vars.LINKEDIN_EMAIL_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up radar
+        uses: ./.github/actions/setup
+
+      - name: Import LinkedIn alert emails
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LINKEDIN_IMAP_HOST: ${{ secrets.LINKEDIN_IMAP_HOST }}
+          LINKEDIN_IMAP_USER: ${{ secrets.LINKEDIN_IMAP_USER }}
+          LINKEDIN_IMAP_PASSWORD: ${{ secrets.LINKEDIN_IMAP_PASSWORD }}
+          LINKEDIN_IMAP_PORT: ${{ vars.LINKEDIN_IMAP_PORT || '993' }}
+          LINKEDIN_IMAP_FOLDER: ${{ vars.LINKEDIN_IMAP_FOLDER || 'INBOX' }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DAYS: ${{ inputs.days }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "${DAYS:-0}" != "0" ]; then args+=(--days "$DAYS"); fi
+          radar email-ingest "${args[@]}"
+
+      - name: Save LinkedIn email state
+        # Also after a failed import: the state records the Issues it did create,
+        # so the next run does not create them again. A dry run saves nothing
+        # (commit-state pushes to main, even from a branch run).
+        if: ${{ !cancelled() && inputs.dry_run != true }}
+        uses: ./.github/actions/commit-state
+        with:
+          paths: data/linkedin_email_state.json reports/linkedin-email-latest.md
+          message: 'chore: update LinkedIn email intake state'
