@@ -77,8 +77,7 @@ LinkedIn Job Review 表单 ────────┘                   │
 **Actions → Update from template → Run workflow**。它会创建一个包含这些更改的 Pull Request：查看后点击
 **Merge pull request** 即可。它不会改动你的设置、简历或求职数据（`config/`、`resumes/master_resume.json`、
 `resumes/jobs/`、`data/`、`reports/`）。它无权修改的工作流文件会列在 Pull Request 中，并附上要粘贴的内容。
-更多说明，包括副本中没有 **Update from template** 时该怎么做，见
-[docs/setup.md](docs/setup.md#5-updates-from-the-template)。
+更多说明见 [docs/setup.md](docs/setup.md#5-updates-from-the-template)。
 
 ## 开始使用（在你的电脑上）
 

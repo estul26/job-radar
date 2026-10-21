@@ -178,13 +178,6 @@ requests in your copy. The run's summary has a link to open it yourself. Or tick
 Actions → General → Allow GitHub Actions to create and approve pull requests**, click **Save**, and
 run it again.
 
-**No Update from template in your Actions tab?** Copies made before it existed don't have it. Add
-it once: in your copy, click **Add file → Create new file**, name the file
-`.github/workflows/update-from-template.yml`, paste the contents of
-[the template's version](https://github.com/estul26/job-radar/blob/main/.github/workflows/update-from-template.yml)
-(its **Copy raw file** button copies them), and click **Commit changes**. Then run it as above. It
-always uses the template's latest update script, so this file rarely needs changing.
-
 **On your computer**, start it with `gh workflow run update-from-template.yml`, then try the update
 before merging it:
 

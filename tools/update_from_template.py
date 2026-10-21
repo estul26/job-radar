@@ -251,8 +251,6 @@ def _is_commit(rev: str) -> bool:
 
 def starting_point(template_ref: str) -> str | None:
     """The commit a copy that was never updated started from."""
-    if git("rev-parse", "--is-shallow-repository") == "true":
-        git("fetch", "--unshallow", "origin")
     shared = _run("merge-base", "HEAD", template_ref, check=False)
     if shared.returncode == 0:
         # A fork or clone shares the template's history.

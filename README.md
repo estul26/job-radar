@@ -88,8 +88,7 @@ improvements. To bring them in, open **Actions → Update from template → Run 
 pull request with the changes: look through it and click **Merge pull request**. It never changes
 your settings, résumé or job data (`config/`, `resumes/master_resume.json`, `resumes/jobs/`,
 `data/`, `reports/`). Workflow files it isn't allowed to change are listed in the pull request,
-with what to paste. More, including what to do if your copy has no **Update from template**:
-[docs/setup.md](docs/setup.md#5-updates-from-the-template).
+with what to paste. More in [docs/setup.md](docs/setup.md#5-updates-from-the-template).
 
 ## Get started (on your computer)
 
