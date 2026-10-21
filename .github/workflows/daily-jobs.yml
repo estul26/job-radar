@@ -58,17 +58,25 @@ jobs:
         uses: ./.github/actions/setup
 
       # Until config/ is filled in, skip the scan with a warning instead of failing twice a day.
+      # Exit 3 means the setup isn't finished; anything else is a crash, which fails the run so it isn't missed.
       - name: Check the setup
         id: doctor
         if: steps.slot.outputs.skip != 'true'
         run: |
-          if radar doctor > doctor.txt; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Job Radar isn't set up yet, so the scan was skipped. See this run's summary."
-          fi
+          status=0
+          radar doctor > doctor.txt 2>&1 || status=$?
           cat doctor.txt
+          case "$status" in
+            0) echo "ready=true" >> "$GITHUB_OUTPUT" ;;
+            3)
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::Job Radar isn't set up yet, so the scan was skipped. See this run's summary."
+              ;;
+            *)
+              echo "::error::radar doctor crashed, so the scan was skipped. This is a bug, not your setup: see this run's summary."
+              exit "$status"
+              ;;
+          esac
 
       - name: Scan job boards
         if: steps.doctor.outputs.ready == 'true'
@@ -85,8 +93,11 @@ jobs:
         env:
           SKIP: ${{ steps.slot.outputs.skip }}
           READY: ${{ steps.doctor.outputs.ready }}
+          DOCTOR: ${{ steps.doctor.outcome }}
         run: |
-          if [ "$READY" = "false" ]; then
+          if [ "$DOCTOR" = "failure" ]; then
+            { echo "## radar doctor crashed"; echo; echo "This is a bug in Job Radar, not in your setup, so no scan ran."; echo; echo '```text'; cat doctor.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$READY" = "false" ]; then
             { echo "## Set up Job Radar first"; echo; echo '```text'; cat doctor.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           elif [ "$SKIP" = "true" ]; then
             echo "This morning/evening scan already ran (or the backup trigger fired outside a scan window); skipped duplicate trigger." >> "$GITHUB_STEP_SUMMARY"
