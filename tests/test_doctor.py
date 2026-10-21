@@ -1,11 +1,14 @@
 """radar doctor on the shipped blank template and on a filled-in setup."""
 
 import json
+import re
 from dataclasses import replace
+
+import pytest
 
 from conftest import CONFIG, MASTER, PROFILE, ROOT
 from job_radar.cli import main
-from job_radar.commands.doctor import checkup, resume_ready
+from job_radar.commands.doctor import check_sites, checkup, resume_ready
 from job_radar.commands.scan import generate_scan_resumes, scan_jobs
 from job_radar.settings import Paths, load_json, load_settings
 
@@ -51,6 +54,44 @@ def test_bad_values_are_named(tmp_path):
     assert "search.locations[0] (Toronto) needs a query" in problems
     assert "experience_years must be a whole number" in problems
     assert "can never match a posting: phlebotomy" in "\n".join(result.warnings)
+
+
+def _check_sites(sites, country):
+    problems, warnings = [], []
+    check_sites(sites, country, problems.append, warnings.append)
+    return problems, warnings
+
+
+@pytest.mark.parametrize("country", ["Germany", "united kingdom", " US ", "UAE", "Türkiye", "turkey"])
+def test_countries_are_recognised_by_name_or_alias(country):
+    assert _check_sites(["indeed"], country) == ([], [])
+
+
+def test_every_country_the_docs_list_is_one_indeed_supports():
+    docs = " ".join((ROOT / "docs/configure.md").read_text(encoding="utf-8").split())
+    listed = re.search(r"Set `country_indeed` to one of: (.+?)\. Add to", docs).group(1)
+    countries = re.split(r", | or ", listed)
+    assert len(countries) > 50
+    for country in countries:
+        assert _check_sites(["indeed"], country) == ([], []), country
+
+
+def test_a_country_indeed_doesnt_cover_is_a_problem():
+    problems, _ = _check_sites(["indeed"], "Atlantis")
+    assert len(problems) == 1 and "Indeed doesn't support 'Atlantis'" in problems[0]
+
+
+def test_glassdoor_warns_only_where_it_has_no_site():
+    assert _check_sites(["indeed", "glassdoor"], "Germany") == ([], [])
+    assert _check_sites(["indeed", "glassdoor"], "Japan") == (
+        [],
+        ["search.sites: Glassdoor doesn't cover Japan, so only the other boards are searched"],
+    )
+
+
+def test_an_unknown_job_board_is_a_problem():
+    problems, _ = _check_sites(["indeed", "monster"], "Canada")
+    assert len(problems) == 1 and "'monster' isn't a job board JobSpy knows" in problems[0]
 
 
 def test_missing_files_are_problems(tmp_path):

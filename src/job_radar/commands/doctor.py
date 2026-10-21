@@ -113,11 +113,14 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
 def check_sites(sites: list[str], country: str, problem: Any, warn: Any) -> None:
     """The job boards JobSpy knows, and the country Indeed and Glassdoor need."""
     try:
+        from jobspy.glassdoor.constant import domains
         from jobspy.model import Country, Site
     except ImportError:  # radar doctor before `pip install`: skip what needs JobSpy.
-        known, check_country = None, None
+        known, check_country, glassdoor = None, None, set()
     else:
-        known, check_country = {site.value for site in Site}, Country.from_string
+        # Country() takes a name or an alias (United Kingdom, US, UAE) in any case, and raises ValueError for a
+        # country Indeed doesn't cover; Glassdoor covers the countries it has a domain for.
+        known, check_country, glassdoor = {site.value for site in Site}, Country, set(domains)
     for site in sites:
         if known is not None and site not in known:
             problem(f"search.sites: '{site}' isn't a job board JobSpy knows ({', '.join(sorted(known))})")
@@ -132,7 +135,7 @@ def check_sites(sites: list[str], country: str, problem: Any, warn: Any) -> None
                     f"search.country_indeed: Indeed doesn't support '{country}' (docs/configure.md lists the countries)"
                 )
             else:
-                if "glassdoor" in sites and len(found.value) < 3:
+                if "glassdoor" in sites and found not in glassdoor:
                     warn(f"search.sites: Glassdoor doesn't cover {country}, so only the other boards are searched")
     if "linkedin" in sites:
         warn(
