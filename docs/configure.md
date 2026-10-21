@@ -90,12 +90,11 @@ you truly have in `resume_profile.json`, using the same names.
 
 Job Radar works in any country whose job postings are in English. Indeed covers the most
 countries, and works from GitHub's servers. Set `country_indeed` to one of: Argentina,
-Australia, Austria, Bahrain, Bangladesh, Belgium, Bulgaria, Brazil, Canada, Chile, China,
-Colombia, Costa Rica, Croatia, Cyprus, Czech Republic, Denmark, Ecuador, Egypt, Estonia, Finland,
-France, Germany, Greece, Hong Kong, Hungary, India, Indonesia, Ireland, Israel, Italy, Japan,
-Kuwait, Latvia, Lithuania, Luxembourg, Malaysia, Malta, Mexico, Morocco, Netherlands, New
-Zealand, Nigeria, Norway, Oman, Pakistan, Panama, Peru, Philippines, Poland, Portugal, Qatar,
-Romania, Saudi Arabia, Singapore, Slovakia, Slovenia, South Africa, South Korea, Spain, Sweden,
+Australia, Austria, Bahrain, Belgium, Brazil, Canada, Chile, China, Colombia, Costa Rica, Czech
+Republic, Denmark, Ecuador, Egypt, Finland, France, Germany, Greece, Hong Kong, Hungary, India,
+Indonesia, Ireland, Israel, Italy, Japan, Kuwait, Luxembourg, Malaysia, Mexico, Morocco,
+Netherlands, New Zealand, Nigeria, Norway, Oman, Pakistan, Panama, Peru, Philippines, Poland,
+Portugal, Qatar, Romania, Saudi Arabia, Singapore, South Africa, South Korea, Spain, Sweden,
 Switzerland, Taiwan, Thailand, Türkiye, Ukraine, United Arab Emirates, UK, USA, Uruguay,
 Venezuela or Vietnam. Add to `sites`, if you like:
 
