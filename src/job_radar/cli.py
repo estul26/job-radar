@@ -125,11 +125,11 @@ def _issue(args: argparse.Namespace) -> int:
 
 
 def _doctor(args: argparse.Namespace) -> int:
-    from .commands.doctor import checkup, render
+    from .commands.doctor import NOT_SET_UP, checkup, render
 
     result = checkup(args.config, args.profile, args.master)
     print(render(result))
-    return 0 if result.ok else 1
+    return 0 if result.ok else NOT_SET_UP
 
 
 def _email_ingest(args: argparse.Namespace) -> int:

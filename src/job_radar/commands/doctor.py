@@ -3,6 +3,9 @@
 Problems stop the scheduled scan (daily-jobs.yml skips it until they are fixed);
 warnings don't. An unfinished master résumé is a warning: jobs are still found
 and scored, but no résumé is generated (resume_ready() gates that).
+
+Problems exit with NOT_SET_UP rather than 1, which is also what a crash exits with,
+so daily-jobs.yml can skip the scan for an unfinished setup but fail the run for a bug.
 """
 
 from __future__ import annotations
@@ -16,6 +19,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import yaml
 
 from ..settings import DEFAULT_CONFIG, DEFAULT_MASTER_RESUME, DEFAULT_PROFILE
+
+NOT_SET_UP = 3
 
 
 @dataclass

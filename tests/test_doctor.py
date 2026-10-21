@@ -19,6 +19,8 @@ BLANK = (BLANK_DIR / "search_config.yaml", BLANK_DIR / "resume_profile.json", BL
 
 
 def test_the_shipped_template_lists_what_to_fill_in():
+    # daily-jobs.yml skips the scan on NOT_SET_UP but fails the run on any other non-zero exit (a crash).
+    assert main(["doctor", "--config", str(BLANK[0]), "--profile", str(BLANK[1]), "--master", str(BLANK[2])]) == 3
     result = checkup(*BLANK)
     assert not result.ok
     problems = "\n".join(result.problems)

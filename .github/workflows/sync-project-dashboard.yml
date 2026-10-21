@@ -35,13 +35,13 @@ jobs:
 
       - name: Checkout
         if: steps.credential.outputs.enabled == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Restore last-synced statuses
         # The sync compares each side with its last-synced status to tell a
         # dragged card from a changed label, so keep that file between runs.
         if: steps.credential.outputs.enabled == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .project-sync-state.json
           key: project-sync-state-${{ github.run_id }}
