@@ -54,6 +54,7 @@ src/job_radar/
   resume/           tailor (selection), ai (guarded rewording), render (Markdown/DOCX), pipeline
 tools/
   project_sync.py   Project board setup and label <-> board sync (runs on your Mac)
+  update_from_template.py   a pull request with the template's later changes, for copies of it
   mac/              launchd installers: Project sync agent and the scan backup trigger
 ```
 
@@ -67,6 +68,7 @@ Each workflow is the same three steps: set up, run one `radar` command, commit w
 | `linkedin-email-alerts.yml` | every 4 hours | `radar email-ingest` |
 | `sync-project-dashboard.yml` | manual (needs `PROJECTS_TOKEN`) | cloud fallback for the board sync |
 | `ci.yml` | pushes and pull requests | `pytest`, `ruff` |
+| `update-from-template.yml` | manual, in copies of the template | `tools/update_from_template.py` from the template's latest version |
 
 ## State
 
@@ -78,6 +80,7 @@ Each workflow is the same three steps: set up, run one `radar` command, commit w
 | `data/radar_*_claim.txt` | scan | The date each slot last scanned, so duplicate triggers skip. |
 | `resumes/jobs/<key>/` | scan, Issue events | One folder per job. Nothing else writes it. |
 | `data/linkedin_email_state.json` | email import | IMAP position and already-imported LinkedIn job IDs. |
+| `.github/template-version` | Update from template (in its pull request) | The template commits your copy was last updated from. |
 
 Only the scan writes shared files. Issue events commit only their own résumé folder and the
 email import only its own state, so concurrent workflows never conflict when they rebase.

@@ -83,6 +83,14 @@ change the four `'UTC'` in `.github/workflows/daily-jobs.yml` to your timezone, 
 `'Europe/London'`. For AI-polished résumé wording, add an OpenAI key as described in
 [docs/setup.md](docs/setup.md).
 
+**Getting the template's fixes later.** Your copy doesn't change when this template gets fixes and
+improvements. To bring them in, open **Actions → Update from template → Run workflow**. It opens a
+pull request with the changes: look through it and click **Merge pull request**. It never changes
+your settings, résumé or job data (`config/`, `resumes/master_resume.json`, `resumes/jobs/`,
+`data/`, `reports/`). Workflow files it isn't allowed to change are listed in the pull request,
+with what to paste. More, including what to do if your copy has no **Update from template**:
+[docs/setup.md](docs/setup.md#5-updates-from-the-template).
+
 ## Get started (on your computer)
 
 For developers, or to check your setup before you push it.
@@ -111,6 +119,8 @@ For developers, or to check your setup before you push it.
 5. **Actions → Daily Job Radar → Run workflow** to scan once, then read `reports/latest.md`.
 6. Optional: [LinkedIn alerts and the Chrome search](docs/linkedin.md), the [board sync and
    the Mac scan trigger](docs/setup.md#2-the-job-search-board).
+7. Later, bring in the template's fixes with **Actions → Update from template**
+   ([how](docs/setup.md#5-updates-from-the-template)).
 
 ## Commands
 
@@ -152,7 +162,8 @@ raise scores just leads to résumés you can't stand behind.
 ## Docs
 
 - [Configure](docs/configure.md): every setting, your country, worked examples
-- [Setup](docs/setup.md): secrets, variables, the board and its sync, the Mac scan trigger
+- [Setup](docs/setup.md): secrets, variables, the board and its sync, the Mac scan trigger,
+  updates from the template
 - [LinkedIn](docs/linkedin.md): alert import, the Chrome search, the Issue form, what scoring does
 - [Résumés](docs/resumes.md): generation, AI guardrails, audit, privacy
 - [Scoring](docs/scoring.md): points, verdicts, hard rejects

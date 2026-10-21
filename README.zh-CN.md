@@ -73,6 +73,13 @@ LinkedIn Job Review 表单 ────────┘                   │
 `.github/workflows/daily-jobs.yml` 中的四处 `'UTC'` 改成你的时区，例如 `'Europe/London'`。
 如需 AI 润色简历措辞，请按照 [docs/setup.md](docs/setup.md) 添加 OpenAI 密钥。
 
+**之后获取模板的修复。** 本模板之后的修复和改进不会自动进入你的副本。要获取它们，打开
+**Actions → Update from template → Run workflow**。它会创建一个包含这些更改的 Pull Request：查看后点击
+**Merge pull request** 即可。它不会改动你的设置、简历或求职数据（`config/`、`resumes/master_resume.json`、
+`resumes/jobs/`、`data/`、`reports/`）。它无权修改的工作流文件会列在 Pull Request 中，并附上要粘贴的内容。
+更多说明，包括副本中没有 **Update from template** 时该怎么做，见
+[docs/setup.md](docs/setup.md#5-updates-from-the-template)。
+
 ## 开始使用（在你的电脑上）
 
 适合开发者，或想在推送前检查配置的用户。
@@ -98,6 +105,7 @@ LinkedIn Job Review 表单 ────────┘                   │
 4. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
 5. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描，然后查看 `reports/latest.md`。
 6. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。
+7. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)）。
 
 ## 命令
 
@@ -137,7 +145,7 @@ pytest && ruff check .
 ## 文档
 
 - [配置](docs/configure.md)：每项设置、你的国家、完整示例
-- [安装设置](docs/setup.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器
+- [安装设置](docs/setup.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器、来自模板的更新
 - [LinkedIn](docs/linkedin.md)：提醒导入、Chrome 搜索、Issue 表单、评分流程
 - [简历](docs/resumes.md)：生成、AI 防护措施、审计、隐私
 - [评分](docs/scoring.md)：分值、判定结果、硬性排除
