@@ -125,6 +125,8 @@ def test_possible_matches_get_an_unassigned_issue_without_a_resume(settings):
     assert gh.labels_of(number) == {"source:indeed", "match:possible", "status:new"}
     assert gh._issues[number]["assignee"] == ""
     assert "resume:tailor" in gh.comments_of(number)[0]
+    # The labels the README and this comment tell you to add exist, so the label picker offers them.
+    assert {"status:applied", "status:interview", "status:skipped", "resume:tailor"} <= gh.labels
 
 
 def test_extra_good_matches_wait_for_the_next_scan(settings):
