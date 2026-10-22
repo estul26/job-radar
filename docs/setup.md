@@ -173,8 +173,9 @@ link to edit it. To have them included instead, create a token once:
 With the token, CI also runs on the pull request by itself. Without it, close and reopen the pull
 request to run CI.
 
-**If the run says it couldn't open the pull request**, GitHub Actions isn't allowed to open pull
-requests in your copy. The run's summary has a link to open it yourself. Or tick **Settings →
+**If the run warns that it couldn't open the pull request**, GitHub Actions isn't allowed to open
+pull requests in your copy, which is how a new repository starts out. The update is ready anyway:
+the run's summary has a link to open it yourself. Or tick **Settings →
 Actions → General → Allow GitHub Actions to create and approve pull requests**, click **Save**, and
 run it again.
 

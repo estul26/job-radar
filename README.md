@@ -85,7 +85,9 @@ change the four `'UTC'` in `.github/workflows/daily-jobs.yml` to your timezone, 
 
 **Getting the template's fixes later.** Your copy doesn't change when this template gets fixes and
 improvements. To bring them in, open **Actions → Update from template → Run workflow**. It opens a
-pull request with the changes: look through it and click **Merge pull request**. It never changes
+pull request with the changes: look through it and click **Merge pull request**. (The first time,
+GitHub may not let it open one: the run then shows a warning, and its summary has a link to open
+the pull request yourself.) It never changes
 your settings, résumé or job data (`config/`, `resumes/master_resume.json`, `resumes/jobs/`,
 `data/`, `reports/`). Workflow files it isn't allowed to change are listed in the pull request,
 with what to paste. More in [docs/setup.md](docs/setup.md#5-updates-from-the-template).

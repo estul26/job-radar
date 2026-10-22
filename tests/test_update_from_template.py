@@ -343,7 +343,8 @@ def github(repos, tmp_path, monkeypatch):
     monkeypatch.setattr(tool, "SERVER", str(server))
     monkeypatch.setenv("GITHUB_REPOSITORY", "me/my-radar")
     monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
-    state = SimpleNamespace(calls=[], open_pr="", fail_create=False, origin=tmp_path / "origin.git")
+    # fail_create: the stderr `gh pr create` fails with, or "" for success.
+    state = SimpleNamespace(calls=[], open_pr="", fail_create="", origin=tmp_path / "origin.git")
 
     def gh(*args, data=None):
         state.calls.append((args[:2], data))
@@ -351,7 +352,7 @@ def github(repos, tmp_path, monkeypatch):
             return state.open_pr
         if args[:2] == ("pr", "create"):
             if state.fail_create:
-                raise subprocess.CalledProcessError(1, "gh", stderr="Actions is not permitted to create pull requests")
+                raise subprocess.CalledProcessError(1, "gh", stderr=state.fail_create)
             state.open_pr = "https://github.com/me/my-radar/pull/7"
             return state.open_pr
         return ""
@@ -381,12 +382,27 @@ def test_run_in_the_template_itself_does_nothing(github, monkeypatch):
     assert git(github.origin, "branch", "--list", tool.BRANCH) == ""
 
 
-def test_run_explains_how_to_open_the_pull_request_when_actions_cannot(github):
-    github.fail_create = True
-    assert tool.main(["--template", "o/job-radar"]) == 1
+def test_run_explains_how_to_open_the_pull_request_when_actions_cannot(github, capsys):
+    # What GitHub answers in a new repository, where workflows can't open pull requests yet.
+    github.fail_create = (
+        "pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull "
+        "requests (createPullRequest)"
+    )
+    # Expected on a first update, so the run warns instead of failing (and emailing a failure).
+    assert tool.main(["--template", "o/job-radar"]) == 0
+    assert "::warning::The update is ready" in capsys.readouterr().out
     summary = github.summary()
     assert f"/me/my-radar/compare/main...{tool.BRANCH}?expand=1" in summary
     assert "Allow GitHub Actions to create and approve pull requests" in summary
+
+
+def test_run_fails_when_the_pull_request_cant_be_opened_for_another_reason(github, capsys):
+    github.fail_create = "HTTP 502: Bad Gateway"
+    assert tool.main(["--template", "o/job-radar"]) == 1
+    assert "::error::Couldn't open the pull request" in capsys.readouterr().out
+    summary = github.summary()
+    assert f"/me/my-radar/compare/main...{tool.BRANCH}?expand=1" in summary
+    assert "Allow GitHub Actions" not in summary
 
 
 def test_run_when_up_to_date_closes_the_stale_pull_request(repos, github):
