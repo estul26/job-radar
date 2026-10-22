@@ -84,15 +84,21 @@ LinkedIn Job Review 表单 ────────┘                   │
 
 适合开发者，或想在推送前检查配置的用户。
 
-
 1. 点击 **Use this template → Create a new repository**，并设为 **私有（Private）**。你的副本会保存你的简历和求职记录。
    不要 Fork：公开仓库的 Fork 必须保持公开。
-2. 填写你的配置（[docs/configure.md](docs/configure.md)）：
+2. 克隆你的副本，而不是模板（副本页面上绿色的 **Code** 按钮会显示它的地址）：
+
+   ```bash
+   git clone https://github.com/YOUR-NAME/YOUR-COPY.git
+   cd YOUR-COPY
+   ```
+
+3. 填写你的配置（[docs/configure.md](docs/configure.md)）：
    - `config/search_config.yaml`：时区、国家、招聘网站、职位名称、地点，以及你所在行业的技能（英文）
    - `config/resume_profile.json`：你的工作年限、技能和证书
    - `resumes/master_resume.json`：生成简历所依据的事实，用英文填写（[填写说明](resumes/README.md)）
    - `.github/workflows/daily-jobs.yml` 和 `linkedin-email-alerts.yml` 中的 `timezone:` 行
-3. 检查配置：
+4. 检查配置：
 
    ```bash
    python -m venv .venv && source .venv/bin/activate   # Windows：.venv\Scripts\activate
@@ -102,10 +108,25 @@ LinkedIn Job Review 表单 ────────┘                   │
 
    在 `radar doctor` 报告没有问题之前，定时扫描会带着警告自动跳过。电脑上没有 Python？请改为按照
    [快速上手](#快速上手无需编程)操作：工作流的运行摘要会显示同样的 `radar doctor` 报告。
-4. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
-5. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描，然后查看 `reports/latest.md`。
-6. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。
-7. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)）。
+5. 推送你的配置。扫描在 GitHub 上运行，读取的是 GitHub 上你副本里的文件，而不是你电脑上的文件：
+
+   ```bash
+   git add config resumes/master_resume.json .github/workflows
+   git commit -m "Set up my job search"
+   git push
+   ```
+
+6. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
+7. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描。扫描会把结果提交到你的副本，所以先拉取，
+   再查看 `reports/latest.md`：
+
+   ```bash
+   git pull
+   ```
+
+   每天两次扫描都会提交，所以在电脑上修改任何文件之前也要先拉取，否则下次推送会被拒绝。
+8. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。
+9. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)）。
 
 ## 命令
 
