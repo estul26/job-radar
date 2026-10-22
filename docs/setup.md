@@ -17,6 +17,7 @@ with a warning.
 | `OPENAI_API_KEY` | AI wording in tailored résumés. Without it, résumés are still generated, deterministically. |
 | `LINKEDIN_IMAP_HOST`, `LINKEDIN_IMAP_USER`, `LINKEDIN_IMAP_PASSWORD` | Importing LinkedIn alert emails ([linkedin.md](linkedin.md)). |
 | `PROJECTS_TOKEN` | Only for the optional cloud board sync (see below). |
+| `TEMPLATE_UPDATE_TOKEN` | Optional: lets **Update from template** update workflow files too ([section 5](#5-updates-from-the-template)). |
 
 | Variable | Default | Effect |
 |---|---|---|
@@ -120,3 +121,67 @@ to start one.
 
 The tests use a filled-in setup for a made-up person in `tests/fixtures/`, so they pass
 whatever you put in `config/`.
+
+## 5. Updates from the template
+
+Fixes and improvements land in the template, [estul26/job-radar](https://github.com/estul26/job-radar).
+A copy made with **Use this template** doesn't get them by itself, and it doesn't share the
+template's git history, so they can't simply be merged. The **Update from template** workflow
+brings them in:
+
+1. **Actions → Update from template → Run workflow → Run workflow.**
+2. After a minute or so it opens a pull request, "Update from the template". Its description says
+   what changes, and **Files changed** shows every line.
+3. Click **Merge pull request**. If the description lists workflow files to update yourself, follow
+   its steps for each one.
+
+It runs only when you start it, as often as you like; running it again updates the open pull
+request. In the template itself it does nothing.
+
+**What it updates.** The template's own files: `src/`, `tests/`, `docs/`, `tools/`, the workflows,
+actions and Issue form in `.github/`, `pyproject.toml`, both READMEs, `LICENSE`, `.gitignore` and
+`resumes/README.md`. For each one it compares three versions: the template's when your copy was
+made (or last updated), yours, and the template's latest.
+
+| If | Then |
+|---|---|
+| Only you changed the file | Yours stays. |
+| Only the template changed it | The template's version is used. |
+| You both changed it, on different lines (say, your `timezone:` lines in `daily-jobs.yml`) | Both changes are kept. |
+| You both changed the same lines | The template's version is used, and the pull request shows your changes so you can add them back. |
+| You deleted it | It stays deleted. |
+
+**What it never changes.** `config/`, `resumes/master_resume.json`, `resumes/jobs/`,
+`resumes/index.csv`, `data/`, `reports/`, and any file the template doesn't have. When the
+template's example settings in `config/` change, the pull request links to the change, so you can
+copy a new setting into your own file. The template version you're on is recorded in
+`.github/template-version` (don't edit it), so the next update knows which changes are yours.
+
+**Workflow files.** A workflow's standard token isn't allowed to change files in
+`.github/workflows/`. So by default those are left out of the pull request, and its description
+gives each one's new version to paste (with your own changes, such as your timezone, kept) and a
+link to edit it. To have them included instead, create a token once:
+
+1. On GitHub, click your picture → **Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token**.
+2. Under **Repository access**, choose **Only select repositories** and pick your copy. Under
+   **Permissions**, add **Contents**, **Pull requests** and **Workflows**, each with **Read and
+   write**. Choose an expiry date and click **Generate token**.
+3. In your copy, **Settings → Secrets and variables → Actions → New repository secret**: name it
+   `TEMPLATE_UPDATE_TOKEN` and paste the token.
+
+With the token, CI also runs on the pull request by itself. Without it, close and reopen the pull
+request to run CI.
+
+**If the run says it couldn't open the pull request**, GitHub Actions isn't allowed to open pull
+requests in your copy. The run's summary has a link to open it yourself. Or tick **Settings →
+Actions → General → Allow GitHub Actions to create and approve pull requests**, click **Save**, and
+run it again.
+
+**On your computer**, start it with `gh workflow run update-from-template.yml`, then try the update
+before merging it:
+
+```bash
+gh pr checkout update-from-template
+pytest && radar doctor
+```
