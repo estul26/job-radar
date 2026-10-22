@@ -98,13 +98,20 @@ For developers, or to check your setup before you push it.
 
 1. **Use this template → Create a new repository**, and make it **Private**. Your copy will hold
    your résumés and job search. Don't fork: a fork of a public repository has to stay public.
-2. Fill in your setup ([docs/configure.md](docs/configure.md)):
+2. Clone your copy, not the template (the green **Code** button on its page shows the address):
+
+   ```bash
+   git clone https://github.com/YOUR-NAME/YOUR-COPY.git
+   cd YOUR-COPY
+   ```
+
+3. Fill in your setup ([docs/configure.md](docs/configure.md)):
    - `config/search_config.yaml`: your timezone, country, job boards, job titles, places, and the
      skills of your field
    - `config/resume_profile.json`: your years of experience, skills and certifications
    - `resumes/master_resume.json`: the facts your résumés are built from ([how](resumes/README.md))
    - the `timezone:` lines in `.github/workflows/daily-jobs.yml` and `linkedin-email-alerts.yml`
-3. Check it:
+4. Check it:
 
    ```bash
    python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
@@ -115,12 +122,29 @@ For developers, or to check your setup before you push it.
    Until `radar doctor` reports no problems, the scheduled scans skip themselves with a
    warning. No Python on your computer? Follow the [quick start](#quick-start-no-coding) instead:
    the workflow's summary shows the same `radar doctor` report.
-4. Optionally add the secrets in [docs/setup.md](docs/setup.md): an OpenAI key for AI résumé
+5. Push your setup. The scans run on GitHub and read your copy there, not the files on your
+   computer:
+
+   ```bash
+   git add config resumes/master_resume.json .github/workflows
+   git commit -m "Set up my job search"
+   git push
+   ```
+
+6. Optionally add the secrets in [docs/setup.md](docs/setup.md): an OpenAI key for AI résumé
    wording, a mailbox for LinkedIn alerts.
-5. **Actions → Daily Job Radar → Run workflow** to scan once, then read `reports/latest.md`.
-6. Optional: [LinkedIn alerts and the Chrome search](docs/linkedin.md), the [board sync and
+7. **Actions → Daily Job Radar → Run workflow** to scan once. The scan commits its results to
+   your copy, so pull them, then read `reports/latest.md`:
+
+   ```bash
+   git pull
+   ```
+
+   Every scan commits, twice a day, so pull before you change anything on your computer too, or
+   your next push is refused.
+8. Optional: [LinkedIn alerts and the Chrome search](docs/linkedin.md), the [board sync and
    the Mac scan trigger](docs/setup.md#2-the-job-search-board).
-7. Later, bring in the template's fixes with **Actions → Update from template**
+9. Later, bring in the template's fixes with **Actions → Update from template**
    ([how](docs/setup.md#5-updates-from-the-template)).
 
 ## Commands
