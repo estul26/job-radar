@@ -109,7 +109,7 @@ def resume_rows(resume_dir: Path, applications: list[dict[str, Any]]) -> list[di
                 "resume_docx": str(metadata.get("resume_docx", "")),
                 "status": (application or {}).get("status", ""),
                 "ai_used": "Yes" if ai.get("used") else "No",
-                "ai_model": str(ai.get("model", "")),
+                "ai_model": str(ai.get("model", "")) if ai.get("used") else "",
             }
         )
     return rows

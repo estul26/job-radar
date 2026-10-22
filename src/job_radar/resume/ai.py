@@ -403,6 +403,23 @@ def _validator_input(
     )
 
 
+# How a résumé's wording was made, for the Issue comments and tailoring notes: "AI wording: <this>".
+# ai_audit.json keeps the status itself (docs/resumes.md lists them).
+_OWN_WORDING = "so it uses your master résumé's wording"
+AI_WORDING = {
+    "ai_validated": "reworded by {model} and checked against your master résumé",
+    "disabled": f"off (AI_RESUME_ENABLED is false), {_OWN_WORDING}",
+    "fallback_missing_api_key": f"off, {_OWN_WORDING} (optional: add an OpenAI key, see docs/setup.md)",
+    "fallback_rule_validation_failed": f"not used: its rewording failed the rule checks, {_OWN_WORDING}",
+    "fallback_ai_fact_check_failed": f"not used: the fact check rejected its rewording, {_OWN_WORDING}",
+    "fallback_ai_error": f"not used: the OpenAI request failed, {_OWN_WORDING}",
+}
+
+
+def describe_ai(status: str, model: str) -> str:
+    return AI_WORDING.get(status, f"not used, {_OWN_WORDING}").format(model=model or "AI")
+
+
 def enhance_resume_with_ai(
     master: dict[str, Any],
     job: dict[str, Any],

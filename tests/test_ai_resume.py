@@ -4,6 +4,7 @@ from job_radar.issue_body import parse_job
 from job_radar.matcher import Vocabulary, score_job
 from job_radar.resume.ai import (
     apply_ai_payload,
+    describe_ai,
     enhance_resume_with_ai,
     selected_bullet_catalog,
     validate_ai_payload,
@@ -124,3 +125,6 @@ def test_missing_api_key_falls_back_without_failure():
     assert content == baseline
     assert audit["used"] is False
     assert audit["status"] == "fallback_missing_api_key"
+    # What the Issue comment says: plain words and where to set it up, not the model it would have used.
+    said = describe_ai(audit["status"], audit["model"])
+    assert said.startswith("off") and "docs/setup.md" in said and "gpt" not in said

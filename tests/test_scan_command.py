@@ -90,6 +90,9 @@ def test_good_matches_get_an_assigned_issue_with_their_resume(settings):
     assert gh.labels_of(number) == {"source:indeed", "match:good", "status:new", "resume:ready"}
     assert gh._issues[number]["assignee"] == "owner"
     assert "/blob/main/" in gh.comments_of(number)[0]
+    # AI is off in these tests: the comment says so in words, without a model name or status code.
+    assert "**AI wording:** off" in gh.comments_of(number)[0]
+    assert "gpt" not in gh.comments_of(number)[0] and "validation status" not in gh.comments_of(number)[0]
     # Any job board gets the same kind of Issue, named after the board.
     assert gh.issue(other)["title"] == "[Glassdoor Job] Telehealth Staff Nurse — Contoso Care"
     assert gh.labels_of(other) == {"source:glassdoor", "match:possible", "status:new"}

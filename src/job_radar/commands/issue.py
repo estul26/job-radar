@@ -19,6 +19,7 @@ from ..issue_body import PLACEHOLDER_MARKER, parse_job
 from ..labels import LABELS, is_job_title
 from ..matcher import score_job
 from ..models import Verdict, classify
+from ..resume.ai import describe_ai
 from ..resume.pipeline import generate_resume
 from ..settings import Settings, load_json
 from .doctor import resume_ready, setup_problems
@@ -183,12 +184,9 @@ def resume_comment(repo: str, result: dict[str, Any]) -> str:
             f"- [Resume source (Markdown)]({link('resume_markdown')})",
             f"- [Application resume (DOCX)]({link('resume_docx')})",
             f"- Master version: {result.get('master_version', '')}",
-            f"- AI used: {str(bool(result.get('ai_used'))).lower()}",
-            f"- AI model: {result.get('ai_model', '')}",
-            f"- AI validation status: {result.get('ai_status', '')}",
+            f"- AI wording: {describe_ai(result.get('ai_status', ''), result.get('ai_model', ''))}",
             "",
-            "AI wording is accepted only after deterministic checks and a separate factual-verification pass. "
-            "If validation fails, the deterministic resume is used.",
+            "Every fact in the résumé comes from your master résumé.",
         ]
     )
 
