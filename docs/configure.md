@@ -66,7 +66,7 @@ and 1 point if it matches none.
 | `fresh_hours` | 24 | Postings this new get full freshness points. |
 | `remote_score` | 5 | Location points for a remote job. |
 | `hard_reject_unrelated_titles` | true | Reject titles that are neither in `titles` nor related through `matching`. |
-| `hard_reject_title_terms` | | Reject titles containing these, e.g. `senior`, `manager`. |
+| `hard_reject_title_terms` | | Reject titles containing these, e.g. `senior`, `manager`. Add abbreviations too (`sr`, `snr`): job titles use them. |
 | `hard_reject_min_years` | 5 | Reject postings that ask for this many years or more. |
 
 ### `matching`

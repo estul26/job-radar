@@ -88,6 +88,8 @@ ranking:
   # Reject titles containing any of these (seniority you're not ready for, say).
   hard_reject_title_terms: []
   #  - senior
+  #  - sr
+  #  - snr
   #  - head of
   #  - director
   # Reject postings that ask for at least this many years of experience.
@@ -104,7 +106,7 @@ matching:
   #  excel: [excel, spreadsheets]
   #  month-end close: [month-end close, month end, monthly close]
   #  financial statements: [financial statements, statutory accounts]
-  #  reconciliations: [reconciliations, bank reconciliation, reconciling]
+  #  reconciliations: [reconciliations, reconcile, bank reconciliation, reconciling]
   #  communication: []
 
   # Skills that nearly every posting mentions: they're reported, but don't count as core
