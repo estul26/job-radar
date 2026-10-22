@@ -9,6 +9,8 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Inches, Pt
 
+from .ai import describe_ai
+
 
 def _joined(*parts: Any) -> str:
     return " | ".join(str(part).strip() for part in parts if str(part or "").strip())
@@ -217,9 +219,7 @@ def tailoring_notes(
             f"- Emphasized matched skills: {values('matched_skills')}",
             f"- Missing core skills NOT added to resume: {values('missing_skills')}",
             f"- Optional gaps NOT added to resume: {values('optional_missing_skills')}",
-            f"- AI model: {ai_audit.get('model', '')}",
-            f"- AI used: {'Yes' if ai_audit.get('used') else 'No'}",
-            f"- AI status: {ai_audit.get('status', '')}",
+            f"- AI wording: {describe_ai(ai_audit.get('status', ''), ai_audit.get('model', ''))}",
             "",
             "Policy: deterministic selection happens first. AI may improve wording only inside the "
             "master-resume factual whitelist. Rule checks and a second AI factual-verification pass "

@@ -108,6 +108,13 @@ def test_soft_skills_alone_do_not_earn_full_skill_points():
     assert "communication" in scored["matched_skills"]
 
 
+def test_a_missing_soft_skill_is_an_optional_gap_not_a_missing_core_skill():
+    profile = {**PROFILE, "skills": [skill for skill in PROFILE["skills"] if skill != "teamwork"]}
+    scored = score_job(job("Registered Nurse", "Wound care and teamwork required."), profile, CONFIG)
+    assert scored["missing_skills"] == []
+    assert scored["optional_missing_skills"] == ["teamwork"]
+
+
 def test_reject_terms_respect_word_boundaries():
     scored = score_job(job("Registered Nurse - Leading Care Home"), PROFILE, CONFIG)
     assert "lead" not in scored["hard_reject_reasons"]

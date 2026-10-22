@@ -54,7 +54,9 @@ def collect_jobs(config: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str
     if not frames:
         return [], errors
 
-    combined = pd.concat(frames, ignore_index=True, sort=False)
+    # A search can return a column that's empty in all its jobs (no salaries, say). pandas is changing how
+    # concat types those, so drop them first: normalize_dataframe treats a missing column as empty anyway.
+    combined = pd.concat([frame.dropna(axis=1, how="all") for frame in frames], ignore_index=True, sort=False)
     jobs = normalize_dataframe(combined)
     jobs = filter_excluded_titles(jobs, search.get("exclude_title_terms", []))
     return jobs, errors

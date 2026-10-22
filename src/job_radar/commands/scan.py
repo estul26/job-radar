@@ -21,6 +21,7 @@ from ..matcher import score_job
 from ..models import Verdict, classify
 from ..normalize import normalize_dataframe
 from ..report import build_report, write_report
+from ..resume.ai import describe_ai
 from ..resume.pipeline import generate_resume
 from ..settings import Settings, load_json
 from ..state import load_seen, prune_seen, save_seen, update_seen
@@ -162,15 +163,12 @@ def match_comment(repo: str, job: dict[str, Any], resume: dict[str, Any] | None)
     ]
     if resume:
         lines += [
-            f"**AI used:** {str(bool(resume.get('ai_used'))).lower()}",
-            f"**AI model:** {text(resume, 'ai_model')}",
-            f"**AI validation status:** {text(resume, 'ai_status')}",
+            f"**AI wording:** {describe_ai(text(resume, 'ai_status'), text(resume, 'ai_model'))}",
             "",
             f"- [Resume source (Markdown)](https://github.com/{repo}/blob/main/{text(resume, 'resume_markdown')})",
             f"- [Application resume (DOCX)](https://github.com/{repo}/blob/main/{text(resume, 'resume_docx')})",
             "",
-            "The resume was generated from the master-resume factual whitelist. "
-            "AI wording is used only when both validation layers pass.",
+            "Every fact in the résumé comes from your master résumé.",
         ]
     else:
         lines += ["", "No résumé was generated for this match. Add the `resume:tailor` label to generate one."]
