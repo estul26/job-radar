@@ -16,7 +16,7 @@ import pandas as pd
 
 from ..github import GitHub
 from ..issue_body import fingerprint_marker, parse_job, render_board_job
-from ..labels import board_name, is_job_title
+from ..labels import STATUSES, board_name, is_job_title, status_label
 from ..matcher import score_job
 from ..models import Verdict, classify
 from ..normalize import normalize_dataframe
@@ -28,6 +28,9 @@ from .doctor import resume_ready
 
 MATCH_MARKER = "<!-- job-radar:board-match -->"
 MATCH_LABELS = ["match:good", "match:possible", "status:new", "resume:ready"]
+# Labels you add to a job Issue by hand. GitHub's label picker only offers labels that already exist,
+# so they're created along with the first Issues.
+HAND_LABELS = [*(status_label(status) for status in STATUSES), "resume:tailor"]
 
 
 def load_fixture(path: str | Path) -> list[dict[str, Any]]:
@@ -179,7 +182,7 @@ def sync_board_issues(gh: GitHub, matches: list[dict[str, Any]], resumes: dict[s
     if not matches:
         return []
     sources = sorted({f"source:{str(job.get('source') or '').strip().lower()}" for job in matches})
-    gh.ensure_labels([*sources, *MATCH_LABELS])
+    gh.ensure_labels([*sources, *MATCH_LABELS, *HAND_LABELS])
     existing: dict[str, int] = {}
     for issue in gh.issues():
         fingerprint = fingerprint_marker(str(issue.get("body", "")))
