@@ -631,15 +631,25 @@ def main(argv: list[str] | None = None) -> int:
     except subprocess.CalledProcessError as error:
         print(error.stderr, file=sys.stderr)
         compare = f"{SERVER}/{repo}/compare/{args.base}...{BRANCH}?expand=1"
-        print("::error::Couldn't open the pull request. See this run's summary.")
+        # A new repository doesn't let workflows open pull requests, so the first update usually lands here.
+        # The update is ready either way: warn rather than fail, which would also email a failure.
+        blocked = "is not permitted to create" in (error.stderr or "")
+        if blocked:
+            print("::warning::The update is ready. Open its pull request from this run's summary.")
+            how = (
+                f"Either [open the pull request yourself]({compare}), or let workflows open it: tick "
+                "**Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**, "
+                "click **Save**, and run Update from template again."
+            )
+        else:
+            print("::error::Couldn't open the pull request. See this run's summary.")
+            how = f"GitHub refused to open it (the run's log says why). [Open the pull request yourself]({compare})."
         summarize(
             "## The update is ready, but the pull request couldn't be opened\n\n"
-            f"Your update is on the `{BRANCH}` branch. Either [open the pull request yourself]({compare}), "
-            "or let workflows open it: tick **Settings → Actions → General → Allow GitHub Actions to create "
-            "and approve pull requests**, click **Save**, and run Update from template again.\n\n"
+            f"Your update is on the `{BRANCH}` branch. {how}\n\n"
             f"{render_body(update, links, include, token_problem=token_problem)}"
         )
-        return 1
+        return 0 if blocked else 1
     summarize(
         f"## [Review and merge the update]({url})\n\n"
         + render_body(update, links, include, token_problem=token_problem)
