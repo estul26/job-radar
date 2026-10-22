@@ -76,7 +76,7 @@ The words of your field. Scoring finds them in postings and compares them with y
 | Key | Meaning |
 |---|---|
 | `skills` | Each skill, and the phrases that mean a posting asks for it. A skill with no phrases (`wound care: []`) is looked for by its own name. |
-| `soft_skills` | Skill names nearly every posting mentions. They're reported but aren't core requirements. |
+| `soft_skills` | Skill names nearly every posting mentions. They aren't core requirements: a missing one is listed with the optional gaps. |
 | `certifications` | Each certification or licence, and the phrases that mean a posting asks for it. |
 | `related_title_keywords` | Words that make a title related when it isn't one of your `titles`. |
 | `context_title_keywords`, `context_words` | Words that count as related only next to a context word. |

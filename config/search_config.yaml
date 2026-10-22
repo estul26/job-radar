@@ -109,8 +109,8 @@ matching:
   #  reconciliations: [reconciliations, reconcile, bank reconciliation, reconciling]
   #  communication: []
 
-  # Skills that nearly every posting mentions: they're reported, but don't count as core
-  # requirements.
+  # Skills that nearly every posting mentions: they don't count as core requirements, so a
+  # missing one is listed with the optional gaps.
   soft_skills: []
   #  - communication
 

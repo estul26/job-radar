@@ -211,9 +211,14 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
     profile_skills = {s.lower() for s in profile.get("skills", [])}
 
     matched_required_skills = sorted(skill for skill in required_skills if skill.lower() in profile_skills)
-    missing_skills = sorted(skill for skill in required_skills if skill.lower() not in profile_skills)
+    missing = {skill for skill in required_skills if skill.lower() not in profile_skills}
+    # A soft skill isn't a core requirement, so a missing one is reported with the optional gaps.
+    soft_missing = {skill for skill in missing if skill.lower() in vocab.soft_skills}
+    missing_skills = sorted(missing - soft_missing)
     matched_optional_skills = sorted(skill for skill in optional_skills if skill.lower() in profile_skills)
-    optional_missing_skills = sorted(skill for skill in optional_skills if skill.lower() not in profile_skills)
+    optional_missing_skills = sorted(
+        {skill for skill in optional_skills if skill.lower() not in profile_skills} | soft_missing
+    )
     matched_skills = sorted(set(matched_required_skills) | set(matched_optional_skills))
 
     core_required = {s for s in required_skills if s.lower() not in vocab.soft_skills}

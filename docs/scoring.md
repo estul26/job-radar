@@ -15,8 +15,8 @@ same score, and the reasons are listed on every report entry and review comment.
 | Location | 5 | `ranking.remote_score` for a remote job; otherwise the `score` of the best `search.locations` entry whose `match` phrases are in its location; 1 when none match |
 
 Skills listed after a "nice to have" or "preferred qualifications" heading are reported as
-optional gaps and don't lower the score. `matching.soft_skills` (communication, say) are
-reported but don't count as core requirements.
+optional gaps and don't lower the score. `matching.soft_skills` (communication, say) don't count
+as core requirements either: a missing one is reported with the optional gaps.
 
 `matching.context_title_keywords` count towards the title only when the title also has one of
 `matching.context_words`. That keeps a common word from making an unrelated title look like
