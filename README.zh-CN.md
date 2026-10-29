@@ -72,14 +72,14 @@ LinkedIn Job Review 表单 ────────┘                   │
 
 可选：扫描默认在 UTC 时间早上约 7 点和下午约 4 点运行。若想按你所在时区的这些时间运行，把
 `.github/workflows/daily-jobs.yml` 中的四处 `'UTC'` 改成你的时区，例如 `'Europe/London'`。
-如需 AI 润色简历措辞，请按照 [docs/setup.md](docs/setup.md)（英文）添加 OpenAI 密钥。
+如需 AI 润色简历措辞，请按照[安装设置](docs/setup.zh-CN.md)添加 OpenAI 密钥。
 
 **之后获取模板的修复。** 本模板之后的修复和改进不会自动进入你的副本。要获取它们，打开
 **Actions → Update from template → Run workflow**。它会创建一个包含这些更改的 Pull Request：查看后点击
 **Merge pull request** 即可。（第一次运行时，GitHub 可能不允许它创建 Pull Request：这时运行会显示一条警告，
 运行摘要里有链接，点开即可自己创建。）它不会改动你的设置、简历或求职数据（`config/`、`resumes/master_resume.json`、
 `resumes/jobs/`、`data/`、`reports/`）。它无权修改的工作流文件会列在 Pull Request 中，并附上要粘贴的内容。
-更多说明见 [docs/setup.md](docs/setup.md#5-updates-from-the-template)（英文）。
+更多说明见[安装设置](docs/setup.zh-CN.md#5-从模板获取更新)。
 
 ## 用起来之后
 
@@ -116,7 +116,7 @@ LinkedIn Job Review 表单 ────────┘                   │
    cd YOUR-COPY
    ```
 
-3. 填写你的配置（[docs/configure.md](docs/configure.md)，英文）：
+3. 填写你的配置（[配置说明](docs/configure.zh-CN.md)）：
    - `config/search_config.yaml`：时区、国家、招聘网站、职位名称、地点，以及你所在行业的技能（英文）
    - `config/resume_profile.json`：你的工作年限、技能和证书
    - `resumes/master_resume.json`：生成简历所依据的事实，用英文填写（[填写说明](resumes/README.zh-CN.md)）
@@ -139,7 +139,7 @@ LinkedIn Job Review 表单 ────────┘                   │
    git push
    ```
 
-6. 可选：添加 [docs/setup.md](docs/setup.md)（英文）中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
+6. 可选：添加[安装设置](docs/setup.zh-CN.md)中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
 7. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描。扫描会把结果提交到你的副本，所以先拉取，
    再查看 `reports/latest.md`：
 
@@ -148,8 +148,8 @@ LinkedIn Job Review 表单 ────────┘                   │
    ```
 
    每天两次扫描都会提交，所以在电脑上修改任何文件之前也要先拉取，否则下次推送会被拒绝。
-8. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)（均为英文）。
-9. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)，英文）。
+8. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)（英文）、[看板同步和 Mac 扫描触发器](docs/setup.zh-CN.md#2-job-search-看板)。
+9. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.zh-CN.md#5-从模板获取更新)）。
 
 ## 命令
 
@@ -188,14 +188,15 @@ pytest && ruff check .
 
 ## 文档
 
-下面的文档目前只有英文版。主简历的填写说明有[中文版](resumes/README.zh-CN.md)。
+配置、安装设置和主简历填写说明有中文版；其余文档目前只有英文版。
 
-- [配置](docs/configure.md)：每项设置、你的国家、完整示例
-- [安装设置](docs/setup.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器、来自模板的更新
-- [LinkedIn](docs/linkedin.md)：提醒导入、Chrome 搜索、Issue 表单、评分流程
-- [简历](docs/resumes.md)：生成、AI 防护措施、审计、隐私
-- [评分](docs/scoring.md)：分值、判定结果、硬性排除
-- [架构](docs/architecture.md)：流水线、代码结构、状态文件
+- [配置](docs/configure.zh-CN.md)：每项设置、你的国家、完整示例
+- [安装设置](docs/setup.zh-CN.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器、来自模板的更新
+- [主简历填写说明](resumes/README.zh-CN.md)：`master_resume.json` 每个字段填什么，附示例
+- [LinkedIn](docs/linkedin.md)（英文）：提醒导入、Chrome 搜索、Issue 表单、评分流程
+- [简历](docs/resumes.md)（英文）：生成、AI 防护措施、审计、隐私
+- [评分](docs/scoring.md)（英文）：分值、判定结果、硬性排除
+- [架构](docs/architecture.md)（英文）：流水线、代码结构、状态文件
 
 ## 使用之前
 
