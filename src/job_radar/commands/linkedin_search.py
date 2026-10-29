@@ -166,7 +166,7 @@ def main(
     chrome: Chrome | None = None,
     stamp: Path = LAST_RUN_STAMP,
 ) -> int:
-    from ..settings import load_yaml
+    from ..settings import load_config
     from .linkedin_import import cards_from_jobs, publish_cards
 
     reason = refusal(force=force, setup_check=setup_check, stamp=stamp, now=datetime.now(timezone.utc))
@@ -188,7 +188,7 @@ def main(
         print("Setup check passed: Chrome control and the LinkedIn sign-in are ready.")
         return 0
 
-    searches, left_out = plan_searches(load_yaml("config/search_config.yaml") or {}, max_queries)
+    searches, left_out = plan_searches(load_config(), max_queries)
     if not searches:
         print(
             "Nothing to search: add search.titles (or search.queries) and a `linkedin:` location to at least one "

@@ -96,9 +96,9 @@ def main(path: str | Path, *, dry_run: bool = False) -> int:
 def publish_cards(cards: list[dict[str, str]], *, dry_run: bool = False) -> int:
     """A "[LinkedIn Job]" Issue for each new on-target card (or, in a dry run, a list of them)."""
     from ..github import GitHub
-    from ..settings import load_yaml
+    from ..settings import load_config
 
-    config = load_yaml("config/search_config.yaml")
+    config = load_config()
     gh = GitHub()
     if not dry_run and cards:
         gh.ensure_labels(["needs:description"])

@@ -149,8 +149,8 @@ pull request and are used from the next update on. If your copy's script is ever
 
 **What it updates.** The template's own files: `src/`, `tests/`, `docs/`, `tools/`, the workflows,
 actions and Issue form in `.github/`, `pyproject.toml`, both READMEs, `LICENSE`, `.gitignore` and
-`resumes/README.md`. For each one it compares three versions: the template's when your copy was
-made (or last updated), yours, and the template's latest.
+the résumé guide in `resumes/` (English and Chinese). For each one it compares three versions: the
+template's when your copy was made (or last updated), yours, and the template's latest.
 
 | If | Then |
 |---|---|

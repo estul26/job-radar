@@ -77,7 +77,7 @@ The words of your field. Scoring finds them in postings and compares them with y
 
 | Key | Meaning |
 |---|---|
-| `skills` | Each skill, and the phrases that mean a posting asks for it. A skill with no phrases (`wound care: []`) is looked for by its own name. |
+| `skills` | Each skill, and the phrases that mean a posting asks for it. A skill with no phrases (`wound care: []`) is looked for by its own name, and so is each name in a plain list (`- wound care`). |
 | `soft_skills` | Skill names nearly every posting mentions. They aren't core requirements: a missing one is listed with the optional gaps. |
 | `certifications` | Each certification or licence, and the phrases that mean a posting asks for it. |
 | `related_title_keywords` | Words that make a title related when it isn't one of your `titles`. |
@@ -175,6 +175,7 @@ matching:
 }
 ```
 
-With this, a "Registered Nurse - Medical/Surgical" posting in Toronto that asks for two years,
-patient assessment, medication administration, wound care and BLS scores 97. One that also asks
-for Epic and ACLS scores 83 and lists both as missing.
+With this, a "Registered Nurse - Medical/Surgical" posting in Toronto, posted today, that asks for
+two years, patient assessment, medication administration, wound care and BLS scores 100. One that
+also asks for Epic and ACLS scores 86 and lists both as missing. (Without a posting date, both
+score 3 less.)

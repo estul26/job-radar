@@ -19,11 +19,11 @@ LinkedIn Job Review 表单 ────────┘                   │
   LinkedIn 职位来自 LinkedIn 自己的提醒邮件、`radar linkedin-search`（在你的 Mac 上、在你已登录的 Chrome 中手动运行），
   或 **LinkedIn Job Review** Issue 表单。
 - **评分。** 确定性且可解释：根据你配置的职位名称、技能和地点，比对职位名称、经验、技能、证书、发布时间和地点。
-  详见 [docs/scoring.md](docs/scoring.md)。
+  详见 [docs/scoring.md](docs/scoring.md)（英文）。
 - **跟踪。** 每个高匹配和可能匹配的职位都是一个 Issue，高匹配的会指派给你。Issue 的 `status:*` 标签就是申请状态：
   修改标签或在看板上拖动卡片即可。每次扫描后，`data/applications.csv` 会从这些 Issue 导出。
 - **简历。** 高匹配职位会获得一份基于 `resumes/master_resume.json` 生成的简历。AI 可以润色措辞，
-  但只有通过事实核查的措辞才会被采用。详见 [docs/resumes.md](docs/resumes.md)。
+  但只有通过事实核查的措辞才会被采用。详见 [docs/resumes.md](docs/resumes.md)（英文）。
 
 它不会替你投递，也不会给任何人发消息。所有流程都在 GitHub Actions 上运行，因此任何电脑（Windows、Linux 或 Mac）都能使用；
 只有可选的 Chrome 搜索和备用扫描触发器需要 Mac。
@@ -41,8 +41,9 @@ LinkedIn Job Review 表单 ────────┘                   │
    - 设置 `timezone`，例如 `timezone: Europe/London`（[时区名称列表](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)）；
    - 设置国家，例如 `country_indeed: "UK"`；
    - 在 `titles` 下列出你想要的职位名称（英文），每行一个，以 `- ` 开头；
-   - 在 `locations` 下按照示例的格式添加你想工作的地点；
-   - 在 `matching` → `skills` 下列出你所在行业的职位广告常要求的技能（英文）。
+   - 在 `locations` 下按照示例的格式添加你想工作的地点（给某个地点加上 `distance: 25`，就只搜索它周围 25 英里以内）；
+   - 在 `matching` → `skills` 下添加你所在行业的职位广告常要求的技能（英文），每行写一个名称加冒号：
+     `excel: []` 表示查找 "excel" 这个词，`excel: [excel, spreadsheets]` 表示两个词中任意一个。
 
    点击 **Commit changes**，再点一次 **Commit changes**。
 3. **描述你自己。** 用同样的方式编辑 `config/resume_profile.json`。引号和逗号请严格按示例保留；
@@ -58,7 +59,7 @@ LinkedIn Job Review 表单 ────────┘                   │
    ```
 
 4. **填写简历信息（可选）。** 填写 `resumes/master_resume.json`，即可为每个高匹配职位生成定制简历
-   （[填写说明](resumes/README.md)）。跳过这一步也能收到匹配的职位。
+   （[填写说明](resumes/README.zh-CN.md)）。跳过这一步也能收到匹配的职位。
 5. **运行。** 打开 **Actions** 标签页，点击左侧的 **Daily Job Radar**，然后点击 **Run workflow → Run workflow**。
    几分钟后打开这次运行，查看它的 **Summary（摘要）**：
    - 如果显示 "Set up Job Radar first"，里面会列出还缺少的内容。改好后再运行一次。
@@ -71,14 +72,36 @@ LinkedIn Job Review 表单 ────────┘                   │
 
 可选：扫描默认在 UTC 时间早上约 7 点和下午约 4 点运行。若想按你所在时区的这些时间运行，把
 `.github/workflows/daily-jobs.yml` 中的四处 `'UTC'` 改成你的时区，例如 `'Europe/London'`。
-如需 AI 润色简历措辞，请按照 [docs/setup.md](docs/setup.md) 添加 OpenAI 密钥。
+如需 AI 润色简历措辞，请按照 [docs/setup.md](docs/setup.md)（英文）添加 OpenAI 密钥。
 
 **之后获取模板的修复。** 本模板之后的修复和改进不会自动进入你的副本。要获取它们，打开
 **Actions → Update from template → Run workflow**。它会创建一个包含这些更改的 Pull Request：查看后点击
 **Merge pull request** 即可。（第一次运行时，GitHub 可能不允许它创建 Pull Request：这时运行会显示一条警告，
 运行摘要里有链接，点开即可自己创建。）它不会改动你的设置、简历或求职数据（`config/`、`resumes/master_resume.json`、
 `resumes/jobs/`、`data/`、`reports/`）。它无权修改的工作流文件会列在 Pull Request 中，并附上要粘贴的内容。
-更多说明见 [docs/setup.md](docs/setup.md#5-updates-from-the-template)。
+更多说明见 [docs/setup.md](docs/setup.md#5-updates-from-the-template)（英文）。
+
+## 用起来之后
+
+- **定制简历在哪里。** 每个高匹配职位的 Issue 下面都有一条评论，里面有简历链接。点开
+  **Application resume (DOCX)**，再点文件右上角的下载按钮。投递前请先通读一遍。所有简历也都在
+  `resumes/jobs/` 里，每个职位一个文件夹。
+- **匹配太少或不对？** 每次运行的 **Summary**（以及 `reports/latest.md`）会列出新职位和它们的评分说明，
+  "Automatically excluded" 下面还会写明每个职位被排除的原因。大多数调整都在 `config/search_config.yaml` 里：
+  把雇主实际使用的职位名加进 `titles`（和 `queries`），把职位常要求的技能加进 `matching.skills`，从
+  `hard_reject_title_terms` 里去掉不该排除的词，或者把 `good_match_threshold` 稍微调低。改动从下一次扫描开始生效；
+  已经见过的职位不会重新评分。
+- **想找两类工作？**（比如网络安全和 IT 支持）每类建一个副本，各自有自己的职位名、技能和档案。每个副本有自己的
+  Issue、扫描和简历。每个副本的 `resumes/master_resume.json` 里填同样的事实，有变化时要全部更新。
+- **搬家了？** 修改 `config/search_config.yaml` 里的 `locations`。如果新地点在另一个时区，还要改同一个文件里的
+  `timezone`，以及 `.github/workflows/daily-jobs.yml` 和 `linkedin-email-alerts.yml` 里的 `timezone:` 行：
+  GitHub 只从 workflow 文件里读取扫描时间。
+- **费用。** 私有仓库会消耗 GitHub Actions 分钟数。一个副本每月大约需要 200 分钟（每天两次扫描，加上几次跳过
+  重复扫描的短运行），GitHub 免费版每月为私有仓库提供 2,000 分钟；你的额度见 GitHub **Settings → Billing**。
+- **暂停。** 打开 **Actions → Daily Job Radar**，点右上角的 **⋯**，选 **Disable workflow**（如果开了
+  **Import LinkedIn Job Alerts**，也同样停用）。重新 Enable 即可继续，停用期间不会丢失任何数据。
+- **收不到新匹配的邮件？** GitHub 会为指派给你的 Issue 发邮件。在 GitHub **Settings → Notifications** 里，确认
+  **Participating, @mentions and custom** 下勾选了 **Email**。
 
 ## 开始使用（在你的电脑上）
 
@@ -93,10 +116,10 @@ LinkedIn Job Review 表单 ────────┘                   │
    cd YOUR-COPY
    ```
 
-3. 填写你的配置（[docs/configure.md](docs/configure.md)）：
+3. 填写你的配置（[docs/configure.md](docs/configure.md)，英文）：
    - `config/search_config.yaml`：时区、国家、招聘网站、职位名称、地点，以及你所在行业的技能（英文）
    - `config/resume_profile.json`：你的工作年限、技能和证书
-   - `resumes/master_resume.json`：生成简历所依据的事实，用英文填写（[填写说明](resumes/README.md)）
+   - `resumes/master_resume.json`：生成简历所依据的事实，用英文填写（[填写说明](resumes/README.zh-CN.md)）
    - `.github/workflows/daily-jobs.yml` 和 `linkedin-email-alerts.yml` 中的 `timezone:` 行
 4. 检查配置：
 
@@ -116,7 +139,7 @@ LinkedIn Job Review 表单 ────────┘                   │
    git push
    ```
 
-6. 可选：添加 [docs/setup.md](docs/setup.md) 中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
+6. 可选：添加 [docs/setup.md](docs/setup.md)（英文）中的 Secrets，例如用于 AI 简历润色的 OpenAI 密钥、用于 LinkedIn 提醒的邮箱。
 7. 打开 **Actions → Daily Job Radar → Run workflow** 运行一次扫描。扫描会把结果提交到你的副本，所以先拉取，
    再查看 `reports/latest.md`：
 
@@ -125,8 +148,8 @@ LinkedIn Job Review 表单 ────────┘                   │
    ```
 
    每天两次扫描都会提交，所以在电脑上修改任何文件之前也要先拉取，否则下次推送会被拒绝。
-8. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)。
-9. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)）。
+8. 可选：[LinkedIn 提醒与 Chrome 搜索](docs/linkedin.md)、[看板同步和 Mac 扫描触发器](docs/setup.md#2-the-job-search-board)（均为英文）。
+9. 之后，用 **Actions → Update from template** 获取模板的修复（[说明](docs/setup.md#5-updates-from-the-template)，英文）。
 
 ## 命令
 
@@ -164,6 +187,8 @@ pytest && ruff check .
 只有在确实有新情况时才修改技能档案和主简历。为了提高分数而添加技能，只会生成你无法为之负责的简历。
 
 ## 文档
+
+下面的文档目前只有英文版。主简历的填写说明有[中文版](resumes/README.zh-CN.md)。
 
 - [配置](docs/configure.md)：每项设置、你的国家、完整示例
 - [安装设置](docs/setup.md)：Secrets、Variables、看板及其同步、Mac 扫描触发器、来自模板的更新

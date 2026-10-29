@@ -21,7 +21,7 @@ from .issue_body import job_url, render_linkedin_alert
 from .matcher import Vocabulary, title_score
 from .normalize import split_company_location, title_matches_exclusion
 from .report import write_report
-from .settings import load_json, load_yaml
+from .settings import load_config, load_json, normalize_profile
 
 GENERIC_LINK_TEXT = {
     "view job",
@@ -376,8 +376,8 @@ def main(*, dry_run: bool = False, since_days: int | None = None) -> int:
             "LINKEDIN_IMAP_USER, and LINKEDIN_IMAP_PASSWORD as GitHub Secrets."
         )
 
-    config = load_yaml("config/search_config.yaml")
-    problems = setup_problems(config or {}, load_json("config/resume_profile.json"))
+    config = load_config()
+    problems = setup_problems(config, normalize_profile(load_json("config/resume_profile.json")))
     if problems:
         # Importing now would file every alert as off-target and move past it for good.
         print("Job Radar isn't set up yet, so no alert email was read:")

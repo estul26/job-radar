@@ -62,6 +62,7 @@ TEMPLATE_FILES = (
     "README.zh-CN.md",
     "pyproject.toml",
     "resumes/README.md",
+    "resumes/README.zh-CN.md",
 )
 # Your files: never written, even where the template has one (its blank config and résumé).
 # These win over TEMPLATE_FILES. Files of neither kind are left alone too.

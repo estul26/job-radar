@@ -234,7 +234,8 @@ def location_score(job: dict[str, Any], locations: list[dict[str, Any]], remote_
 
 
 def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
-    ranking = config["ranking"]
+    ranking = config.get("ranking") or {}
+    search = config.get("search") or {}
     vocab = Vocabulary.from_config(config)
     title = job.get("title", "")
     text = _text(job)
@@ -243,11 +244,11 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
     # LinkedIn and fixtures too.
     reject_terms = [
         *(ranking.get("hard_reject_title_terms") or []),
-        *(config["search"].get("exclude_title_terms") or []),
+        *(search.get("exclude_title_terms") or []),
     ]
     hard_reject_reasons = list(dict.fromkeys(term for term in reject_terms if title_matches_exclusion(title, [term])))
 
-    role_pts, role_reason = title_score(title, config["search"].get("titles") or [], vocab)
+    role_pts, role_reason = title_score(title, search.get("titles") or [], vocab)
     if role_pts == 0 and ranking.get("hard_reject_unrelated_titles", False):
         hard_reject_reasons.append("unrelated title")
 
@@ -305,9 +306,7 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
         cert_reason = "no specific certification requirement detected"
 
     fresh_pts, fresh_reason = freshness_score(job.get("date_posted", ""), int(ranking.get("fresh_hours", 24)))
-    loc_pts, loc_reason = location_score(
-        job, config["search"].get("locations") or [], int(ranking.get("remote_score", 5))
-    )
+    loc_pts, loc_reason = location_score(job, search.get("locations") or [], int(ranking.get("remote_score", 5)))
 
     score = max(0, min(100, role_pts + exp_pts + skill_pts + cert_pts + fresh_pts + loc_pts))
     hard_reject = bool(hard_reject_reasons)
