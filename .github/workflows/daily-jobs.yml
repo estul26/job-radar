@@ -85,6 +85,7 @@ jobs:
           GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
           AI_RESUME_ENABLED: ${{ vars.AI_RESUME_ENABLED }}
         run: radar scan
 
@@ -105,11 +106,14 @@ jobs:
             cat reports/latest.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Save daily state and report
+      # The résumés go first so the Issues can link to them. The seen-jobs state waits until the
+      # Issues exist: if opening them fails, the next scan finds these jobs again instead of
+      # treating them as already reported.
+      - name: Save the report and résumés
         if: steps.doctor.outputs.ready == 'true'
         uses: ./.github/actions/commit-state
         with:
-          paths: data/seen_jobs.json data/latest_jobs.csv reports/latest.md resumes/jobs
+          paths: data/latest_jobs.csv reports/latest.md resumes/jobs
           message: 'chore: update daily job radar'
 
       - name: Open Issues for new matches
@@ -133,9 +137,11 @@ jobs:
           SLOT_DATE: ${{ steps.slot.outputs.date }}
         run: radar record-claim "$SLOT" "$SLOT_DATE"
 
-      - name: Commit tracker export and scan slot claim
+      - name: Commit seen jobs, tracker export and scan slot claim
         if: success() && steps.doctor.outputs.ready == 'true'
         uses: ./.github/actions/commit-state
         with:
-          paths: data/applications.csv resumes/index.csv data/radar_morning_claim.txt data/radar_evening_claim.txt
+          paths: >-
+            data/seen_jobs.json data/applications.csv resumes/index.csv
+            data/radar_morning_claim.txt data/radar_evening_claim.txt
           message: "chore: export job tracker after the ${{ steps.slot.outputs.slot || 'manual' }} scan"

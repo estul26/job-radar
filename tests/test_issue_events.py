@@ -1,9 +1,11 @@
 """The issue-events workflow: what each Issue event changes locally and on GitHub."""
 
 import pytest
+import yaml
 
+from conftest import ROOT
 from fake_github import FakeGitHub
-from job_radar.commands.issue import RESUME_MARKER, REVIEW_MARKER, prepare, publish, route
+from job_radar.commands.issue import RESUME_MARKER, REVIEW_MARKER, UNREADABLE_MARKER, prepare, publish, route
 from job_radar.models import Verdict
 
 JOB_URL = "https://www.linkedin.com/jobs/view/4471544570/"
@@ -161,3 +163,45 @@ def test_a_status_event_for_a_label_already_removed_changes_nothing(settings):
     assert run_event(gh, settings, 7, "labeled", "status:applied") == "status"
     assert gh.labels_of(7) == {"status:interview"}
     assert gh.state_of(7) == "OPEN"
+
+
+def test_an_edit_after_applying_keeps_the_resume_you_sent(settings):
+    gh = FakeGitHub([linkedin_issue(GOOD, labels={"status:applied", "match:good"})])
+    run_event(gh, settings, 7, "edited")
+
+    assert not settings.paths.resume_dir.exists()
+    assert "the one you sent is kept" in gh.comments_of(7)[0]
+    assert "status:applied" in gh.labels_of(7)
+
+
+def test_resume_tailor_still_regenerates_after_applying(settings):
+    gh = FakeGitHub([linkedin_issue(GOOD, labels={"status:applied", "resume:tailor"})])
+    run_event(gh, settings, 7, "labeled", "resume:tailor")
+    assert "resume:ready" in gh.labels_of(7)
+
+
+def test_resume_tailor_on_an_issue_without_a_description_explains_instead_of_failing(settings):
+    issue = linkedin_issue(GOOD, labels={"resume:tailor"})
+    issue["body"] = issue["body"].replace(GOOD, "")
+    gh = FakeGitHub([issue])
+    assert run_event(gh, settings, 7, "labeled", "resume:tailor") == "resume"
+
+    assert not settings.paths.resume_dir.exists() and "resume:ready" not in gh.labels_of(7)
+    assert gh.comments_of(7)[-1].startswith(UNREADABLE_MARKER)
+    assert "Missing required Issue field: Job description" in gh.comments_of(7)[-1]
+
+
+def test_resume_tailor_on_an_alert_still_waiting_for_its_description(settings):
+    issue = linkedin_issue("_Paste full job description here, replacing this line, then save the issue._")
+    gh = FakeGitHub([{**issue, "labels": {"resume:tailor"}}])
+    run_event(gh, settings, 7, "labeled", "resume:tailor")
+    assert "still the placeholder line" in gh.comments_of(7)[-1]
+    assert not settings.paths.resume_dir.exists()
+
+
+def test_the_workflow_scores_only_issues_from_you_collaborators_or_the_radar():
+    workflow = yaml.safe_load((ROOT / ".github/workflows/issue-events.yml").read_text(encoding="utf-8"))
+    condition = " ".join(workflow["jobs"]["handle"]["if"].split())
+    assert "github.event.issue.author_association" in condition
+    assert '"OWNER", "MEMBER", "COLLABORATOR"' in condition
+    assert "github.event.issue.user.login == 'github-actions[bot]'" in condition

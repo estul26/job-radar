@@ -330,7 +330,11 @@ def test_the_workflow_runs_only_by_hand_and_never_in_the_template():
     assert triggers["workflow_dispatch"]["inputs"]["template"]["default"] == tool.DEFAULT_TEMPLATE
     [job] = workflow["jobs"].values()
     assert job["if"] == f"github.repository != '{tool.DEFAULT_TEMPLATE}'"
-    assert "FETCH_HEAD:tools/update_from_template.py" in WORKFLOW.read_text(encoding="utf-8")
+    # By default it runs the copy's own, reviewed script; the template's latest only when asked to.
+    assert triggers["workflow_dispatch"]["inputs"]["script_from_template"]["default"] is False
+    [choose] = [step for step in job["steps"] if step.get("name") == "Choose the update script"]
+    assert "cp tools/update_from_template.py" in choose["run"]
+    assert 'if [ "$FROM_TEMPLATE" = "true" ]' in choose["run"]
 
 
 @pytest.fixture

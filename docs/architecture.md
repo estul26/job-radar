@@ -68,13 +68,13 @@ Each workflow is the same three steps: set up, run one `radar` command, commit w
 | `linkedin-email-alerts.yml` | every 4 hours | `radar email-ingest` |
 | `sync-project-dashboard.yml` | manual (needs `PROJECTS_TOKEN`) | cloud fallback for the board sync |
 | `ci.yml` | pushes and pull requests | `pytest`, `ruff` |
-| `update-from-template.yml` | manual, in copies of the template | `tools/update_from_template.py` from the template's latest version |
+| `update-from-template.yml` | manual, in copies of the template | the copy's own `tools/update_from_template.py` (the template's latest only when asked) |
 
 ## State
 
 | File | Written by | Notes |
 |---|---|---|
-| `data/seen_jobs.json` | scan | Postings already reported. Append-only, pruned after 90 days. |
+| `data/seen_jobs.json` | scan | Postings already reported. Append-only, pruned after 90 days. Committed only once the scan's Issues exist, so a failed run doesn't lose its matches. |
 | `data/latest_jobs.csv`, `reports/latest.md` | scan | The latest scan's jobs and report. |
 | `data/applications.csv`, `resumes/index.csv` | scan (`radar export`) | Exported from the Issues. Don't edit them. |
 | `data/radar_*_claim.txt` | scan | The date each slot last scanned, so duplicate triggers skip. |

@@ -60,3 +60,17 @@ def test_excluded_titles_are_dropped_before_scoring():
 def test_exclusions_match_whole_words_only():
     assert title_matches_exclusion("Nurse - Aiden Health", ["aide"]) is False
     assert title_matches_exclusion("Nurse Aide", ["aide"]) is True
+
+
+def test_a_location_can_set_the_search_radius(monkeypatch):
+    calls = []
+    monkeypatch.setattr(collector, "scrape_jobs", lambda **kwargs: calls.append(kwargs))
+    config = {
+        "search": {
+            "sites": ["indeed"],
+            "titles": ["Accountant"],
+            "locations": [{"name": "London", "query": "London", "distance": 15}, {"name": "UK", "query": "UK"}],
+        }
+    }
+    collect_jobs(config)
+    assert calls[0]["distance"] == 15 and "distance" not in calls[1]

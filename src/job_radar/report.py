@@ -116,7 +116,10 @@ def build_report(
 
 def _job_block(job: dict[str, Any], good_threshold: int) -> list[str]:
     score = job.get("score", 0)
-    label = "🔥 APPLY FIRST" if score >= 85 else ("✅ GOOD MATCH" if score >= good_threshold else "🟡 POSSIBLE")
+    if job.get("good_capped") or score < good_threshold:
+        label = "🟡 POSSIBLE"
+    else:
+        label = "🔥 APPLY FIRST" if score >= 85 else "✅ GOOD MATCH"
     url = job.get("job_url") or ""
     title = job.get("title", "Untitled")
     title_text = f"[{title}]({url})" if url else title

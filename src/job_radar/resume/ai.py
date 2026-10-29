@@ -11,6 +11,44 @@ from typing import Any
 from ..matcher import Vocabulary, detect_certs, detect_skills
 
 RESPONSES_URL = "https://api.openai.com/v1/responses"
+DEFAULT_MODEL = "gpt-6.1-sol"
+# Reasoning models spend part of max_output_tokens on reasoning before they write a word, so the
+# budgets leave room for it, and the effort is kept low: this is light rewording, not problem solving.
+# OPENAI_REASONING_EFFORT overrides it; "default" leaves it to the model.
+DEFAULT_REASONING_EFFORT = "low"
+EDITOR_MAX_OUTPUT_TOKENS = 8000
+VALIDATOR_MAX_OUTPUT_TOKENS = 4000
+
+# Structured Outputs: the API returns JSON in exactly these shapes, so nothing has to be fished out of prose.
+EDITOR_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "summary": {"type": "string"},
+        "summary_source_ids": {"type": "array", "items": {"type": "string"}},
+        "bullet_rewrites": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"source_id": {"type": "string"}, "text": {"type": "string"}},
+                "required": ["source_id", "text"],
+            },
+        },
+        "editor_notes": {"type": "string"},
+    },
+    "required": ["summary", "summary_source_ids", "bullet_rewrites", "editor_notes"],
+}
+VALIDATOR_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "pass": {"type": "boolean"},
+        "unsupported_claims": {"type": "array", "items": {"type": "string"}},
+        "notes": {"type": "string"},
+    },
+    "required": ["pass", "unsupported_claims", "notes"],
+}
 
 NUMBER_WORDS = {
     "zero",
@@ -233,20 +271,14 @@ def _parse_json_text(text_value: str) -> dict[str, Any]:
     return parsed
 
 
-def _openai_response(
-    api_key: str,
-    model: str,
-    instructions: str,
-    input_text: str,
-    max_output_tokens: int,
-) -> tuple[dict[str, Any], str]:
-    request_body = {
-        "model": model,
-        "instructions": instructions,
-        "input": input_text,
-        "max_output_tokens": max_output_tokens,
-        "store": False,
-    }
+class OpenAIHTTPError(RuntimeError):
+    def __init__(self, code: int, detail: str) -> None:
+        super().__init__(f"OpenAI API HTTP {code}: {detail[:500]}")
+        self.code = code
+        self.detail = detail
+
+
+def _post_response(api_key: str, request_body: dict[str, Any]) -> dict[str, Any]:
     request = urllib.request.Request(
         RESPONSES_URL,
         data=json.dumps(request_body).encode("utf-8"),
@@ -256,16 +288,52 @@ def _openai_response(
         },
         method="POST",
     )
-
     try:
         with urllib.request.urlopen(request, timeout=120) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenAI API HTTP {exc.code}: {detail[:500]}") from exc
+        raise OpenAIHTTPError(exc.code, exc.read().decode("utf-8", errors="replace")) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"OpenAI API connection error: {exc.reason}") from exc
 
+
+def _openai_response(
+    api_key: str,
+    model: str,
+    instructions: str,
+    input_text: str,
+    max_output_tokens: int,
+    *,
+    schema_name: str = "",
+    schema: dict[str, Any] | None = None,
+    reasoning_effort: str = "",
+) -> tuple[dict[str, Any], str]:
+    request_body: dict[str, Any] = {
+        "model": model,
+        "instructions": instructions,
+        "input": input_text,
+        "max_output_tokens": max_output_tokens,
+        "store": False,
+    }
+    if schema:
+        request_body["text"] = {
+            "format": {"type": "json_schema", "name": schema_name, "schema": schema, "strict": True}
+        }
+    if reasoning_effort:
+        request_body["reasoning"] = {"effort": reasoning_effort}
+
+    try:
+        payload = _post_response(api_key, request_body)
+    except OpenAIHTTPError as exc:
+        # A model without reasoning settings (OPENAI_MODEL set to an older one) rejects them: ask again without.
+        if exc.code != 400 or "reasoning" not in request_body or "reasoning" not in exc.detail.lower():
+            raise
+        del request_body["reasoning"]
+        payload = _post_response(api_key, request_body)
+
+    if payload.get("status") == "incomplete":
+        reason = (payload.get("incomplete_details") or {}).get("reason") or "unknown reason"
+        raise RuntimeError(f"OpenAI API stopped before finishing ({reason}).")
     output_text = _extract_output_text(payload)
     if not output_text:
         raise RuntimeError("OpenAI API returned no output text.")
@@ -432,12 +500,15 @@ def enhance_resume_with_ai(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     resolved_enabled = _truthy(os.environ.get("AI_RESUME_ENABLED"), True) if enabled is None else enabled
     resolved_key = api_key if api_key is not None else os.environ.get("OPENAI_API_KEY", "")
-    resolved_model = model or os.environ.get("OPENAI_MODEL") or "gpt-6.1-sol"
+    resolved_model = model or os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
+    effort = (os.environ.get("OPENAI_REASONING_EFFORT") or DEFAULT_REASONING_EFFORT).strip().lower()
+    reasoning_effort = "" if effort == "default" else effort
 
     audit: dict[str, Any] = {
         "enabled": bool(resolved_enabled),
         "used": False,
         "model": resolved_model,
+        "reasoning_effort": reasoning_effort or "default",
         "status": "deterministic",
         "rewrite_response_id": "",
         "validator_response_id": "",
@@ -460,7 +531,10 @@ def enhance_resume_with_ai(
             resolved_model,
             EDITOR_INSTRUCTIONS,
             _editor_input(master, job, baseline),
-            max_output_tokens=2600,
+            max_output_tokens=EDITOR_MAX_OUTPUT_TOKENS,
+            schema_name="resume_rewrite",
+            schema=EDITOR_SCHEMA,
+            reasoning_effort=reasoning_effort,
         )
         proposal = _parse_json_text(edit_text)
         audit["rewrite_response_id"] = str(edit_response.get("id", ""))
@@ -478,7 +552,10 @@ def enhance_resume_with_ai(
             resolved_model,
             VALIDATOR_INSTRUCTIONS,
             _validator_input(master, baseline, proposal),
-            max_output_tokens=900,
+            max_output_tokens=VALIDATOR_MAX_OUTPUT_TOKENS,
+            schema_name="fact_check",
+            schema=VALIDATOR_SCHEMA,
+            reasoning_effort=reasoning_effort,
         )
         validator = _parse_json_text(validator_text)
         audit["validator_response_id"] = str(validator_response.get("id", ""))

@@ -27,11 +27,19 @@ from .doctor import resume_ready, setup_problems
 LINKEDIN_PREFIXES = ("[LinkedIn Job]", "[LinkedIn Alert]")
 REVIEW_MARKER = "<!-- job-radar:match-review -->"
 SETUP_MARKER = "<!-- job-radar:setup-needed -->"
+UNREADABLE_MARKER = "<!-- job-radar:unreadable -->"
 RESUME_MARKER = "<!-- job-radar:resume -->"
 MATCH_LABELS = {f"match:{verdict.value}" for verdict in Verdict}
 # The statuses scoring sets itself. Any other status was your choice and is kept.
 SCORER_STATUSES = {"status:new", "status:skipped"}
 CLOSING_STATUSES = {"status:rejected", "status:offer", "status:skipped"}
+# Once an application has gone this far, the résumé you sent is kept: re-scoring an edited Issue
+# doesn't regenerate it (the resume:tailor label still does).
+SENT_STATUSES = {"status:applied", "status:interview", "status:offer", "status:rejected"}
+KEPT_RESUME_NOTE = (
+    "The résumé wasn't regenerated: this application is past status:saved, so the one you sent is kept. "
+    "Add the `resume:tailor` label to regenerate it."
+)
 CLOSING_REASONS = {
     Verdict.REJECTED: "Scoring complete. This issue is closed by the configured hard-reject rules.",
     Verdict.LOW: "Scoring complete. This job is below the tracking threshold.",
@@ -68,7 +76,24 @@ def _score(settings: Settings, issue: dict[str, Any]) -> tuple[dict[str, Any], V
     return scored, classify(scored, settings.good_threshold, settings.possible_threshold)
 
 
-def build_review(scored: dict[str, Any], verdict: Verdict) -> str:
+def unreadable_reason(issue: dict[str, Any]) -> str:
+    """Why the job in this Issue can't be scored, or "" when it can."""
+    body = str(issue.get("body", ""))
+    if PLACEHOLDER_MARKER in body:
+        return "its job description is still the placeholder line"
+    try:
+        parse_job(body)
+    except ValueError as exc:
+        return str(exc)
+    return ""
+
+
+def resume_kept(issue: dict[str, Any]) -> bool:
+    """True when the application has progressed far enough that a re-score keeps its résumé."""
+    return bool(label_names(issue) & SENT_STATUSES)
+
+
+def build_review(scored: dict[str, Any], verdict: Verdict, note: str = "") -> str:
     def items(key: str, separator: str = ", ") -> str:
         return separator.join(scored.get(key, [])) or "—"
 
@@ -94,6 +119,7 @@ def build_review(scored: dict[str, Any], verdict: Verdict) -> str:
             f"- Score notes: {items('score_reasons', '; ')}",
             f"- Hard-reject reasons: {items('hard_reject_reasons', '; ')}",
             "",
+            *([note, ""] if note else []),
             "When you apply, set the status:applied label (or drag the card on the Job Search board).",
             "",
         ]
@@ -124,11 +150,11 @@ def prepare(settings: Settings, issue: dict[str, Any], kind: str, label: str = "
     Status changes need no files: the label is the status.
     """
     settings.paths.pending_resume.unlink(missing_ok=True)
-    if kind in ("intake", "resume") and setup_problems(settings.config, settings.profile):
-        return  # publish() explains; nothing is scored against an unfinished setup.
+    if kind in ("intake", "resume") and (setup_problems(settings.config, settings.profile) or unreadable_reason(issue)):
+        return  # publish() explains; nothing is scored against an unfinished setup or an unreadable Issue.
     if kind == "intake":
         scored, verdict = _score(settings, issue)
-        if verdict is Verdict.GOOD:
+        if verdict is Verdict.GOOD and not resume_kept(issue):
             _generate_resume(settings, scored, issue)
     elif kind == "resume":
         scored, _ = _score(settings, issue)
@@ -146,9 +172,16 @@ def publish(gh: GitHub, settings: Settings, issue: dict[str, Any], kind: str, la
         lines += ["", "Fill in `config/` (see `radar doctor` and docs/configure.md), then edit this Issue to score it."]
         gh.upsert_comment(number, SETUP_MARKER, "\n".join(lines))
         return
+    reason = unreadable_reason(issue) if kind in ("intake", "resume") else ""
+    if reason:
+        lines = [UNREADABLE_MARKER, f"This job wasn't scored and no résumé was made: {reason}."]
+        lines += ["", "Fill in the Issue (the full job description goes under `### Job description`), then save it."]
+        gh.upsert_comment(number, UNREADABLE_MARKER, "\n".join(lines))
+        return
     if kind == "intake":
         scored, verdict = _score(settings, issue)
-        gh.upsert_comment(number, REVIEW_MARKER, f"{REVIEW_MARKER}\n{build_review(scored, verdict)}")
+        note = KEPT_RESUME_NOTE if verdict is Verdict.GOOD and resume_kept(issue) else ""
+        gh.upsert_comment(number, REVIEW_MARKER, f"{REVIEW_MARKER}\n{build_review(scored, verdict, note)}")
         gh.ensure_labels(LABELS)
         publish_resume(gh, settings, issue)
         _apply_verdict(gh, issue, verdict)

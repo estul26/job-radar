@@ -23,6 +23,7 @@ with a warning.
 |---|---|---|
 | `GOOD_MATCH_THRESHOLD` | `ranking.good_match_threshold` in `config/search_config.yaml` | Score for a good match: an assigned Issue plus a tailored résumé. |
 | `OPENAI_MODEL` | `gpt-6.1-sol` | Model for résumé wording and its fact check. |
+| `OPENAI_REASONING_EFFORT` | `low` | Reasoning effort for that model; `default` leaves it to the model. A model without reasoning settings is asked again without it. |
 | `AI_RESUME_ENABLED` | `true` | Set `false` to always use deterministic résumés. |
 | `LINKEDIN_EMAIL_ENABLED` | off | `true` runs the email import every 4 hours. |
 | `LINKEDIN_IMAP_PORT`, `LINKEDIN_IMAP_FOLDER` | `993`, `INBOX` | Mailbox details. |
@@ -80,7 +81,10 @@ private-repository Actions minutes, so the Mac agent is the default.
 
 ## 3. A backup trigger for the scans
 
-GitHub can delay or drop scheduled runs. This launchd agent asks GitHub to run
+GitHub can delay or drop scheduled runs, and delays of several hours are common: in one test
+copy, every 10:13 scan started between 12:45 and 15:00. If the time matters, start the scans
+earlier in `daily-jobs.yml` (a schedule before noon is still the morning scan), or install this
+backup trigger. This launchd agent asks GitHub to run
 `daily-jobs.yml` at 07:20 and 16:20 local time, and at login if the Mac was off. If you change
 the schedules in `daily-jobs.yml`, change `MORNING_HOUR`/`EVENING_HOUR` (and the minutes) at
 the top of the installer to match.
@@ -137,6 +141,11 @@ brings them in:
 
 It runs only when you start it, as often as you like; running it again updates the open pull
 request. In the template itself it does nothing.
+
+It runs your copy's own update script, the one you reviewed when you merged the last update, so
+nothing you haven't seen runs with your repository's tokens. Fixes to that script arrive in the
+pull request and are used from the next update on. If your copy's script is ever broken, tick
+**script_from_template** when you start the run to use the template's latest one instead.
 
 **What it updates.** The template's own files: `src/`, `tests/`, `docs/`, `tools/`, the workflows,
 actions and Issue form in `.github/`, `pyproject.toml`, both READMEs, `LICENSE`, `.gitignore` and

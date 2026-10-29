@@ -19,8 +19,10 @@ Each template file is compared in three versions: the template commit your copy 
 GITHUB_TOKEN can't change workflow files, so without --include-workflows (a token that can), those are
 listed in the pull request, with their new contents, for you to update on the GitHub website.
 
-Standard library, git and gh only. The workflow runs this file straight from the template, with the
-arguments in the copy's own (possibly older) update-from-template.yml: keep the command line compatible.
+Standard library, git and gh only. The workflow runs the copy's own version of this file, so a fix here
+reaches a copy one update after it lands; with its script_from_template input, it runs the template's
+latest instead. Either way the arguments come from the copy's own (possibly older)
+update-from-template.yml: keep the command line compatible.
 """
 
 from __future__ import annotations

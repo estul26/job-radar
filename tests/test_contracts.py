@@ -125,3 +125,37 @@ def test_repository_variable_overrides_good_threshold():
     assert good_match_threshold(config, env={}) == 65
     assert good_match_threshold(config, env={"GOOD_MATCH_THRESHOLD": "60"}) == 60
     assert good_match_threshold(config, env={"GOOD_MATCH_THRESHOLD": " "}) == 65
+
+
+def test_headings_inside_a_job_description_stay_in_the_description(issue_body):
+    # Job boards send Markdown descriptions, often starting with a "###" heading of their own.
+    body = issue_body("indeed_markdown_headings")
+    job = parse_job(body)
+    assert (job["title"], job["location"]) == ("Assistant Accountant", "Leeds, ENG, UK")
+    assert job["description"].startswith("### **About the role**")
+    assert "Hybrid, three days a week" in job["description"]
+    assert job["description"].endswith("This line is part of the description, not a field.")
+    assert parse_job(render_board_job(job)) == job
+
+
+def test_a_trailing_source_heading_still_ends_the_description():
+    candidate = {
+        "job_id": "4471532081",
+        "job_url": "https://www.linkedin.com/jobs/view/4471532081/",
+        "title": "Registered Nurse",
+        "company": "Northwind Care",
+        "location": "Toronto, ON",
+        "card_excerpt": "Registered Nurse\nNorthwind Care · Toronto, ON",
+    }
+    body = render_linkedin_alert(candidate, "New jobs for you").replace(
+        PLACEHOLDER_DESCRIPTION, "### Responsibilities\n\nAssess patients."
+    )
+    job = parse_job(body)
+    assert job["description"] == "### Responsibilities\n\nAssess patients."
+
+
+def test_a_missing_description_can_be_allowed(issue_body):
+    body = issue_body("indeed").split("### Job description")[0] + "### Job description\n\n"
+    with pytest.raises(ValueError, match="Job description"):
+        parse_job(body)
+    assert parse_job(body, require_description=False)["description"] == ""

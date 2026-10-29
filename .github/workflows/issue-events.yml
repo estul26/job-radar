@@ -23,11 +23,16 @@ concurrency:
 
 jobs:
   handle:
+    # Scoring can call OpenAI with your key and commit to main, so only Issues opened by you or a
+    # collaborator, or by the radar itself (alert imports), are scored: if this repository is ever
+    # public, anyone could open one. Adding a label needs triage access already.
     if: >-
       (github.event.action != 'labeled' &&
        (startsWith(github.event.issue.title, '[LinkedIn Job]') ||
         startsWith(github.event.issue.title, '[LinkedIn Alert]')) &&
-       !contains(github.event.issue.body, '_Paste full job description here')) ||
+       !contains(github.event.issue.body, '_Paste full job description here') &&
+       (contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association) ||
+        github.event.issue.user.login == 'github-actions[bot]')) ||
       (github.event.action == 'labeled' &&
        (startsWith(github.event.label.name, 'status:') || github.event.label.name == 'resume:tailor'))
     runs-on: ubuntu-24.04
@@ -47,6 +52,7 @@ jobs:
           GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
           AI_RESUME_ENABLED: ${{ vars.AI_RESUME_ENABLED }}
           EVENT: ${{ github.event.action }}
           LABEL: ${{ github.event.label.name }}

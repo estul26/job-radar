@@ -4,6 +4,8 @@ import json
 from dataclasses import replace
 from pathlib import Path
 
+import yaml
+
 from conftest import ROOT
 from fake_github import FakeGitHub
 from job_radar.commands.scan import (
@@ -155,3 +157,13 @@ def test_report_counts_read_as_english():
     assert "Collected **1** unique job; **1** was new to the tracker." in report
     assert "Shortlist: **1** good match and **0** possible matches." in report
     assert "**1** more good match waits for the next scan." in report
+
+
+def test_seen_jobs_are_committed_only_after_the_issues_are_opened():
+    # If opening the Issues fails, the next scan must still treat these jobs as new.
+    steps = yaml.safe_load((ROOT / ".github/workflows/daily-jobs.yml").read_text(encoding="utf-8"))["jobs"]["scan"]
+    names = [step.get("name", "") for step in steps["steps"]]
+    commits = [(index, step["with"]["paths"].split()) for index, step in enumerate(steps["steps"]) if "with" in step]
+    publish = names.index("Open Issues for new matches")
+    assert all("data/seen_jobs.json" not in paths for index, paths in commits if index < publish)
+    assert any("data/seen_jobs.json" in paths for index, paths in commits if index > publish)
