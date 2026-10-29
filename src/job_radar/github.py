@@ -114,10 +114,20 @@ class GitHub:
             )
 
     def ensure_labels(self, names: Iterable[str]) -> None:
-        """Create any of the named labels (from labels.LABELS) the repository lacks."""
+        """Create any of the named labels (from labels.LABELS) the repository lacks.
+
+        Each label is created once however often it is named, and one another run created in the
+        meantime is fine. GitHub compares label names ignoring case.
+        """
         listed = json.loads(_gh(["label", "list", "--repo", self.repo, "--limit", "500", "--json", "name"]) or "[]")
-        existing = {label["name"] for label in listed}
-        for name in names:
-            if name not in existing:
-                color, description = LABELS.get(name, ("2164F3", ""))
+        existing = {str(label["name"]).lower() for label in listed}
+        for name in dict.fromkeys(names):
+            if name.lower() in existing:
+                continue
+            color, description = LABELS.get(name, ("2164F3", ""))
+            try:
                 _gh(["label", "create", name, "--repo", self.repo, "--color", color, "--description", description])
+            except GitHubError as exc:
+                if "already exists" not in str(exc):
+                    raise
+            existing.add(name.lower())
