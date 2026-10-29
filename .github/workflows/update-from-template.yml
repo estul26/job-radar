@@ -4,6 +4,9 @@ name: Update from template
 # config/, résumés, data/ or reports/. It opens a pull request for you to review and merge.
 # Runs only when you click Run workflow, and does nothing in the template itself.
 # Optional: a TEMPLATE_UPDATE_TOKEN secret lets it update workflow files too (docs/setup.md).
+# It runs this copy's own tools/update_from_template.py, which you reviewed when you merged the last
+# update, so no code you haven't seen runs with your tokens. That script's own fixes arrive in the
+# pull request and take effect from the next update.
 
 on:
   workflow_dispatch:
@@ -12,6 +15,10 @@ on:
         description: 'The template to update from (owner/name)'
         type: string
         default: 'estul26/job-radar'
+      script_from_template:
+        description: "Only if this copy's update script is broken: run the template's latest one instead (code you haven't reviewed, with this repository's tokens)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -37,13 +44,19 @@ jobs:
           # GITHUB_TOKEN can't push changes to workflow files; a TEMPLATE_UPDATE_TOKEN can.
           token: ${{ secrets.TEMPLATE_UPDATE_TOKEN || github.token }}
 
-      # The script comes from the template's latest version, so its own fixes need no change here.
-      - name: Get the update script from the template
+      # Run from outside the checkout, so the script never runs a file the update itself changes.
+      - name: Choose the update script
         env:
           TEMPLATE: ${{ inputs.template }}
+          FROM_TEMPLATE: ${{ inputs.script_from_template }}
         run: |
-          git fetch --no-tags "https://github.com/$TEMPLATE.git" main
-          git show FETCH_HEAD:tools/update_from_template.py > "$RUNNER_TEMP/update_from_template.py"
+          if [ "$FROM_TEMPLATE" = "true" ]; then
+            git fetch --no-tags "https://github.com/$TEMPLATE.git" main
+            git show FETCH_HEAD:tools/update_from_template.py > "$RUNNER_TEMP/update_from_template.py"
+            echo "::warning::Running the latest update script of $TEMPLATE, not this copy's reviewed one."
+          else
+            cp tools/update_from_template.py "$RUNNER_TEMP/update_from_template.py"
+          fi
 
       - name: Open a pull request with the template's changes
         env:

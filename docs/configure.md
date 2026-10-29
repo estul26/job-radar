@@ -47,19 +47,21 @@ Each `locations` entry:
 |---|---|
 | `name` | Shown in reports ("Toronto location"). |
 | `query` | What the job board's location box gets. |
-| `remote_only` | `true` asks the job board for remote jobs only. |
+| `remote_only` | `true` asks the job board for remote jobs only. Such an entry never gives location points to a job that isn't remote, even when its `match` phrases fit. |
+| `distance` | Search radius in miles around the `query`. Default: the job board's (50 miles on Indeed, which reaches far past most cities). |
 | `score` | Location points (out of 5) when a job's location matches. Default 5. |
 | `match` | Phrases that mean a job is in this place. Default: the `name`. |
 | `linkedin` | The location text for `radar linkedin-search` ([linkedin.md](linkedin.md)). Optional. |
 
 A job gets the best `score` among the entries it matches, `ranking.remote_score` if it's remote,
-and 1 point if it matches none.
+and 1 point if it matches none. Only entries without `remote_only` count for a job that isn't remote.
 
 ### `ranking`
 
 | Key | Default | Meaning |
 |---|---|---|
 | `good_match_threshold` | 65 | A good match: an Issue assigned to you and a tailored résumé. The `GOOD_MATCH_THRESHOLD` variable overrides it. |
+| `good_requires_matched_skill` | true | A good match also needs one of your skills in the posting; otherwise it's a possible match ([scoring.md](scoring.md#verdicts)). |
 | `possible_match_threshold` | 55 | A possible match: an Issue, but no résumé. |
 | `max_good_matches` | 10 | Good matches per scan that get an Issue and a résumé (0 for no limit). The rest are listed in the report and come up again in the next scan. |
 | `max_possible_matches` | 5 | Possible matches per scan that get an Issue. |

@@ -27,16 +27,48 @@ MAX_DESCRIPTION_CHARS = 42000
 _HEADING = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
 _FINGERPRINT_MARKER = re.compile(r"<!--\s*job-fingerprint:([a-f0-9]{8,64})\s*-->", re.IGNORECASE)
 
+# The headings the Issue Form and the radar write, lower-cased. Job descriptions are Markdown and often
+# have "###" headings of their own ("### About the role"), so only these headings start a field.
+FIELD_HEADINGS = frozenset(
+    {
+        "linkedin job url",
+        "job url",
+        "job title",
+        "company",
+        "location",
+        "source",
+        "remote?",
+        "date posted (optional)",
+        "date posted",
+        "job description",
+    }
+)
+# The headings that can follow the description: the card a LinkedIn alert or search Issue was made from.
+TRAILING_HEADINGS = frozenset({"linkedin alert source", "linkedin search source"})
+
 
 def parse_sections(body: str) -> dict[str, str]:
-    """Issue Form output as lower-cased heading -> value ("_No response_" becomes "")."""
+    """Issue Form output as lower-cased heading -> value ("_No response_" becomes "").
+
+    Only the radar's own headings count, each at its first appearance. The description runs to the
+    end of the body, or to a trailing source heading, whatever headings it contains itself.
+    """
     body = body or ""
+    headings: list[tuple[str, re.Match[str]]] = []
+    in_description = False
+    for match in _HEADING.finditer(body):
+        name = match.group(1).strip().lower()
+        allowed = TRAILING_HEADINGS if in_description else FIELD_HEADINGS | TRAILING_HEADINGS
+        if name not in allowed or any(name == seen for seen, _ in headings):
+            continue
+        headings.append((name, match))
+        in_description = in_description or name == "job description"
+
     sections: dict[str, str] = {}
-    matches = list(_HEADING.finditer(body))
-    for index, match in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+    for index, (name, match) in enumerate(headings):
+        end = headings[index + 1][1].start() if index + 1 < len(headings) else len(body)
         value = body[match.end() : end].strip()
-        sections[match.group(1).strip().lower()] = "" if value == "_No response_" else value
+        sections[name] = "" if value == "_No response_" else value
     return sections
 
 
@@ -56,8 +88,11 @@ def fingerprint_marker(body: str) -> str:
     return match.group(1).lower() if match else ""
 
 
-def parse_job(body: str) -> Job:
-    """The job described by a LinkedIn or job-board Issue."""
+def parse_job(body: str, *, require_description: bool = True) -> Job:
+    """The job described by a LinkedIn or job-board Issue; raises ValueError when a field is missing.
+
+    The tracker export passes require_description=False: a tracked job stays tracked without one.
+    """
     sections = parse_sections(body)
     job_url = _field(sections, "LinkedIn job URL", "Job URL")
     title = _field(sections, "Job title")
@@ -82,7 +117,7 @@ def parse_job(body: str) -> Job:
         "max_amount": "",
         "currency": "",
         "job_url": job_url,
-        "description": _field(sections, "Job description"),
+        "description": _field(sections, "Job description", required=require_description),
         "fingerprint": fingerprint,
     }
 

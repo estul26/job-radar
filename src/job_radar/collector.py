@@ -39,6 +39,9 @@ def collect_jobs(config: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str
                 kwargs["google_search_term"] = f"{query} jobs near {location['query']}"
             if location.get("remote_only"):
                 kwargs["is_remote"] = True
+            if location.get("distance") is not None:
+                # Search radius in miles; JobSpy's default of 50 reaches well past most cities.
+                kwargs["distance"] = int(location["distance"])
 
             try:
                 result = scrape_jobs(**kwargs)

@@ -58,10 +58,13 @@ contact details, role titles, dates, the skills inventory, certifications or edu
 |---|---|---|
 | `OPENAI_API_KEY` | secret | none: deterministic résumés only |
 | `OPENAI_MODEL` | variable | `gpt-6.1-sol` |
+| `OPENAI_REASONING_EFFORT` | variable | `low` (`default`: the model's own) |
 | `AI_RESUME_ENABLED` | variable | `true` |
 
-A résumé with AI wording costs two model calls: editor and fact checker. Scanning and scoring
-never call the model.
+A résumé with AI wording costs two model calls: editor and fact checker. Both ask for Structured
+Outputs (a fixed JSON shape), and leave room in their output budget for a reasoning model's
+reasoning, which counts towards it. A response cut short is recorded as `fallback_ai_error` with
+the reason. Scanning and scoring never call the model.
 
 ### Audit statuses (`ai_audit.json`)
 

@@ -27,10 +27,16 @@ Coordinator" is related to nursing and "Customer Care Agent" isn't.
 
 | Verdict | Rule | What happens |
 |---|---|---|
-| **good** | score ≥ `GOOD_MATCH_THRESHOLD` | Issue (assigned to you), `match:good`, `status:new`, tailored résumé |
+| **good** | score ≥ `GOOD_MATCH_THRESHOLD`, and at least one of your skills is in the posting | Issue (assigned to you), `match:good`, `status:new`, tailored résumé |
 | **possible** | score ≥ `ranking.possible_match_threshold` (55) | Issue, `match:possible`, `status:new`; add `resume:tailor` for a résumé |
 | **low** | below that | Report only; a LinkedIn Issue gets `match:low` and `status:skipped` and is closed |
 | **rejected** | a hard-reject rule | Listed under "Automatically excluded"; a LinkedIn Issue gets `match:rejected` and is closed |
+
+The skill rule is there because the neutral points add up: a posting with one of your `search.titles`
+in one of your places scores about 70 before it names a single skill. A posting above the threshold
+in which none of your skills (soft skills aside) is found is a possible match instead, and its score
+notes say so. Set `ranking.good_requires_matched_skill: false` to turn this off; it never applies
+while `matching.skills` is empty.
 
 `GOOD_MATCH_THRESHOLD` is a repository variable. Without it, `ranking.good_match_threshold` in
 `config/search_config.yaml` applies. A scan opens Issues for at most `ranking.max_good_matches`
@@ -43,7 +49,9 @@ the limit are listed in the report and come up again in the next scan.
   say), matched on word boundaries, so "lead" doesn't match "Leading".
 - A title that is neither one of `search.titles` nor related through `matching`, when
   `ranking.hard_reject_unrelated_titles` is on.
-- A minimum requirement of `ranking.hard_reject_min_years` (5) or more years.
+- A minimum requirement of `ranking.hard_reject_min_years` (5) or more years. Only experience
+  requirements count: ages ("18 years or older"), the company's own history ("serving clients for
+  25 years"), contract lengths and numbers above 15 years are left out.
 
 `search.exclude_title_terms` are rejected the same way, wherever the job came from, and job-board
 searches drop them even earlier, before they are scored or reported.

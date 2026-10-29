@@ -43,7 +43,8 @@ def test_bad_values_are_named(tmp_path):
     config = tmp_path / "search_config.yaml"
     config.write_text(
         "timezone: Mars/Olympus\nsearch:\n  sites: [indeed]\n  country_indeed: Canada\n  titles: [Nurse]\n"
-        "  locations: [{name: Toronto}]\nmatching:\n  skills: {wound care: []}\n",
+        "  locations: [{name: Toronto}, {name: Ottawa, query: Ottawa, distance: ten}]\n"
+        "matching:\n  skills: {wound care: []}\n",
         encoding="utf-8",
     )
     profile = tmp_path / "profile.json"
@@ -54,6 +55,7 @@ def test_bad_values_are_named(tmp_path):
     problems = "\n".join(result.problems)
     assert "'Mars/Olympus' is not an IANA timezone" in problems
     assert "search.locations[0] (Toronto) needs a query" in problems
+    assert "search.locations[1] (Ottawa): distance must be a whole number of miles" in problems
     assert "experience_years must be a whole number" in problems
     assert "can never match a posting: phlebotomy" in "\n".join(result.warnings)
 

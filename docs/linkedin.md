@@ -45,13 +45,15 @@ imported, and jobs that already have an Issue (for example one you submitted thr
    `LINKEDIN_IMAP_PORT` (`993`) and `LINKEDIN_IMAP_FOLDER` (`INBOX`).
 
 Only messages from a `linkedin.com` sender are read, whatever the subject; only their job links
-whose titles match the search titles become Issues.
+whose titles match the search titles become Issues. Since anyone can write a LinkedIn address in
+From, a message is also skipped when your mail server's DKIM/DMARC check (its
+`Authentication-Results` header, which Gmail and Outlook add) says it didn't come from LinkedIn.
 
 ### When nothing is imported
 
 Each run's report (`reports/linkedin-email-latest.md`) lists every email it read and what
-happened to it: not from LinkedIn, no job links, or how many jobs were new, off-target or
-already imported. To check without changing anything, run **Actions → Import LinkedIn Job
+happened to it: not from LinkedIn, not confirmed by your mail server, no job links, or how many
+jobs were new, off-target or already imported. To check without changing anything, run **Actions → Import LinkedIn Job
 Alerts → Run workflow** with **dry run** ticked and **days** set to, say, `7`; the run's log
 shows what each email of the past week would import. Locally:
 
@@ -142,7 +144,8 @@ own risk and sparingly. It is built to stay small and slow:
 ## The Issue form
 
 Paste the job URL, title, company, location, remote yes/no and the **full** description, then
-submit. Scoring starts as soon as the Issue is saved.
+submit. Scoring starts as soon as the Issue is saved. Only Issues you or a collaborator open are
+scored, so a public copy doesn't spend your OpenAI key on strangers' Issues.
 
 ## What scoring does
 

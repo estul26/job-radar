@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 from collections.abc import Iterable
 from pathlib import Path
@@ -52,8 +53,11 @@ def _label_value(labels: set[str], prefix: str) -> str:
     return next((name.split(":", 1)[1] for name in sorted(labels) if name.startswith(prefix)), "")
 
 
-def application_rows(issues: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    """One row per scored job Issue; alerts still waiting for a description are left out."""
+def application_rows(issues: Iterable[dict[str, Any]], skipped: list[str] | None = None) -> list[dict[str, Any]]:
+    """One row per scored job Issue; alerts still waiting for a description are left out.
+
+    A job Issue whose body can't be read is left out too, and noted in skipped ("#12: why").
+    """
     rows = []
     for issue in issues:
         labels = label_names(issue)
@@ -61,8 +65,10 @@ def application_rows(issues: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
         if not is_job_title(str(issue.get("title", ""))) or not status:
             continue
         try:
-            job = parse_job(str(issue.get("body", "")))
-        except ValueError:
+            job = parse_job(str(issue.get("body", "")), require_description=False)
+        except ValueError as exc:
+            if skipped is not None:
+                skipped.append(f"#{issue['number']}: {exc}")
             continue
         rows.append(
             {
@@ -118,7 +124,12 @@ def resume_rows(resume_dir: Path, applications: list[dict[str, Any]]) -> list[di
 def export(gh: GitHub, settings: Settings) -> tuple[int, int]:
     """Write both exports; returns (applications, résumés)."""
     paths = settings.paths
-    applications = application_rows(gh.issues(fields=EXPORT_FIELDS))
+    skipped: list[str] = []
+    applications = application_rows(gh.issues(fields=EXPORT_FIELDS), skipped)
+    # Annotated in the Actions run, so a job missing from the tracker isn't missed.
+    prefix = "::warning::" if os.environ.get("GITHUB_ACTIONS") else "Warning: "
+    for item in skipped:
+        print(f"{prefix}Left out of {paths.applications}: Issue {item}")
     paths.applications.parent.mkdir(parents=True, exist_ok=True)
     # utf-8-sig: Excel only reads non-English text correctly from a CSV that starts with a BOM.
     with paths.applications.open("w", encoding="utf-8-sig", newline="") as handle:

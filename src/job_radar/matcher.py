@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -107,13 +108,60 @@ def detect_certs(text: str, vocab: Vocabulary) -> set[str]:
     return {cert for cert, phrases in vocab.certifications.items() if phrase_found(text, phrases)}
 
 
+# "3 years", "3+ years", "3-5 years", "2 to 4 yrs", "1.5 years"; group 1 is the (lower) number.
+_YEARS = re.compile(
+    r"(?<![\w.,])(\d{1,2}(?:\.\d)?)\s*(?:(?:-|–|—|to)\s*\d{1,2}(?:\.\d)?\s*)?\+?\s*(?:years?|yrs?)\b", re.I
+)
+# More years than a posting you could apply for plausibly asks for: "over 40 years" is the company's age,
+# and "18 years" or "21 years" is usually an age limit.
+MAX_REQUIRED_YEARS = 15
+# The words right around a number of years that make it something other than an experience requirement.
+_AGE_BEFORE = re.compile(r"\b(?:aged?|age of|be(?: at least| over)?)\s*$", re.I)
+_AGE_AFTER = re.compile(r"^\W*(?:old|of age|or older|or over|and over|and above)\b", re.I)
+_COMPANY_BEFORE = re.compile(
+    r"\b(?:we have|we've|we bring|our \w+ (?:has|have)|with a (?:history|heritage) of)\s+(?:over\s+|more than\s+)?$",
+    re.I,
+)
+_OTHER_BEFORE = re.compile(
+    r"\b(?:for|since|(?:over|in|during) the (?:last|past)|the (?:last|past)|last|past|established|founded|"
+    r"celebrating|within|every|after|under|up to)\s+(?:(?:over|more than|almost|nearly|around|about|some)\s+)?$",
+    re.I,
+)
+_OTHER_AFTER = re.compile(
+    r"^\W*(?:of (?:trading|history|heritage|service|operation|growth)|in business|anniversary|ago|"
+    r"fixed[- ]term|contract|ftc|maternity|secondment|warranty|guarantee)\b",
+    re.I,
+)
+_EXPERIENCE_AFTER = re.compile(
+    r"^[^.;\n]{0,40}?\b(?:experience|experienced|exp|pqe|post[- ]?qualifi\w*|"
+    r"in (?:a|an|the) (?:similar|related|relevant))\b",
+    re.I,
+)
+
+
+def _requirement_years(text: str, match: re.Match[str]) -> int | None:
+    """The years an experience requirement asks for, or None when the number means something else."""
+    years = math.ceil(float(match.group(1)))
+    before = re.split(r"[.;:!?\n]", text[max(0, match.start() - 40) : match.start()])[-1]
+    after = re.split(r"[.;!?\n]", text[match.end() : match.end() + 60])[0]
+    if years > MAX_REQUIRED_YEARS or _AGE_BEFORE.search(before) or _AGE_AFTER.match(after):
+        return None
+    if _COMPANY_BEFORE.search(before):
+        return None
+    if _EXPERIENCE_AFTER.match(after):
+        return years
+    if _OTHER_BEFORE.search(before) or _OTHER_AFTER.match(after):
+        return None
+    return years
+
+
 def extract_min_years(text: str) -> int | None:
-    """The fewest years of experience the text asks for: "3+ years", "3-5 years", "2 to 4 yrs"."""
-    found: list[int] = []
-    for match in re.finditer(r"\b(\d{1,2})\s*(?:-|–|—|to)\s*(\d{1,2})\s*(?:years?|yrs?)\b", text, re.I):
-        found.append(int(match.group(1)))
-    for match in re.finditer(r"\b(\d{1,2})\s*\+?\s*(?:years?|yrs?)\b", text, re.I):
-        found.append(int(match.group(1)))
+    """The fewest years of experience the text asks for: "3+ years", "3-5 years", "2 to 4 yrs".
+
+    Ages ("18 years or older"), the company's own history ("for 25 years", "over 40 years of
+    experience"), contract lengths ("2 years fixed term") and other durations are left out.
+    """
+    found = [years for match in _YEARS.finditer(text) if (years := _requirement_years(text, match)) is not None]
     return min(found) if found else None
 
 
@@ -164,12 +212,18 @@ def freshness_score(date_posted: str, fresh_hours: int) -> tuple[int, str]:
 
 
 def location_score(job: dict[str, Any], locations: list[dict[str, Any]], remote_score: int = 5) -> tuple[int, str]:
-    """Points for the best-scoring `search.locations` entry whose `match` phrases are in the job's location."""
+    """Points for the best-scoring `search.locations` entry whose `match` phrases are in the job's location.
+
+    A `remote_only` entry is a search for remote jobs, so it never scores a job that isn't remote:
+    with `match: [uk]`, it would otherwise reward every on-site job in the country.
+    """
     if job.get("is_remote"):
         return remote_score, "remote role"
     loc = str(job.get("location", ""))
     best: tuple[int, str] | None = None
     for place in locations:
+        if place.get("remote_only"):
+            continue
         name = str(place.get("name", "")).strip()
         phrases = _phrases(place.get("match")) or _phrases(name)
         if phrases and phrase_found(loc, phrases):
@@ -259,6 +313,15 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
     hard_reject = bool(hard_reject_reasons)
 
     reasons = [role_reason, exp_reason, skill_reason, cert_reason, fresh_reason, loc_reason]
+    # The neutral points alone put a target title in your city over the good-match line, so a good
+    # match also needs one of your skills to show up in the posting (when your field's skills are set).
+    good_capped = bool(
+        ranking.get("good_requires_matched_skill", True)
+        and vocab.skills
+        and not any(skill.lower() not in vocab.soft_skills for skill in matched_skills)
+    )
+    if good_capped:
+        reasons.append("none of your skills found in the posting, so at most a possible match")
     return {
         **job,
         "score": score,
@@ -271,4 +334,5 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
         "matched_certs": matched_certs,
         "missing_certs": missing_certs,
         "score_reasons": reasons,
+        "good_capped": good_capped,
     }

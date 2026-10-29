@@ -37,6 +37,8 @@ class ScoredJob(Job):
     matched_certs: list[str]
     missing_certs: list[str]
     score_reasons: list[str]
+    # No skill of yours was found in the posting, so it can't be a good match.
+    good_capped: bool
 
 
 class Verdict(StrEnum):
@@ -56,7 +58,7 @@ def classify(scored: dict[str, Any], good_threshold: int, possible_threshold: in
         return Verdict.REJECTED
     score = int(scored.get("score", 0))
     if score >= good_threshold:
-        return Verdict.GOOD
+        return Verdict.POSSIBLE if scored.get("good_capped") else Verdict.GOOD
     if score >= possible_threshold:
         return Verdict.POSSIBLE
     return Verdict.LOW

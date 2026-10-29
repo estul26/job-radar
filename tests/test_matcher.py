@@ -2,8 +2,12 @@
 
 from pathlib import Path
 
-from job_radar.matcher import Vocabulary, detect_skills, location_score, score_job
+import pytest
+
+from job_radar.matcher import Vocabulary, detect_skills, extract_min_years, location_score, score_job
+from job_radar.models import Verdict, classify
 from job_radar.normalize import phrase_found
+from job_radar.report import build_report
 from job_radar.settings import load_json, load_yaml
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -124,8 +128,9 @@ def test_location_points_come_from_the_configured_locations():
     places = CONFIG["search"]["locations"]
     assert location_score({"location": "Toronto, ON"}, places) == (5, "Toronto location")
     assert location_score({"location": "Ottawa, ON, CA"}, places) == (4, "Ontario location")
-    assert location_score({"location": "Vancouver, BC, Canada"}, places) == (3, "Canada location")
     assert location_score({"location": "Remote", "is_remote": True}, places, remote_score=4) == (4, "remote role")
+    # "Canada" is a remote_only search: an on-site job in Vancouver isn't what it looked for.
+    assert location_score({"location": "Vancouver, BC, Canada"}, places) == (1, "location needs review")
     # The province abbreviation only counts after a comma, on a word boundary.
     assert location_score({"location": "Abbotsford, BC"}, places) == (1, "location needs review")
     assert location_score({"location": "Remote - Oneida"}, places) == (1, "location needs review")
@@ -215,3 +220,59 @@ def test_a_posting_naming_few_skills_counts_them_only_partly():
     assert "matched 1/1 core detected skills (few named, so partly counted)" in one["score_reasons"]
     assert "matched 3/3 core detected skills" in three["score_reasons"]
     assert three["score"] - one["score"] == 35 - 24
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("3+ years of experience in accounts", 3),
+        ("2 to 4 yrs in a similar role", 2),
+        ("3-5 years' experience; must be 18 years or older", 3),
+        ("2+ years of acute care", 2),
+        ("at least 1.5 years experience", 2),
+        ("we are looking for 3+ years of experience", 3),
+        # Not experience requirements:
+        ("applicants must be 18 years or older", None),
+        ("you must be at least 21 years of age", None),
+        ("aged 18 years and over", None),
+        ("we have served local clients for 25 years", None),
+        ("a family business trading for 12 years", None),
+        ("with over 40 years of experience, we are the region's leading firm", None),
+        ("we have 15 years of experience in freight", None),
+        ("this is a 2 years fixed term contract", None),
+        ("celebrating 60 years of history", None),
+        ("founded 30 years ago", None),
+    ],
+)
+def test_extract_min_years_reads_only_experience_requirements(text, expected):
+    assert extract_min_years(text) == expected
+
+
+def test_an_age_limit_is_not_a_hard_reject():
+    scored = score_job(job("Staff Nurse", "Applicants must be 18 years or older. 1 year experience."), PROFILE, CONFIG)
+    assert scored["hard_reject_reasons"] == []
+    assert "requires 1 year(s), within profile" in scored["score_reasons"]
+
+
+def test_a_good_match_needs_one_of_your_skills_in_the_posting():
+    good, possible = 60, 50
+    empty = score_job(job("Registered Nurse", "Join our friendly team."), PROFILE, CONFIG)
+    assert empty["score"] >= good and empty["good_capped"]
+    assert classify(empty, good, possible) is Verdict.POSSIBLE
+    assert "at most a possible match" in empty["score_reasons"][-1]
+
+    evidence = score_job(job("Registered Nurse", "Wound care on a busy unit."), PROFILE, CONFIG)
+    assert not evidence["good_capped"] and classify(evidence, good, possible) is Verdict.GOOD
+
+
+def test_the_skill_evidence_rule_can_be_turned_off():
+    config = {**CONFIG, "ranking": {**CONFIG["ranking"], "good_requires_matched_skill": False}}
+    assert not score_job(job("Registered Nurse", "Join our friendly team."), PROFILE, config)["good_capped"]
+    # Nor does it apply before matching.skills is filled in: there would be nothing to find.
+    assert not score_job(job("Registered Nurse", ""), PROFILE, {**CONFIG, "matching": {}})["good_capped"]
+
+
+def test_a_capped_job_is_listed_as_possible_in_the_report():
+    capped = {**score_job(job("Registered Nurse", ""), PROFILE, CONFIG), "score": 80}
+    report = build_report([], [capped], [], [], 1, 1, 60, 50)
+    assert "🟡 POSSIBLE" in report and "GOOD MATCH" not in report

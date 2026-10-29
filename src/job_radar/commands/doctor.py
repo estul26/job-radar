@@ -106,6 +106,10 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
                 f"search.locations[{index}] ({place['name']}) needs a query: "
                 "what you'd type in the job board's location box"
             )
+        elif place.get("distance") is not None and (
+            isinstance(place["distance"], bool) or not isinstance(place["distance"], int) or place["distance"] < 1
+        ):
+            problem(f"search.locations[{index}] ({place['name']}): distance must be a whole number of miles, e.g. 15")
 
     matching = config.get("matching") or {}
     if not matching.get("skills"):

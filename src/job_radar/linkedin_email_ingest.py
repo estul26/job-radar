@@ -216,6 +216,24 @@ def _sender_domain(sender: str) -> str:
     return match.group(1).lower() if match else "unknown sender"
 
 
+_LINKEDIN_DMARC = re.compile(r"\bdmarc=pass\b[^;]*\bheader\.from=(?:[\w-]+\.)*linkedin\.com\b")
+_LINKEDIN_DKIM = re.compile(r"\bdkim=pass\b[^;]*\bheader\.[di]=@?(?:[\w-]+\.)*linkedin\.com\b")
+
+
+def sender_authentication(msg: Message) -> str:
+    """Whether your mail server verified the mail really came from LinkedIn: "pass", "fail", or "".
+
+    Anyone can put a linkedin.com address in From. The receiving server records its DKIM and DMARC
+    checks in the topmost Authentication-Results header (lower ones could have come with the mail);
+    "" means it records none, so there is nothing to go by.
+    """
+    results = msg.get_all("Authentication-Results") or []
+    if not results:
+        return ""
+    top = " ".join(str(results[0]).split()).lower()
+    return "pass" if _LINKEDIN_DMARC.search(top) or _LINKEDIN_DKIM.search(top) else "fail"
+
+
 def _alert_messages(
     mailbox: Any, last_uid: int, since_days: int | None = None
 ) -> Iterator[tuple[int, Message | None, str]]:
@@ -253,6 +271,9 @@ def _alert_messages(
         # and only job links whose titles match the search titles become Issues.
         if domain != "linkedin.com" and not domain.endswith(".linkedin.com"):
             yield uid, None, f"not from LinkedIn ({domain})"
+            continue
+        if sender_authentication(msg) == "fail":
+            yield uid, None, "says it's from LinkedIn, but your mail server's DKIM/DMARC check didn't confirm it"
             continue
         yield uid, msg, ""
 

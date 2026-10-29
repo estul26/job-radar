@@ -1,7 +1,9 @@
+import json
 from pathlib import Path
 
 from job_radar.issue_body import parse_job
 from job_radar.matcher import Vocabulary, score_job
+from job_radar.resume import ai
 from job_radar.resume.ai import (
     apply_ai_payload,
     describe_ai,
@@ -128,3 +130,69 @@ def test_missing_api_key_falls_back_without_failure():
     # What the Issue comment says: plain words and where to set it up, not the model it would have used.
     said = describe_ai(audit["status"], audit["model"])
     assert said.startswith("off") and "docs/setup.md" in said and "gpt" not in said
+
+
+def _response(payload: dict, status: str = "completed") -> dict:
+    return {"id": "resp_1", "status": status, "output_text": json.dumps(payload)}
+
+
+def _fake_openai(monkeypatch, replies):
+    """Replace the HTTP call: each request gets the next reply (a dict, or an exception to raise)."""
+    sent = []
+
+    def post(api_key, body):
+        sent.append(json.loads(json.dumps(body)))
+        reply = replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+    monkeypatch.setattr(ai, "_post_response", post)
+    return sent
+
+
+def test_both_calls_ask_for_structured_output_and_low_reasoning_effort(monkeypatch):
+    monkeypatch.delenv("OPENAI_REASONING_EFFORT", raising=False)
+    job, baseline = _baseline()
+    verdict = {"pass": True, "unsupported_claims": [], "notes": "ok"}
+    sent = _fake_openai(monkeypatch, [_response(_safe_payload(baseline)), _response(verdict)])
+
+    _, audit = enhance_resume_with_ai(MASTER, job, baseline, vocab=VOCAB, api_key="k", model="m", enabled=True)
+
+    assert audit["status"] == "ai_validated" and audit["reasoning_effort"] == "low"
+    editor, validator = sent
+    assert editor["text"]["format"]["name"] == "resume_rewrite" and editor["text"]["format"]["strict"] is True
+    assert validator["text"]["format"]["schema"] == ai.VALIDATOR_SCHEMA
+    assert editor["reasoning"] == validator["reasoning"] == {"effort": "low"}
+    assert editor["max_output_tokens"] >= 8000 and validator["max_output_tokens"] >= 4000
+
+
+def test_a_model_without_reasoning_settings_is_asked_again_without_them(monkeypatch):
+    job, baseline = _baseline()
+    rejected = ai.OpenAIHTTPError(400, '{"error": {"message": "Unsupported parameter: reasoning.effort"}}')
+    verdict = {"pass": True, "unsupported_claims": [], "notes": "ok"}
+    sent = _fake_openai(monkeypatch, [rejected, _response(_safe_payload(baseline)), _response(verdict)])
+
+    _, audit = enhance_resume_with_ai(MASTER, job, baseline, vocab=VOCAB, api_key="k", model="m", enabled=True)
+
+    assert audit["status"] == "ai_validated"
+    assert "reasoning" in sent[0] and "reasoning" not in sent[1]
+
+
+def test_a_response_cut_short_falls_back_and_says_why(monkeypatch):
+    job, baseline = _baseline()
+    cut = {"id": "r", "status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"}, "output": []}
+    _fake_openai(monkeypatch, [cut])
+
+    content, audit = enhance_resume_with_ai(MASTER, job, baseline, vocab=VOCAB, api_key="k", model="m", enabled=True)
+
+    assert content == baseline and audit["status"] == "fallback_ai_error"
+    assert "max_output_tokens" in audit["error"]
+
+
+def test_reasoning_effort_default_leaves_it_to_the_model(monkeypatch):
+    monkeypatch.setenv("OPENAI_REASONING_EFFORT", "default")
+    job, baseline = _baseline()
+    sent = _fake_openai(monkeypatch, [_response({"summary": ""})])
+    enhance_resume_with_ai(MASTER, job, baseline, vocab=VOCAB, api_key="k", model="m", enabled=True)
+    assert "reasoning" not in sent[0]

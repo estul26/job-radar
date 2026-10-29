@@ -226,3 +226,45 @@ def test_senior_titles_are_not_imported(tmp_path):
     )
     assert [job["title"] for job in created] == ["Staff Nurse 2"]
     assert skipped == 2
+
+
+GMAIL_PASS = (
+    "mx.google.com; dkim=pass header.i=@linkedin.com header.s=d2048-2 header.b=abc; "
+    "spf=pass smtp.mailfrom=s-1@bounce.linkedin.com; dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=linkedin.com"
+)
+OUTLOOK_PASS = "spf=pass smtp.mailfrom=bounce.linkedin.com; dkim=pass (signature was verified) header.d=linkedin.com"
+FORGED = "mx.google.com; dkim=none; spf=fail smtp.mailfrom=evil.example; dmarc=fail (p=REJECT) header.from=linkedin.com"
+
+
+def _authenticated_email(*results: str) -> bytes:
+    """The alert email with Authentication-Results headers on top, as the receiving servers add them."""
+    headers = "".join(f"Authentication-Results: {value}\n" for value in results).encode()
+    return headers + _alert_email(ALERT_HTML)
+
+
+@pytest.mark.parametrize(
+    ("results", "expected"),
+    [((GMAIL_PASS,), "pass"), ((OUTLOOK_PASS,), "pass"), ((FORGED,), "fail"), ((), ""), ((FORGED, GMAIL_PASS), "fail")],
+)
+def test_sender_authentication_reads_the_receiving_servers_verdict(results, expected):
+    from email import message_from_bytes
+
+    from job_radar.linkedin_email_ingest import sender_authentication
+
+    assert sender_authentication(message_from_bytes(_authenticated_email(*results))) == expected
+
+
+def test_a_forged_linkedin_email_creates_no_issues(tmp_path):
+    from job_radar.linkedin_email_ingest import ingest
+
+    notes: list[str] = []
+    created, _ = ingest(
+        FakeMailbox({3: _authenticated_email(FORGED), 4: _authenticated_email(GMAIL_PASS)}),
+        tmp_path / "state.json",
+        exclusions=[],
+        target_titles=["Registered Nurse", "Staff Nurse"],
+        create_issue=lambda title, body: "https://github.com/example/repo/issues/1",
+        notes=notes,
+    )
+    assert len(created) == 2  # both jobs, from the genuine email only
+    assert "DKIM/DMARC" in notes[0] and notes[1].startswith("UID 4: LinkedIn")

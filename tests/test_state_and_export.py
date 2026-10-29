@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from fake_github import FakeGitHub
-from job_radar.commands.export import export
+from job_radar.commands.export import application_rows, export
 from job_radar.state import prune_seen, update_seen
 
 NOW = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
@@ -123,3 +123,31 @@ def test_export_rebuilds_the_tracker_and_resume_index_from_issues(settings, issu
     [index] = list(csv.DictReader(settings.paths.resume_index.open(encoding="utf-8-sig")))
     assert (index["job_key"], index["issue_number"]) == ("abc12345", "5")  # matched to its Issue by fingerprint
     assert (index["status"], index["ai_used"]) == ("Rejected", "Yes")
+
+
+def test_export_keeps_jobs_whose_description_has_headings_or_is_empty(issue_body):
+    no_description = _indeed_body("def67890").replace("Wound care.", "")
+    issues = [
+        {
+            "number": 2,
+            "title": "[Indeed Job] Assistant Accountant — Example Freight Ltd",
+            "body": issue_body("indeed_markdown_headings"),
+            "labels": [{"name": "status:new"}],
+        },
+        {
+            "number": 3,
+            "title": "[Indeed Job] Registered Nurse — Example",
+            "body": no_description,
+            "labels": [{"name": "status:applied"}],
+        },
+        {
+            "number": 4,
+            "title": "[Indeed Job] Broken — Example",
+            "body": "no fields at all",
+            "labels": [{"name": "status:new"}],
+        },
+    ]
+    skipped: list[str] = []
+    rows = application_rows(issues, skipped)
+    assert [(row["issue_number"], row["location"]) for row in rows] == [(2, "Leeds, ENG, UK"), (3, "Toronto, ON")]
+    assert skipped == ["#4: Missing required Issue field: LinkedIn job URL"]

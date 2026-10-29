@@ -16,7 +16,7 @@ MASTER = FIXTURES / "master_resume.json"
 
 @pytest.fixture
 def issue_body():
-    """Job Issue bodies as the radar writes them: linkedin_form, indeed and linkedin_alert."""
+    """Job Issue bodies as the radar writes them: linkedin_form, indeed, indeed_markdown_headings, linkedin_alert."""
 
     def load(name: str) -> str:
         return (ISSUE_FIXTURES / f"{name}.md").read_text(encoding="utf-8")
