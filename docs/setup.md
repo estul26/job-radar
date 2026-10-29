@@ -1,5 +1,7 @@
 # Setup
 
+**English** | [简体中文](setup.zh-CN.md)
+
 Your copy must be **private**: the workflows commit your résumés (with your contact details)
 and the Issues hold your job search. Create it with **Use this template** (not Fork: a fork of
 a public repository has to stay public).
