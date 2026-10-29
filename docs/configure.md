@@ -1,5 +1,7 @@
 # Configure it for your job search
 
+**English** | [简体中文](configure.zh-CN.md)
+
 Three files describe you and the jobs you want. They ship empty; fill them in, then run
 `radar doctor` until it reports no problems.
 
