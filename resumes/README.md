@@ -1,5 +1,7 @@
 # Résumés
 
+**English** | [简体中文](README.zh-CN.md)
+
 `master_resume.json` holds the facts every tailored résumé is built from, and `jobs/` holds one
 folder per job. See **[docs/resumes.md](../docs/resumes.md)** for how they are generated and checked.
 
@@ -28,6 +30,9 @@ nothing is ever added.
 **Tags** decide what gets picked for a job. Use the skill names from `matching.skills` in
 `config/search_config.yaml` (a tag equal to a skill the posting asks for counts most), plus any
 words a posting might use.
+
+Write only what you have done. Hands-on work from training or a course goes in that `education`
+entry's `bullets`, not under `experience`.
 
 A short example:
 
@@ -63,3 +68,7 @@ A short example:
   ]
 }
 ```
+
+When you edit it on the GitHub website, keep every quote, comma and bracket paired, exactly as in
+the example. If one breaks, GitHub emails you that **CI failed**; open the failed run to see which
+file.

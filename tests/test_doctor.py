@@ -10,6 +10,7 @@ from conftest import CONFIG, MASTER, PROFILE, ROOT
 from job_radar.cli import main
 from job_radar.commands.doctor import check_sites, checkup, resume_ready
 from job_radar.commands.scan import generate_scan_resumes, scan_jobs
+from job_radar.matcher import score_job
 from job_radar.settings import Paths, load_json, load_settings
 
 # A copy of the template as it ships: config/ itself is yours to fill in, and the tests must
@@ -181,3 +182,69 @@ def test_your_config_files_load():
     settings = load_settings(ROOT / "config/search_config.yaml", ROOT / "config/resume_profile.json")
     assert isinstance(settings.config.get("search"), dict)
     assert isinstance(load_json(ROOT / "resumes/master_resume.json").get("identity"), dict)
+
+
+# How people write settings by hand on GitHub: one title without its "- ", skills as a list like
+# the titles, one location without its "- ", and no ranking section at all.
+HAND_WRITTEN = """timezone: America/Edmonton
+search:
+  sites: indeed
+  country_indeed: Canada
+  titles: IT Support Specialist
+  locations:
+    name: Edmonton
+    query: Edmonton, AB
+matching:
+  skills:
+    - windows
+    - active directory: [active directory, AD]
+  certifications:
+    - CompTIA A+
+"""
+
+
+def test_settings_written_by_hand_are_understood(tmp_path, monkeypatch):
+    config = tmp_path / "search_config.yaml"
+    config.write_text(HAND_WRITTEN, encoding="utf-8")
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"experience_years": 4, "skills": "windows", "certifications": []}), "utf-8")
+
+    result = checkup(config, profile, MASTER)
+    assert result.ok, result.problems
+
+    settings = load_settings(config, profile)
+    search = settings.config["search"]
+    assert search["titles"] == ["IT Support Specialist"] and search["sites"] == ["indeed"]
+    assert search["locations"] == [{"name": "Edmonton", "query": "Edmonton, AB"}]
+    assert settings.config["matching"]["skills"] == {"windows": [], "active directory": ["active directory", "AD"]}
+    assert settings.profile["skills"] == ["windows"]
+
+    posting = {"title": "IT Support Specialist", "description": "Windows and AD support.", "location": "Edmonton, AB"}
+    scored = score_job(posting, settings.profile, settings.config)
+    assert scored["matched_skills"] == ["windows"] and scored["missing_skills"] == ["active directory"]
+    assert "target-role title" in scored["score_reasons"]
+
+    from job_radar import collector
+
+    searched = []
+    monkeypatch.setattr(collector, "scrape_jobs", lambda **kwargs: searched.append(kwargs["search_term"]))
+    collector.collect_jobs(settings.config)
+    assert searched == ["IT Support Specialist"]  # not "I", "T", " ", …
+
+
+def test_shapes_the_radar_cannot_read_are_named(tmp_path):
+    config = tmp_path / "search_config.yaml"
+    config.write_text(
+        "timezone: UTC\nsearch:\n  sites: [indeed]\n  country_indeed: Canada\n  titles: {Analyst: yes}\n"
+        "  locations: Edmonton\nmatching:\n  skills: 3\n",
+        encoding="utf-8",
+    )
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"experience_years": True, "skills": {"windows": 1}}), encoding="utf-8")
+
+    problems = "\n".join(checkup(config, profile, MASTER).problems)
+    assert "search.titles must be a list: one entry per line, each starting with '- '" in problems
+    assert "search.locations[0] needs a name" in problems
+    assert "matching.skills must list names with their phrases" in problems
+    assert "experience_years must be a whole number" in problems
+    assert 'skills must be a list in square brackets, e.g. ["excel", "xero"]' in problems

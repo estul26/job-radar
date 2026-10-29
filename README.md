@@ -48,8 +48,11 @@ Everything below happens on the GitHub website. It takes about 20 minutes.
    - set `timezone`, e.g. `timezone: Europe/London` ([list of names](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones));
    - set your country, e.g. `country_indeed: "UK"`;
    - under `titles`, list the job titles you want, one per line starting with `- `;
-   - under `locations`, add where you want to work, copying the example's layout;
-   - under `matching` → `skills`, list the skills job ads in your field ask for.
+   - under `locations`, add where you want to work, copying the example's layout (add
+     `distance: 25` to a place to search only within 25 miles of it);
+   - under `matching` → `skills`, add the skills job ads in your field ask for, one per line as a
+     name and a colon: `excel: []` looks for "excel", and `excel: [excel, spreadsheets]` for either
+     word.
 
    Click **Commit changes**, then **Commit changes** again.
 3. **Describe yourself.** Edit `config/resume_profile.json` the same way. Keep the quotes and
@@ -91,6 +94,35 @@ the pull request yourself.) It never changes
 your settings, résumé or job data (`config/`, `resumes/master_resume.json`, `resumes/jobs/`,
 `data/`, `reports/`). Workflow files it isn't allowed to change are listed in the pull request,
 with what to paste. More in [docs/setup.md](docs/setup.md#5-updates-from-the-template).
+
+## Once it's running
+
+- **Your tailored résumés.** Each good match's Issue has a comment with links to its résumé. Open
+  **Application resume (DOCX)** and click the download button at the top right of the file. Read
+  it before you send it. All résumés are also in `resumes/jobs/`, one folder per job.
+- **Few matches, or the wrong ones?** Each run's **Summary** (and `reports/latest.md`) shows the new
+  jobs with their score notes, and under "Automatically excluded" the reason each was left out.
+  Most fixes are in `config/search_config.yaml`: add the titles employers actually use to `titles`
+  (and `queries`), add the skills postings ask for to `matching.skills`, take a word out of
+  `hard_reject_title_terms`, or lower `good_match_threshold` a little. Changes apply from the next
+  scan; jobs it has already seen aren't scored again.
+- **Looking for two kinds of jobs** (say, cybersecurity and IT support)? Make one copy for each,
+  with its own titles, skills and profile. Each copy has its own Issues, scans and résumés. Put the
+  same facts in each copy's `resumes/master_resume.json`, and update all of them when something
+  changes.
+- **Moving?** Change `locations` in `config/search_config.yaml`. If the new place is in another
+  timezone, also change `timezone` there and the `timezone:` lines in
+  `.github/workflows/daily-jobs.yml` and `linkedin-email-alerts.yml`: GitHub reads scan times only
+  from the workflow files.
+- **Cost.** A private repository uses GitHub Actions minutes. A copy needs roughly 200 a month (two
+  scans a day, plus short runs that skip a scan already done), and GitHub Free includes 2,000 a
+  month for private repositories; see your plan under GitHub **Settings → Billing**.
+- **Pausing.** Open **Actions → Daily Job Radar**, click **⋯** at the top right and choose **Disable
+  workflow** (and the same for **Import LinkedIn Job Alerts** if you turned it on). Enable it again
+  to carry on; nothing is lost while it's off.
+- **No emails about new matches?** GitHub emails you about Issues assigned to you. Check that
+  **Email** is ticked for **Participating, @mentions and custom** under GitHub **Settings →
+  Notifications**.
 
 ## Get started (on your computer)
 

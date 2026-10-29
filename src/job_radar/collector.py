@@ -14,14 +14,14 @@ def filter_excluded_titles(jobs: list[dict[str, Any]], terms: list[str]) -> list
 
 
 def collect_jobs(config: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
-    search = config["search"]
-    sites = search["sites"]
+    search = config.get("search") or {}
+    sites = search.get("sites") or []
     errors: list[str] = []
     frames: list[pd.DataFrame] = []
 
-    queries = search.get("queries") or search["titles"]
+    queries = search.get("queries") or search.get("titles") or []
 
-    for location in search["locations"]:
+    for location in search.get("locations") or []:
         for query in queries:
             kwargs = dict(
                 site_name=sites,

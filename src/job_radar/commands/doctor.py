@@ -18,7 +18,15 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 
-from ..settings import DEFAULT_CONFIG, DEFAULT_MASTER_RESUME, DEFAULT_PROFILE
+from ..settings import (
+    DEFAULT_CONFIG,
+    DEFAULT_MASTER_RESUME,
+    DEFAULT_PROFILE,
+    LIST_SETTINGS,
+    NAMED_SETTINGS,
+    normalize_config,
+    normalize_profile,
+)
 
 NOT_SET_UP = 3
 
@@ -79,6 +87,17 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
     def warn(message: str) -> None:
         checkup.warnings.append(f"{path}: {message}")
 
+    config = normalize_config(config)
+    for section, keys in LIST_SETTINGS.items():
+        for key in keys:
+            if not isinstance(config[section].get(key, []), list):
+                problem(f"{section}.{key} must be a list: one entry per line, each starting with '- '")
+    for key in NAMED_SETTINGS:
+        if not isinstance(config["matching"].get(key, {}), dict):
+            problem(
+                f"matching.{key} must list names with their phrases, one per line, e.g. `excel: [excel, spreadsheets]`"
+            )
+
     timezone = str(config.get("timezone") or "").strip()
     if not timezone:
         warn("timezone is not set, so dates use UTC (set it to e.g. Europe/London, Asia/Kolkata or America/Chicago)")
@@ -88,15 +107,19 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
         except (ZoneInfoNotFoundError, ValueError):
             problem(f"timezone '{timezone}' is not an IANA timezone name such as Europe/London or Asia/Kolkata")
 
-    search = config.get("search") or {}
-    sites = [str(site).strip().lower() for site in search.get("sites") or []]
+    search = config["search"]
+    listed_sites = search.get("sites") if isinstance(search.get("sites"), list) else []
+    sites = [str(site).strip().lower() for site in listed_sites]
     if not sites:
         problem("search.sites is empty: use [indeed], or a job board for your region (docs/configure.md)")
     check_sites(sites, str(search.get("country_indeed") or "").strip(), problem, warn)
     if not search.get("titles"):
         problem("search.titles is empty: list the job titles you want, e.g. Accountant or Registered Nurse")
     locations = search.get("locations") or []
-    if not locations:
+    if not isinstance(locations, list):
+        problem("search.locations must be a list of places, each starting with '- name:'")
+        locations = []
+    elif not locations:
         problem("search.locations is empty: add where you want to work (and a remote entry if you want remote)")
     for index, place in enumerate(locations):
         if not isinstance(place, dict) or not str(place.get("name") or "").strip():
@@ -111,7 +134,7 @@ def check_config(config: dict[str, Any], path: Path, checkup: Checkup) -> None:
         ):
             problem(f"search.locations[{index}] ({place['name']}): distance must be a whole number of miles, e.g. 15")
 
-    matching = config.get("matching") or {}
+    matching = config["matching"]
     if not matching.get("skills"):
         warn(
             "matching.skills is empty, so postings' skill requirements aren't detected and every job gets the "
@@ -156,12 +179,18 @@ def check_sites(sites: list[str], country: str, problem: Any, warn: Any) -> None
 
 
 def check_profile(profile: dict[str, Any], config: dict[str, Any], path: Path, checkup: Checkup) -> None:
-    if not isinstance(profile.get("experience_years"), int):
+    profile, config = normalize_profile(profile), normalize_config(config)
+    if not isinstance(profile.get("experience_years"), int) or isinstance(profile.get("experience_years"), bool):
         checkup.problems.append(f"{path}: experience_years must be a whole number of years in your field")
+    for key in ("skills", "certifications"):
+        if not isinstance(profile.get(key, []), list):
+            checkup.problems.append(f'{path}: {key} must be a list in square brackets, e.g. ["excel", "xero"]')
+            profile[key] = []
     skills = [str(skill) for skill in profile.get("skills") or []]
     if not skills:
         checkup.warnings.append(f"{path}: skills is empty, so no posting's skills will match yours")
-    known = {str(name).lower() for name in ((config.get("matching") or {}).get("skills") or {})}
+    named_skills = config["matching"].get("skills")
+    known = {str(name).lower() for name in named_skills} if isinstance(named_skills, dict) else set()
     unknown = sorted(skill for skill in skills if skill.lower() not in known)
     if known and unknown:
         checkup.warnings.append(

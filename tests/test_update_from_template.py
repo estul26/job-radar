@@ -144,6 +144,7 @@ def kinds(update) -> dict[str, str]:
         (".github/actions/setup/action.yml", "template"),
         ("README.zh-CN.md", "template"),
         ("resumes/README.md", "template"),
+        ("resumes/README.zh-CN.md", "template"),
         ("config/search_config.yaml", "yours"),
         ("resumes/master_resume.json", "yours"),
         ("resumes/jobs/abc/resume.docx", "yours"),
