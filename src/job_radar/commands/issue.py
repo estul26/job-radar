@@ -120,7 +120,8 @@ def build_review(scored: dict[str, Any], verdict: Verdict, note: str = "") -> st
             f"- Hard-reject reasons: {items('hard_reject_reasons', '; ')}",
             "",
             *([note, ""] if note else []),
-            "When you apply, set the status:applied label (or drag the card on the Job Search board).",
+            "When you apply, set the status:applied label (or drag the card on the Job Search board, if you "
+            "set one up).",
             "",
         ]
     )

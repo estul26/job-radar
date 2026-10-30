@@ -5,7 +5,13 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from ..matcher import Vocabulary, detect_skills
+from ..matcher import Vocabulary, detect_certs, detect_skills
+from ..normalize import phrase_found
+
+# The summary's closing "Experience includes …" sentence names at most this many capabilities, so it
+# stays one readable sentence, and at least this many when fewer of them match the job.
+MAX_SUMMARY_CAPABILITIES = 4
+MIN_SUMMARY_CAPABILITIES = 3
 
 
 def slug(value: str, limit: int = 56) -> str:
@@ -40,14 +46,39 @@ def sorted_items(items: list[dict[str, Any]], job_text: str, detected: set[str])
     return [item for _, item in indexed]
 
 
+def sorted_certifications(items: list[dict[str, Any]], job_text: str, vocab: Vocabulary) -> list[dict[str, Any]]:
+    """The certifications the posting asks for first, then the rest in your `priority` order.
+
+    Asked for means the posting names a certification in `matching.certifications` and the entry's
+    text or tags contain one of that certification's phrases. Skill tags don't move a certification:
+    one tagged "troubleshooting" would otherwise outrank the certification the posting names.
+    """
+    asked = [vocab.certifications[name] for name in detect_certs(job_text, vocab)]
+
+    def is_asked(item: dict[str, Any]) -> bool:
+        own = "\n".join([str(item.get("text", "")), *(str(tag) for tag in item.get("tags") or [])])
+        return any(phrase_found(own, phrases) for phrases in asked)
+
+    indexed = list(enumerate(items))
+    indexed.sort(
+        key=lambda pair: (
+            not is_asked(pair[1]),
+            int(pair[1].get("priority", 100 + pair[0])),
+            pair[0],
+        )
+    )
+    return [item for _, item in indexed]
+
+
 def tailored_summary(master: dict[str, Any], job_text: str, detected: set[str]) -> str:
     summary = master.get("summary") or {}
     capabilities = sorted_items(summary.get("capabilities", []), job_text, detected)
     relevant = [item["text"] for item in capabilities if tag_relevance(item.get("tags", []), job_text, detected) > 0]
-    if len(relevant) < 3:
-        relevant = [item["text"] for item in capabilities[:5]]
+    if len(relevant) < MIN_SUMMARY_CAPABILITIES:
+        # The sort put the relevant ones first; fill up with your next ones in order.
+        relevant = [item["text"] for item in capabilities[:MIN_SUMMARY_CAPABILITIES]]
     else:
-        relevant = relevant[:6]
+        relevant = relevant[:MAX_SUMMARY_CAPABILITIES]
 
     capability_text = ", ".join(relevant[:-1])
     if len(relevant) > 1:
@@ -87,7 +118,7 @@ def tailor_content(
             }
         )
 
-    certifications = sorted_items(master.get("certifications", []), job_text, detected)
+    certifications = sorted_certifications(master.get("certifications", []), job_text, vocab)
 
     return {
         "identity": master["identity"],

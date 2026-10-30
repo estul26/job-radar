@@ -19,14 +19,15 @@
 | `identity` | 姓名、头衔（例如 "Registered Nurse \| BLS, ACLS"）、所在地、电话（如果申请国外职位，加上国家区号）、邮箱，以及可选的 `linkedin`、`github`、`website`。空着的字段不会出现在简历上。 |
 | `summary.experience` | 一句话概括你的经验，例如 "Registered Nurse with three years of acute-care experience."。 |
 | `summary.credentials` | 一句话说明你的执照或证书，也可以留空。 |
-| `summary.capabilities` | 带 `tags` 的短语；和职位最相关的几条会接在摘要后面。 |
+| `summary.capabilities` | 三到五个带 `tags` 的短语，每个都要能自然地接在 "Experience includes" 后面。和职位最相关的三四条会接在摘要后面。 |
 | `technical_skills` | 技能行：`category`（可选）、`text`、`tags` 和 `priority`（没有标签匹配职位时，数字小的排在前面）。这一部分在简历上的标题是 "Skills"。 |
 | `experience` | 工作经历：`role`、可选的 `company`、`dates`、可选的 `max_bullets`（默认 4），以及 `bullets`，每条都有 `text` 和 `tags`。 |
 | `education` | `program`、`school`、`dates`，以及可选的 `bullets`。 |
-| `certifications` | `text`、`tags`、`priority`。前四个会逐条列出，其余的合并成一行。 |
+| `certifications` | `text`、`tags`、`priority`。职位提到的证书（按 `matching.certifications` 的定义）排在最前，其余按 `priority` 排；技能标签不影响证书顺序。前四个会逐条列出，其余的合并成一行。 |
 
 **标签（tags）** 决定为某个职位挑选哪些内容。使用 `config/search_config.yaml` 里 `matching.skills` 中的技能名称
-（标签和职位要求的技能同名时，权重最高），再加上职位广告里可能出现的其他词。
+（标签和职位要求的技能同名时，权重最高），再加上职位广告里可能出现的其他词。`config/resume_profile.json`
+里也要列出同样的技能名称：标在这里但那边没列，或者那边列了但这里没有任何一行标注的技能，`radar doctor` 都会提醒。
 
 只写你确实做过的事。培训、课程里的实操写进对应 `education` 条目的 `bullets`，不要写进 `experience`（工作经历）。
 

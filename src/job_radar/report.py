@@ -108,7 +108,7 @@ def build_report(
     lines += [
         "---",
         "Good and possible matches each have a job Issue. Track your progress with its `status:*` "
-        "label or by dragging its card on the Job Search board.",
+        "label (or by dragging its card on the Job Search board, if you set one up).",
         "",
     ]
     return "\n".join(lines)

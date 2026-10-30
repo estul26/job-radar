@@ -21,7 +21,7 @@ LinkedIn Job Review 表单 ────────┘                   │
 - **评分。** 确定性且可解释：根据你配置的职位名称、技能和地点，比对职位名称、经验、技能、证书、发布时间和地点。
   详见 [docs/scoring.md](docs/scoring.md)（英文）。
 - **跟踪。** 每个高匹配和可能匹配的职位都是一个 Issue，高匹配的会指派给你。Issue 的 `status:*` 标签就是申请状态：
-  修改标签或在看板上拖动卡片即可。每次扫描后，`data/applications.csv` 会从这些 Issue 导出。
+  修改标签即可；如果设置了可选的看板，也可以拖动卡片。每次扫描后，`data/applications.csv` 会从这些 Issue 导出。
 - **简历。** 高匹配职位会获得一份基于 `resumes/master_resume.json` 生成的简历。AI 可以润色措辞，
   但只有通过事实核查的措辞才会被采用。详见 [docs/resumes.md](docs/resumes.md)（英文）。
 

@@ -161,5 +161,5 @@ scored, so a public copy doesn't spend your OpenAI key on strangers' Issues.
 Re-scoring (after you edit the description, say) never replaces a status you chose: only the
 statuses scoring sets itself (`new`, `skipped`) are updated.
 
-When you apply, set `status:applied` (or drag the card on the board). Each Issue keeps one
+When you apply, set `status:applied` (or drag the card on the board, if you set one up). Each Issue keeps one
 status label. Rejected, offer and skipped close the Issue; the others keep it open.

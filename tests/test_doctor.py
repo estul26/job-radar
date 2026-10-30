@@ -248,3 +248,54 @@ def test_shapes_the_radar_cannot_read_are_named(tmp_path):
     assert "matching.skills must list names with their phrases" in problems
     assert "experience_years must be a whole number" in problems
     assert 'skills must be a list in square brackets, e.g. ["excel", "xero"]' in problems
+
+
+def test_skills_on_the_resume_and_in_the_profile_are_compared(tmp_path):
+    profile = load_json(PROFILE)
+    # "charting" is tagged on the résumé but no longer listed; "triage" is listed but tagged nowhere.
+    profile["skills"] = [skill for skill in profile["skills"] if skill != "charting"] + ["triage"]
+    profile_path = tmp_path / "resume_profile.json"
+    profile_path.write_text(json.dumps(profile), encoding="utf-8")
+
+    result = checkup(CONFIG, profile_path, MASTER)
+
+    assert result.ok
+    unlisted, untagged = result.warnings
+    assert unlisted.startswith(f"{profile_path}:") and unlisted.endswith("count them as missing: charting")
+    assert untagged.startswith(f"{MASTER}:") and ": triage (tag a line" in untagged
+
+
+def test_an_unfinished_resume_is_not_compared_with_the_profile():
+    # The blank master résumé already warns that it's empty; no skill-by-skill list on top of that.
+    result = checkup(CONFIG, PROFILE, BLANK[2])
+    assert not any("tagged" in warning for warning in result.warnings)
+
+
+def test_a_schedule_on_another_timezone_is_named(tmp_path):
+    (tmp_path / "config").mkdir()
+    config = tmp_path / "config" / "search_config.yaml"
+    config.write_text(
+        re.sub(r"(?m)^timezone:.*$", "timezone: America/Edmonton", CONFIG.read_text(encoding="utf-8")),
+        encoding="utf-8",
+    )
+    workflows = tmp_path / ".github" / "workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "daily-jobs.yml").write_text(
+        "on:\n  schedule:\n    - cron: '13 7 * * *'\n      timezone: 'America/Edmonton'\n"
+        "    - cron: '13 16 * * *'\n      timezone: 'America/Edmonton'\n",
+        encoding="utf-8",
+    )
+    (workflows / "linkedin-email-alerts.yml").write_text(
+        "on:\n  workflow_dispatch:\n  schedule:\n    - cron: '23 */4 * * *'\n      timezone: 'UTC'\n",
+        encoding="utf-8",
+    )
+    (workflows / "ci.yml").write_text("on:\n  push:\n    branches: [main]\n", encoding="utf-8")
+    (workflows / "broken.yml").write_text("on: [unclosed\n", encoding="utf-8")
+
+    result = checkup(config, PROFILE, MASTER)
+
+    assert result.ok
+    assert result.warnings == [
+        f".github/workflows/linkedin-email-alerts.yml: its schedule runs on UTC time, but {config} sets "
+        "timezone to America/Edmonton; set every `timezone:` line in it to America/Edmonton"
+    ]

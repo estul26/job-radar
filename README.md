@@ -25,7 +25,7 @@ LinkedIn Job Review form ──────┘                    │
   freshness and location, using the titles, skills and places you configure. See
   [docs/scoring.md](docs/scoring.md).
 - **Tracking.** Every good and possible match is an Issue; good ones are assigned to you. Its
-  `status:*` label is the application status: change it or drag the card on the board.
+  `status:*` label is the application status: change it, or drag the card on the optional board.
   `data/applications.csv` is exported from the Issues after each scan.
 - **Résumés.** Good matches get a résumé built from `resumes/master_resume.json`. AI may reword
   it, but only when the wording passes fact checks. See [docs/resumes.md](docs/resumes.md).

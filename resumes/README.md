@@ -21,15 +21,16 @@ nothing is ever added.
 | `identity` | Name, headline (e.g. "Registered Nurse \| BLS, ACLS"), location, phone (with your country code if you apply abroad), email, and optional `linkedin`, `github`, `website`. Empty fields are left off the résumé. |
 | `summary.experience` | One sentence on your experience, e.g. "Registered Nurse with three years of acute-care experience." |
 | `summary.credentials` | One sentence on licences or certifications, or empty. |
-| `summary.capabilities` | Short phrases with `tags`; the ones most relevant to a job finish the summary. |
+| `summary.capabilities` | Three to five short phrases with `tags`, each reading well after "Experience includes". The three or four most relevant to a job finish the summary. |
 | `technical_skills` | Skill lines: `category` (optional), `text`, `tags` and `priority` (lower comes first when no tag matches the job). The section is titled "Skills". |
 | `experience` | Jobs: `role`, optional `company`, `dates`, optional `max_bullets` (default 4), and `bullets`, each with `text` and `tags`. |
 | `education` | `program`, `school`, `dates`, optional `bullets`. |
-| `certifications` | `text`, `tags`, `priority`. The first four are listed; the rest go on one line. |
+| `certifications` | `text`, `tags`, `priority`. Ones the posting names (as `matching.certifications` defines them) come first, the rest in `priority` order; skill tags don't move them. The first four are listed; the rest go on one line. |
 
 **Tags** decide what gets picked for a job. Use the skill names from `matching.skills` in
 `config/search_config.yaml` (a tag equal to a skill the posting asks for counts most), plus any
-words a posting might use.
+words a posting might use. List the same skill names in `config/resume_profile.json`: `radar doctor`
+warns about a skill tagged here but not listed there, or listed there but tagged nowhere.
 
 Write only what you have done. Hands-on work from training or a course goes in that `education`
 entry's `bullets`, not under `experience`.
