@@ -11,7 +11,7 @@
 | `resumes/master_resume.json` | 生成定制简历所依据的事实（[填写说明](../resumes/README.zh-CN.md)） |
 
 然后让 workflow 和你的时区一致：把 `.github/workflows/daily-jobs.yml` 和 `linkedin-email-alerts.yml` 里的
-`timezone:` 行，设成和 `search_config.yaml` 里 `timezone` 相同的值。
+`timezone:` 行，设成和 `search_config.yaml` 里 `timezone` 相同的值。哪个 workflow 的定时设置和它不一致，`radar doctor` 会提醒。
 
 ## 短语如何匹配
 
@@ -77,7 +77,7 @@ Python 正则表达式；请用单引号括起来，这样 YAML 不会改动反�
 |---|---|
 | `skills` | 每项技能，以及表示职位要求这项技能的短语。没有短语的技能（`wound care: []`）按它自己的名称查找；普通列表里的每个名称（`- wound care`）也一样。 |
 | `soft_skills` | 几乎每个职位广告都会提到的技能名称。它们不算核心要求：缺少时列在可选差距里。 |
-| `certifications` | 每个证书或执照，以及表示职位要求它的短语。 |
+| `certifications` | 每个证书或执照，以及表示职位要求它的短语。定制简历会把职位提到的证书排在最前面。 |
 | `related_title_keywords` | 不在你的 `titles` 里时，让一个职位名称算作相关的词。 |
 | `context_title_keywords`、`context_words` | 只有和某个上下文词同时出现时才算相关的词。 |
 
@@ -113,7 +113,7 @@ GitHub 上永远不会搜索 LinkedIn：请用它的提醒邮件或 `radar linke
 | 键 | 含义 |
 |---|---|
 | `experience_years` | 你在本行业的工作年限（整数），和职位要求的年限比较。 |
-| `skills` | 你真正具备的技能，名称和 `matching.skills` 里的一致。 |
+| `skills` | 你真正具备的技能，名称和 `matching.skills` 里的一致。要和主简历标签里的技能保持一致：只在一边出现的技能，`radar doctor` 会提醒。 |
 | `certifications` | 你持有的证书，名称和 `matching.certifications` 里的一致。 |
 | `profile_name` | 给自己的一个标签；不参与评分。 |
 

@@ -13,7 +13,7 @@ Three files describe you and the jobs you want. They ship empty; fill them in, t
 
 Then match the workflows to your timezone: set the `timezone:` lines in
 `.github/workflows/daily-jobs.yml` and `linkedin-email-alerts.yml` to the same value as
-`timezone` in `search_config.yaml`.
+`timezone` in `search_config.yaml`. `radar doctor` warns about any workflow schedule that doesn't match.
 
 ## How phrases match
 
@@ -81,7 +81,7 @@ The words of your field. Scoring finds them in postings and compares them with y
 |---|---|
 | `skills` | Each skill, and the phrases that mean a posting asks for it. A skill with no phrases (`wound care: []`) is looked for by its own name, and so is each name in a plain list (`- wound care`). |
 | `soft_skills` | Skill names nearly every posting mentions. They aren't core requirements: a missing one is listed with the optional gaps. |
-| `certifications` | Each certification or licence, and the phrases that mean a posting asks for it. |
+| `certifications` | Each certification or licence, and the phrases that mean a posting asks for it. A tailored résumé lists the ones a posting names first. |
 | `related_title_keywords` | Words that make a title related when it isn't one of your `titles`. |
 | `context_title_keywords`, `context_words` | Words that count as related only next to a context word. |
 
@@ -123,7 +123,7 @@ emails or `radar linkedin-search` ([linkedin.md](linkedin.md)).
 | Key | Meaning |
 |---|---|
 | `experience_years` | Whole years of experience in your field, compared with what postings ask for. |
-| `skills` | Skills you really have, named as in `matching.skills`. |
+| `skills` | Skills you really have, named as in `matching.skills`. Keep it to the skills your master résumé is tagged with: `radar doctor` warns about any it finds on only one side. |
 | `certifications` | Certifications you hold, named as in `matching.certifications`. |
 | `profile_name` | A label for yourself; not used in scoring. |
 

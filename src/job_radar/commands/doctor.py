@@ -198,6 +198,94 @@ def check_profile(profile: dict[str, Any], config: dict[str, Any], path: Path, c
         )
 
 
+def resume_tags(master: dict[str, Any]) -> set[str]:
+    """The tags on the résumé lines that show a skill: summary, skills, experience and education bullets."""
+    tags: set[str] = set()
+
+    def add(items: Any) -> None:
+        for item in items if isinstance(items, list) else []:
+            if isinstance(item, dict) and isinstance(item.get("tags"), list):
+                tags.update(str(tag).strip().lower() for tag in item["tags"])
+
+    summary = master.get("summary")
+    add(summary.get("capabilities") if isinstance(summary, dict) else None)
+    add(master.get("technical_skills"))
+    for section in ("experience", "education"):
+        for entry in master.get(section) if isinstance(master.get(section), list) else []:
+            if isinstance(entry, dict):
+                add(entry.get("bullets"))
+    return tags
+
+
+def check_resume_matches_profile(
+    master: dict[str, Any],
+    profile: dict[str, Any],
+    config: dict[str, Any],
+    master_path: Path,
+    profile_path: Path,
+    checkup: Checkup,
+) -> None:
+    """The skills your résumé shows and the skills scoring counts as yours should be the same list.
+
+    A skill tagged on the résumé but missing from resume_profile.json is reported as missing on every
+    posting that asks for it; one listed there but tagged nowhere scores as matched with nothing on the
+    résumé to show it. Only names from matching.skills count, and soft skills only the first way round.
+    """
+    config, profile = normalize_config(config), normalize_profile(profile)
+    named = config["matching"].get("skills")
+    if not isinstance(named, dict) or not named or not isinstance(profile.get("skills"), list):
+        return
+    if not resume_ready(master):
+        return
+    known = {str(name).strip().lower() for name in named}
+    soft = {str(skill).strip().lower() for skill in config["matching"].get("soft_skills") or []}
+    listed = {str(skill).strip().lower() for skill in profile["skills"]}
+    tagged = resume_tags(master) & known
+
+    unlisted = sorted(tagged - listed)
+    if unlisted:
+        checkup.warnings.append(
+            f"{profile_path}: your résumé is tagged with these skills but skills doesn't list them, so postings "
+            f"that ask for them count them as missing: {', '.join(unlisted)}"
+        )
+    untagged = sorted((listed & known) - tagged - soft)
+    if untagged:
+        checkup.warnings.append(
+            f"{master_path}: no line is tagged with these skills from {profile_path.name}, so a posting can "
+            f"score them as matched while your résumé doesn't show them: {', '.join(untagged)} (tag a line "
+            "that shows each one, or remove it from skills)"
+        )
+
+
+def check_workflow_timezones(config: dict[str, Any], config_path: Path, checkup: Checkup) -> None:
+    """Every schedule's `timezone:` should be the timezone in search_config.yaml, which dates use."""
+    timezone = str(normalize_config(config).get("timezone") or "").strip()
+    workflows = config_path.resolve().parent.parent / ".github" / "workflows"
+    if not timezone or not workflows.is_dir():
+        return
+    for path in sorted([*workflows.glob("*.yml"), *workflows.glob("*.yaml")]):
+        try:
+            workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, yaml.YAMLError):
+            continue
+        if not isinstance(workflow, dict):
+            continue
+        # YAML 1.1 reads the key `on` as true.
+        triggers = workflow.get("on", workflow.get(True))
+        schedules = triggers.get("schedule") if isinstance(triggers, dict) else None
+        if not isinstance(schedules, list):
+            continue
+        zones = {
+            str(entry["timezone"]).strip() for entry in schedules if isinstance(entry, dict) and entry.get("timezone")
+        }
+        others = sorted(zones - {timezone})
+        if others:
+            checkup.warnings.append(
+                f".github/workflows/{path.name}: its schedule runs on {', '.join(others)} time, but "
+                f"{config_path} sets timezone to {timezone}; set every `timezone:` line in it to {timezone}"
+            )
+
+
 def setup_problems(config: dict[str, Any], profile: dict[str, Any]) -> list[str]:
     """What stops scoring, for loaded settings: empty until config/ is filled in."""
     result = Checkup()
@@ -217,6 +305,7 @@ def checkup(
     config = _load(config_path, yaml.safe_load, result)
     if config is not None:
         check_config(config, config_path, result)
+        check_workflow_timezones(config, config_path, result)
     profile = _load(profile_path, json.load, result)
     if profile is not None:
         check_profile(profile, config or {}, profile_path, result)
@@ -224,6 +313,8 @@ def checkup(
     if master is not None:
         for problem in resume_problems(master):
             result.warnings.append(f"{master_path}: {problem} (no résumés until it's filled in)")
+        if config is not None and profile is not None:
+            check_resume_matches_profile(master, profile, config, master_path, profile_path, result)
     return result
 
 
