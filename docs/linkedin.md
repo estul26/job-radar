@@ -90,7 +90,7 @@ what `search.exclude_title_terms` leaves out:
 `radar linkedin-describe` does the pasting for you. For each open Issue labelled
 `needs:description`, it reads the posting's **public page** (the one LinkedIn shows people who
 aren't signed in), writes the description into the Issue, and fills in a company or location
-the card lacked. Saving the Issue starts the scoring, as it does when you paste.
+the card lacked (and the title, when the card ran all three together). Saving the Issue starts the scoring, as it does when you paste.
 
 ```bash
 radar linkedin-describe --dry-run     # read the postings, change no Issue
@@ -107,8 +107,9 @@ tools/mac/uninstall-linkedin-describe-agent.sh
 ```
 
 The agent installs its own copy of `radar` under `~/Library/Application Support/job-radar`, so
-rerun the installer after you update your checkout. It edits Issues as the account `gh` is
-signed in to, which must be able to write to each repository. Logs are in
+rerun the installer after you update your checkout. It edits Issues as the GitHub account `gh`
+had active when you installed it (or `JOB_RADAR_GH_USER=account` in front of the installer),
+which must be able to write to each repository; switching `gh` accounts later doesn't change it. Logs are in
 `~/Library/Logs/job-radar-linkedin-describe.log`.
 
 What to know before you turn it on:
@@ -116,8 +117,9 @@ What to know before you turn it on:
 - **It uses no LinkedIn account.** No sign-in, no cookies, so there is no account for LinkedIn
   to restrict. **LinkedIn's terms still forbid automated access to its pages**, so this is your
   call and your risk.
-- It reads one page per waiting job, with 3–8 second pauses, and stops for the run the moment
-  LinkedIn refuses a request (the rest wait for the next run).
+- It reads one page per waiting job, with 3–8 second pauses. When LinkedIn refuses a request it
+  waits a couple of minutes and tries once more; a second refusal ends the run (the rest wait
+  for the next one).
 - It refuses to run in GitHub Actions or any CI: LinkedIn blocks GitHub's servers, and it should
   run from your own connection.
 - A posting LinkedIn no longer shows publicly gets a comment and loses the `needs:description`

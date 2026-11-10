@@ -4,6 +4,9 @@
 #   tools/mac/install-linkedin-describe-agent.sh                      # this checkout's repository
 #   tools/mac/install-linkedin-describe-agent.sh you/radar-a you/radar-b   # several copies at once
 #
+# The agent keeps acting as the GitHub account gh has active now, even if you switch accounts
+# later. To pick another signed-in account: JOB_RADAR_GH_USER=other-account tools/mac/install-...
+#
 # Opt-in: it reads LinkedIn's public posting pages without signing in, which LinkedIn's terms
 # forbid for automated readers. Remove it with uninstall-linkedin-describe-agent.sh.
 set -euo pipefail
@@ -44,10 +47,17 @@ if [[ -z "$REPOS" ]]; then
   exit 1
 fi
 
-# The agent edits Issues as the account gh is signed in to, which is what starts the scoring.
+# The agent edits Issues as this GitHub account, which is what starts the scoring.
+GH_USER="${JOB_RADAR_GH_USER:-$(gh api user --jq .login 2>/dev/null || true)}"
+if [[ -z "$GH_USER" ]] || ! GH_TOKEN="$(gh auth token --user "$GH_USER" 2>/dev/null)" || [[ -z "$GH_TOKEN" ]]; then
+  echo "gh isn't signed in as ${GH_USER:-any account}. Run: gh auth login"
+  exit 1
+fi
+export GH_TOKEN
 for repo in ${=REPOS}; do
   if [[ "$(gh api "repos/$repo" --jq .permissions.push 2>/dev/null || true)" != "true" ]]; then
-    echo "The GitHub account gh is using can't write to $repo. Check the name, or switch accounts: gh auth switch"
+    echo "The GitHub account $GH_USER can't write to $repo. Check the name, or use another account:"
+    echo "  JOB_RADAR_GH_USER=other-account $0 $REPOS"
     exit 1
   fi
 done
@@ -89,6 +99,8 @@ cat > "$PLIST" <<PLIST_EOF
   <dict>
     <key>JOB_RADAR_REPOS</key>
     <string>$REPOS</string>
+    <key>JOB_RADAR_GH_USER</key>
+    <string>$GH_USER</string>
   </dict>
 
   <key>RunAtLoad</key>
@@ -110,7 +122,7 @@ launchctl bootout "gui/$UID/$LABEL" 2>/dev/null || true
 launchctl bootout "gui/$UID" "$PLIST" 2>/dev/null || true
 launchctl bootstrap "gui/$UID" "$PLIST"
 
-echo "The LinkedIn description agent is installed for: $REPOS"
+echo "The LinkedIn description agent is installed for: $REPOS (as $GH_USER)"
 echo "Every two hours (and at login) it fills in the Issues labelled needs:description."
 echo "Rerun this installer after updating the checkout, or to change the repositories."
 echo
