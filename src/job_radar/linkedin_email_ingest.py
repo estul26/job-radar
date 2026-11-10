@@ -227,11 +227,52 @@ def sender_authentication(msg: Message) -> str:
     checks in the topmost Authentication-Results header (lower ones could have come with the mail);
     "" means it records none, so there is nothing to go by.
     """
-    results = msg.get_all("Authentication-Results") or []
+    results = receiving_server_results(msg)
     if not results:
         return ""
-    top = " ".join(str(results[0]).split()).lower()
-    return "pass" if _LINKEDIN_DMARC.search(top) or _LINKEDIN_DKIM.search(top) else "fail"
+    for method, verdict in (("dmarc", _LINKEDIN_DMARC), ("dkim", _LINKEDIN_DKIM)):
+        # Only the server's topmost word on each check counts: one further down could have come with the mail.
+        first = next((result for result in results if f"{method}=" in result), "")
+        if verdict.search(first):
+            return "pass"
+    return "fail"
+
+
+def _server_site(result: str) -> str:
+    """The domain of the server that wrote an Authentication-Results header: "dmarc.icloud.com; ..." -> "icloud.com"."""
+    server = result.split(";", 1)[0].strip()
+    if "=" in server or " " in server:
+        return ""  # Outlook writes no server name
+    return ".".join(server.split(".")[-2:])
+
+
+def receiving_server_results(msg: Message) -> list[str]:
+    """The Authentication-Results headers your mail server added, lower-cased, topmost first.
+
+    Gmail and Outlook write one header for all their checks. iCloud writes one per check
+    (dmarc.icloud.com, dkim-verifier.icloud.com, spf.icloud.com, bimi.icloud.com), so the headers
+    right below the topmost that name the same server domain belong to it as well.
+    """
+    results = [" ".join(str(value).split()).lower() for value in msg.get_all("Authentication-Results") or []]
+    if not results:
+        return []
+    site = _server_site(results[0])
+    kept = [results[0]]
+    for result in results[1:]:
+        if not site or _server_site(result) != site:
+            break
+        kept.append(result)
+    return kept
+
+
+def authentication_summary(msg: Message) -> str:
+    """What the receiving server's checks said, for the report: "dmarc.icloud.com dmarc=fail; …"."""
+    parts = []
+    for result in receiving_server_results(msg):
+        server = result.split(";", 1)[0].strip() if _server_site(result) else "(unnamed server)"
+        verdicts = " ".join(re.findall(r"\b(?:dkim|dmarc|spf|bimi|arc)=\w+", result)) or "no verdict"
+        parts.append(f"{server} {verdicts}")
+    return "; ".join(parts)
 
 
 def _alert_messages(
@@ -273,7 +314,12 @@ def _alert_messages(
             yield uid, None, f"not from LinkedIn ({domain})"
             continue
         if sender_authentication(msg) == "fail":
-            yield uid, None, "says it's from LinkedIn, but your mail server's DKIM/DMARC check didn't confirm it"
+            yield (
+                uid,
+                None,
+                "says it's from LinkedIn, but your mail server's DKIM/DMARC check didn't confirm it "
+                f"({authentication_summary(msg)})",
+            )
             continue
         yield uid, msg, ""
 

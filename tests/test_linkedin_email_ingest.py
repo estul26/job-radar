@@ -242,9 +242,36 @@ def _authenticated_email(*results: str) -> bytes:
     return headers + _alert_email(ALERT_HTML)
 
 
+# iCloud writes one header per check, and the topmost isn't the DKIM or DMARC one.
+ICLOUD_PASS = (
+    'bimi.icloud.com; bimi=skipped reason="insufficient dmarc"',
+    "dmarc.icloud.com; dmarc=pass header.from=linkedin.com",
+    "dkim-verifier.icloud.com; dkim=pass (2048-bit key) header.d=linkedin.com header.i=@linkedin.com header.b=abc",
+    "spf.icloud.com; spf=pass (spf.icloud.com: domain of bounce.linkedin.com) smtp.mailfrom=s-1@bounce.linkedin.com",
+)
+ICLOUD_FORGED = (
+    "dmarc.icloud.com; dmarc=fail header.from=linkedin.com",
+    "dkim-verifier.icloud.com; dkim=none",
+    # These two came with the mail: a later word on a check, and another server's header.
+    "dmarc.icloud.com; dmarc=pass header.from=linkedin.com",
+    "mx.example.com; dkim=pass header.d=linkedin.com",
+)
+
+
 @pytest.mark.parametrize(
     ("results", "expected"),
-    [((GMAIL_PASS,), "pass"), ((OUTLOOK_PASS,), "pass"), ((FORGED,), "fail"), ((), ""), ((FORGED, GMAIL_PASS), "fail")],
+    [
+        ((GMAIL_PASS,), "pass"),
+        ((OUTLOOK_PASS,), "pass"),
+        ((FORGED,), "fail"),
+        ((), ""),
+        ((FORGED, GMAIL_PASS), "fail"),
+        (ICLOUD_PASS, "pass"),
+        (ICLOUD_FORGED, "fail"),
+        # A pass from a server other than the topmost one could have come with the mail.
+        (("mx.example.org; spf=pass", "mx.google.com; dkim=pass header.d=linkedin.com"), "fail"),
+        ((OUTLOOK_PASS.replace("pass", "fail"), GMAIL_PASS), "fail"),
+    ],
 )
 def test_sender_authentication_reads_the_receiving_servers_verdict(results, expected):
     from email import message_from_bytes
@@ -268,3 +295,5 @@ def test_a_forged_linkedin_email_creates_no_issues(tmp_path):
     )
     assert len(created) == 2  # both jobs, from the genuine email only
     assert "DKIM/DMARC" in notes[0] and notes[1].startswith("UID 4: LinkedIn")
+    # The report says what the server's checks found, so a mail server it misreads can be spotted.
+    assert notes[0].endswith("(mx.google.com dkim=none spf=fail dmarc=fail)")
