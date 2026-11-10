@@ -52,6 +52,16 @@
       ]
     }
   ],
+  "projects": [
+    {
+      "name": "Ward Handover Checklist",
+      "details": "Self-directed project, https://example.com/handover",
+      "dates": "2024",
+      "bullets": [
+        {"text": "Wrote a one-page handover checklist adopted by two surgical units.", "tags": ["charting", "communication"]}
+      ]
+    }
+  ],
   "education": [
     {
       "program": "Bachelor of Science in Nursing",

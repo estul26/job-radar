@@ -24,6 +24,7 @@ nothing is ever added.
 | `summary.capabilities` | Three to five short phrases with `tags`, each reading well after "Experience includes". The three or four most relevant to a job finish the summary. |
 | `technical_skills` | Skill lines: `category` (optional), `text`, `tags` and `priority` (lower comes first when no tag matches the job). The section is titled "Skills". |
 | `experience` | Jobs: `role`, optional `company`, `dates`, optional `max_bullets` (default 4), and `bullets`, each with `text` and `tags`. |
+| `projects` | Optional. Your own projects: `name`, optional `details` (the line under the name, e.g. a link), `dates`, optional `bullets`. They get their own "Projects" section between experience and education. |
 | `education` | `program`, `school`, `dates`, optional `bullets`. |
 | `certifications` | `text`, `tags`, `priority`. Ones the posting names (as `matching.certifications` defines them) come first, the rest in `priority` order; skill tags don't move them. The first four are listed; the rest go on one line. |
 
@@ -33,7 +34,7 @@ words a posting might use. List the same skill names in `config/resume_profile.j
 warns about a skill tagged here but not listed there, or listed there but tagged nowhere.
 
 Write only what you have done. Hands-on work from training or a course goes in that `education`
-entry's `bullets`, not under `experience`.
+entry's `bullets`, and work you did on your own goes under `projects`; neither belongs under `experience`.
 
 A short example:
 

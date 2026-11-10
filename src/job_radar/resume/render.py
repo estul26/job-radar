@@ -34,47 +34,84 @@ def skill_line(skill: dict[str, Any]) -> tuple[str, str]:
     return str(skill.get("category") or "").strip(), str(skill.get("text") or "").strip()
 
 
+def project_heading(project: dict[str, Any]) -> tuple[str, str]:
+    """(name, the line under it); the line may be empty."""
+    return str(project.get("name") or "").strip(), _joined(project.get("details"), project.get("dates"))
+
+
+# Two trailing spaces: a Markdown line break, so consecutive lines don't run together as one paragraph.
+_BREAK = "  "
+
+
+def _paragraph(lines: list[str]) -> list[str]:
+    """One Markdown paragraph that keeps each of `lines` on its own line, then a blank line."""
+    lines = [line for line in lines if line]
+    return [*(line + _BREAK for line in lines[:-1]), *lines[-1:], ""] if lines else []
+
+
+def _bullets(texts: list[str]) -> list[str]:
+    """A Markdown list, then a blank line. The caller's previous block already ended with one."""
+    return [*(f"- {text}" for text in texts), ""] if texts else []
+
+
+def _bullet_texts(entry: dict[str, Any]) -> list[str]:
+    return [bullet["text"] for bullet in entry.get("bullets") or []]
+
+
 def markdown_resume(content: dict[str, Any]) -> str:
+    """Standard Markdown: a blank line around every heading, paragraph and list, so GitHub, pandoc
+    and other converters all render the same lines and bullets."""
     identity = content["identity"]
-    lines = [f"# {identity['name']}"]
+    lines = [f"# {identity['name']}", ""]
     if identity.get("headline"):
-        lines.append(f"**{identity['headline']}**")
-    lines += ["", *contact_lines(identity), "", "## PROFESSIONAL SUMMARY", content["summary"], ""]
+        lines += [f"**{identity['headline']}**", ""]
+    lines += _paragraph(contact_lines(identity))
+    lines += ["## PROFESSIONAL SUMMARY", "", content["summary"], ""]
 
     if content.get("technical_skills"):
-        lines.append("## SKILLS")
+        lines += ["## SKILLS", ""]
+        # Categorised skills are lines of one paragraph, uncategorised ones a list; keep their order.
+        labelled: list[str] = []
+        plain: list[str] = []
         for skill in content["technical_skills"]:
             category, text = skill_line(skill)
-            lines.append(f"**{category}:** {text}" if category else f"- {text}")
-        lines.append("")
+            if category:
+                lines += _bullets(plain)
+                plain = []
+                labelled.append(f"**{category}:** {text}")
+            else:
+                lines += _paragraph(labelled)
+                labelled = []
+                plain.append(text)
+        lines += _paragraph(labelled) + _bullets(plain)
 
     if content.get("experience"):
-        lines.append("## PROFESSIONAL EXPERIENCE")
+        lines += ["## PROFESSIONAL EXPERIENCE", ""]
         for experience in content["experience"]:
-            lines.append(f"**{experience_heading(experience)}**")
-            for bullet in experience.get("bullets", []):
-                lines.append(f"- {bullet['text']}")
-            lines.append("")
+            lines += [f"**{experience_heading(experience)}**", ""]
+            lines += _bullets(_bullet_texts(experience))
+
+    if content.get("projects"):
+        lines += ["## PROJECTS", ""]
+        for project in content["projects"]:
+            name, where = project_heading(project)
+            lines += _paragraph([f"**{name}**", where])
+            lines += _bullets(_bullet_texts(project))
 
     if content.get("education"):
-        lines.append("## EDUCATION")
+        lines += ["## EDUCATION", ""]
         for education in content["education"]:
-            lines.append(f"**{education['program']}**")
-            if where := _joined(education.get("school"), education.get("dates")):
-                lines.append(where)
-            for bullet in education.get("bullets", []):
-                lines.append(f"- {bullet['text']}")
-            lines.append("")
+            where = _joined(education.get("school"), education.get("dates"))
+            lines += _paragraph([f"**{education['program']}**", where])
+            lines += _bullets(_bullet_texts(education))
 
     if content.get("certifications"):
-        lines.append("## CERTIFICATIONS")
+        lines += ["## CERTIFICATIONS", ""]
         primary = content["certifications"][:4]
         additional = content["certifications"][4:]
-        for cert in primary:
-            lines.append(f"- {cert['text']}")
+        lines += _bullets([cert["text"] for cert in primary])
         if additional:
-            lines.append("Additional certificates: " + "; ".join(c["text"] for c in additional))
-        lines.append("")
+            lines += ["Additional certificates: " + "; ".join(c["text"] for c in additional), ""]
 
     return "\n".join(lines).rstrip() + "\n"
 
@@ -172,6 +209,20 @@ def docx_resume(content: dict[str, Any], path: Path) -> None:
             r = p.add_run(experience_heading(experience))
             r.bold = True
             for bullet in experience.get("bullets", []):
+                _bullet(document, bullet["text"])
+
+    if content.get("projects"):
+        _section_heading(document, "PROJECTS")
+        for project in content["projects"]:
+            name, where = project_heading(project)
+            p = document.add_paragraph()
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(0)
+            r = p.add_run(name)
+            r.bold = True
+            if where:
+                document.add_paragraph(where)
+            for bullet in project.get("bullets", []):
                 _bullet(document, bullet["text"])
 
     if content.get("education"):
