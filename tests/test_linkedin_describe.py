@@ -3,7 +3,15 @@
 import pytest
 
 from fake_github import FakeGitHub
-from job_radar.commands.linkedin_describe import GONE_MARKER, LABEL, describe_pending, fill_body, pending, refusal
+from job_radar.commands.linkedin_describe import (
+    GONE_MARKER,
+    LABEL,
+    RETRY_PAUSE,
+    describe_pending,
+    fill_body,
+    pending,
+    refusal,
+)
 from job_radar.issue_body import PLACEHOLDER_DESCRIPTION, PLACEHOLDER_MARKER, parse_job, render_linkedin_alert
 from job_radar.linkedin_guest import (
     GUEST_URL,
@@ -139,7 +147,7 @@ def test_only_open_labelled_linkedin_issues_with_the_placeholder_are_pending():
         waiting_issue(4, "104", body=alert_body("104").replace(PLACEHOLDER_DESCRIPTION, "Pasted by hand.")),
         waiting_issue(5, "105", title="[Indeed Job] Registered Nurse — Northwind Care"),
     ]
-    assert [(number, job_id) for number, job_id, _ in pending(FakeGitHub(issues).issues())] == [(1, "101")]
+    assert [(number, job_id) for number, job_id, *_ in pending(FakeGitHub(issues).issues())] == [(1, "101")]
 
 
 def test_filling_in_makes_the_issue_scorable_and_keeps_its_source():
@@ -205,6 +213,48 @@ def test_a_posting_gone_from_linkedin_is_not_tried_again():
     assert pending(gh.issues()) == []
 
 
+def test_a_passing_refusal_is_retried_once_after_a_wait():
+    gh = FakeGitHub([waiting_issue(1, "101"), waiting_issue(2, "102")])
+    calls, sleeps = [], []
+
+    def fetch(job_id):
+        calls.append(job_id)
+        if calls == ["102"]:
+            raise GuestBlocked("HTTP 429")
+        return parse_posting(POSTING_HTML)
+
+    outcome = describe_pending(gh, fetch=fetch, sleep=sleeps.append, pause=lambda a, b: a, log=lambda _: None)
+    assert (outcome.filled, outcome.blocked) == ([2, 1], False)
+    assert calls == ["102", "102", "101"]
+    assert sleeps == [RETRY_PAUSE[0], 3.0]
+
+
+def test_a_card_that_ran_title_company_and_place_together_is_repaired():
+    body = alert_body("101", company="Unknown — edit before scoring", location="Unknown — edit before scoring").replace(
+        "### Job title\n\nRegistered Nurse\n", "### Job title\n\nRegistered Nurse Northwind Care · Toronto, ON\n"
+    )
+    issue = waiting_issue(
+        1, "101", title="[LinkedIn Alert] Registered Nurse Northwind Care · Toronto, ON — Unknown", body=body
+    )
+    gh = FakeGitHub([issue])
+    run(gh, lambda job_id: parse_posting(POSTING_HTML))
+    fixed = gh.issue(1)
+    job = parse_job(fixed["body"])
+    assert fixed["title"] == "[LinkedIn Alert] Registered Nurse — Northwind Care"
+    assert (job["title"], job["company"], job["location"]) == (
+        "Registered Nurse",
+        "Northwind Care",
+        "Toronto, Ontario, Canada",
+    )
+
+
+def test_a_card_with_its_company_keeps_its_own_title():
+    gh = FakeGitHub([waiting_issue(1, "101", title="[LinkedIn Alert] RN, Medicine — Northwind Care")])
+    run(gh, lambda job_id: {**parse_posting(POSTING_HTML), "title": "Registered Nurse (Medicine)"})
+    assert gh.issue(1)["title"] == "[LinkedIn Alert] RN, Medicine — Northwind Care"
+    assert parse_job(gh.issue(1)["body"])["title"] == "Registered Nurse"
+
+
 def test_a_refusal_from_linkedin_stops_the_run():
     gh = FakeGitHub([waiting_issue(1, "101"), waiting_issue(2, "102"), waiting_issue(3, "103")])
     fetched = []
@@ -217,7 +267,7 @@ def test_a_refusal_from_linkedin_stops_the_run():
 
     outcome = run(gh, fetch)
     assert (outcome.filled, outcome.blocked) == ([3], True)
-    assert fetched == ["103", "102"]
+    assert fetched == ["103", "102", "102"]  # one more try, then the run stops
     assert LABEL in gh.labels_of(2)
 
 

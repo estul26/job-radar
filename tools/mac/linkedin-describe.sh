@@ -19,6 +19,15 @@ if [[ -z "${JOB_RADAR_REPOS:-}" ]]; then
   exit 1
 fi
 
+# Always act as the GitHub account the installer was run for, whichever account gh has active now.
+if [[ -n "${JOB_RADAR_GH_USER:-}" ]]; then
+  if ! GH_TOKEN="$(gh auth token --user "$JOB_RADAR_GH_USER" 2>/dev/null)" || [[ -z "$GH_TOKEN" ]]; then
+    echo "$(date '+%F %T') gh isn't signed in as $JOB_RADAR_GH_USER. Run: gh auth login" >&2
+    exit 1
+  fi
+  export GH_TOKEN
+fi
+
 # Outside the checkout: launchd can't read ~/Downloads, ~/Documents or ~/Desktop.
 cd "$INSTALL_DIR"
 failed=0
