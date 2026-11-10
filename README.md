@@ -191,6 +191,7 @@ For developers, or to check your setup before you push it.
 | `radar email-ingest` | Import LinkedIn alert emails |
 | `radar linkedin-search [...]` | Search LinkedIn in your signed-in Chrome (Mac, by hand) and import the cards |
 | `radar linkedin-import FILE` | Import cards saved by `linkedin-search --export` |
+| `radar linkedin-describe [...]` | Fill in LinkedIn Issues waiting for a description from their public posting pages (opt-in, your computer) |
 | `radar scan-slot …`, `radar record-claim …` | Morning/evening deduplication for `daily-jobs.yml` |
 
 Check your scoring offline: save a few postings you'd apply for in the format of
@@ -231,7 +232,8 @@ raise scores just leads to résumés you can't stand behind.
 - **You're responsible for following each job site's terms.** Job boards are searched through
   [JobSpy](https://pypi.org/project/python-jobspy/). `radar linkedin-search` drives your own
   LinkedIn account, which LinkedIn's terms forbid; it is kept small and slow and runs only by
-  hand, but use it at your own risk.
+  hand, but use it at your own risk. `radar linkedin-describe` uses no account, but reads
+  LinkedIn's public posting pages, which its terms also forbid; it is off unless you run it.
 - **Read every résumé before you send it.** AI wording is fact-checked against your master
   résumé, but you're the one applying.
 - **Keep your copy private.** It holds your contact details and your job search.

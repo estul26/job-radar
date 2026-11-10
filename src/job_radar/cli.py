@@ -11,6 +11,7 @@ radar issue N --event E [--label L] [--publish]
 radar email-ingest                import LinkedIn alert emails as review Issues
 radar linkedin-search [...]       search LinkedIn in your signed-in Chrome (Mac, by hand); import the cards
 radar linkedin-import FILE        import job cards saved by linkedin-search --export
+radar linkedin-describe [...]     fill in waiting LinkedIn Issues from their public posting pages (opt-in)
 """
 
 from __future__ import annotations
@@ -175,6 +176,16 @@ def _linkedin_search(args: argparse.Namespace) -> int:
     )
 
 
+def _linkedin_describe(args: argparse.Namespace) -> int:
+    from .commands.linkedin_describe import MAX_JOBS_CAP
+    from .commands.linkedin_describe import main as describe_main
+
+    if not 1 <= args.max <= MAX_JOBS_CAP:
+        raise SystemExit(f"--max must be between 1 and {MAX_JOBS_CAP}.")
+    _use_checkout_repository()
+    return describe_main(max_jobs=args.max, dry_run=args.dry_run)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="radar", description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -236,6 +247,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     chrome.add_argument("file", help="the file written by radar linkedin-search --export")
     chrome.add_argument("--dry-run", action="store_true", help="report what would be imported; change nothing")
     chrome.set_defaults(handler=_linkedin_import)
+
+    describe = commands.add_parser(
+        "linkedin-describe",
+        help="fill in LinkedIn Issues waiting for a description from their public posting pages (opt-in)",
+    )
+    describe.add_argument("--max", type=int, default=15, help="postings to read in one run, 1-40 (15)")
+    describe.add_argument("--dry-run", action="store_true", help="read the postings but change no Issue")
+    describe.set_defaults(handler=_linkedin_describe)
 
     args = parser.parse_args(argv)
     return args.handler(args)
