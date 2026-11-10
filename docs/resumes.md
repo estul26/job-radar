@@ -20,7 +20,7 @@ The Issue gets a comment linking the Markdown and DOCX files.
 
 ```text
 resumes/jobs/<job key>-<company>-<role>/
-├── resume.md            readable source
+├── resume.md            readable source, in standard Markdown (converts cleanly, e.g. with pandoc)
 ├── resume.docx          the file to send
 ├── tailoring_notes.md   what was emphasized, and which missing skills were NOT added
 ├── metadata.json        job, Issue, score, master version, AI result, file paths
@@ -50,7 +50,7 @@ The rule checks know your field's skills and certifications from `matching` in
 `config/search_config.yaml`, so keep that list complete.
 
 The AI step can only reword the summary and the already-selected bullets. It never touches
-contact details, role titles, dates, the skills inventory, certifications or education.
+contact details, role titles, dates, the skills inventory, certifications, projects or education.
 
 ### Setup
 

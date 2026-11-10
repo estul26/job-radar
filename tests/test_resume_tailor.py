@@ -78,6 +78,40 @@ def test_empty_sections_are_left_out_and_company_is_shown():
     assert "## EDUCATION" not in text and "## CERTIFICATIONS" not in text
 
 
+def test_markdown_is_standard_so_converters_keep_lines_and_bullets():
+    job = {"title": "Registered Nurse", "description": "Wound care and charting."}
+    content = tailor_content(MASTER, job, {}, vocab=Vocabulary.from_config(CONFIG))
+    content["certifications"] = [{"text": f"Certificate {n}"} for n in range(1, 6)]
+    lines = markdown_resume(content).split("\n")
+
+    for index, line in enumerate(lines):
+        previous = lines[index - 1] if index else ""
+        # A list needs a blank line before it, or strict converters (pandoc) fold it into the paragraph above.
+        if line.startswith("- "):
+            assert previous == "" or previous.startswith("- "), f"no blank line before: {line}"
+        # A paragraph right after a list item would be read as part of that item.
+        elif line and previous.startswith("- "):
+            raise AssertionError(f"no blank line after the list: {line}")
+        # Two lines of one paragraph need a hard break, or they are joined into one line.
+        elif line and previous and not line.startswith("#"):
+            assert previous.endswith("  "), f"no line break before: {line}"
+    assert lines[-2].startswith("Additional certificates: Certificate 5") and lines[-1] == ""
+
+
+def test_projects_get_their_own_section_between_experience_and_education():
+    job = {"title": "Registered Nurse", "description": "Wound care and charting."}
+    content = tailor_content(MASTER, job, {}, vocab=Vocabulary.from_config(CONFIG))
+    text = markdown_resume(content)
+
+    assert text.index("## PROFESSIONAL EXPERIENCE") < text.index("## PROJECTS") < text.index("## EDUCATION")
+    project = text.split("## PROJECTS", 1)[1].split("## EDUCATION", 1)[0]
+    heading = "**Ward Handover Checklist**  \nSelf-directed project, https://example.com/handover | 2024\n\n- Wrote"
+    assert heading in project
+    # A master résumé without the key (every copy made before it existed) has no such section.
+    without = {key: value for key, value in MASTER.items() if key != "projects"}
+    assert "## PROJECTS" not in markdown_resume(tailor_content(without, job, {}, vocab=Vocabulary.from_config(CONFIG)))
+
+
 CAPABILITIES = [item["text"] for item in MASTER["summary"]["capabilities"]]
 
 

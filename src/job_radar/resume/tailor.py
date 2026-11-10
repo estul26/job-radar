@@ -125,6 +125,7 @@ def tailor_content(
         "summary": tailored_summary(master, job_text, detected),
         "technical_skills": skills,
         "experience": experiences,
+        "projects": master.get("projects", []),
         "education": master.get("education", []),
         "certifications": certifications,
         "matched_skills": scored.get("matched_skills", []),

@@ -199,7 +199,7 @@ def check_profile(profile: dict[str, Any], config: dict[str, Any], path: Path, c
 
 
 def resume_tags(master: dict[str, Any]) -> set[str]:
-    """The tags on the résumé lines that show a skill: summary, skills, experience and education bullets."""
+    """The tags on the résumé lines that show a skill: summary, skills, and the bullets of every entry."""
     tags: set[str] = set()
 
     def add(items: Any) -> None:
@@ -210,7 +210,7 @@ def resume_tags(master: dict[str, Any]) -> set[str]:
     summary = master.get("summary")
     add(summary.get("capabilities") if isinstance(summary, dict) else None)
     add(master.get("technical_skills"))
-    for section in ("experience", "education"):
+    for section in ("experience", "projects", "education"):
         for entry in master.get(section) if isinstance(master.get(section), list) else []:
             if isinstance(entry, dict):
                 add(entry.get("bullets"))
