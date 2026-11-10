@@ -11,6 +11,10 @@ LinkedIn jobs reach it in three ways:
 Either way the job ends up scored, with a review comment, labels and (for good matches) a
 tailored résumé.
 
+Alerts and search cards carry no description, so their Issues wait for one. You paste it, or
+you opt in to [`radar linkedin-describe`](#filling-in-descriptions-automatically-optional),
+which reads it from the posting's public page on your own computer.
+
 ## Alert emails
 
 ```text
@@ -81,6 +85,47 @@ what `search.exclude_title_terms` leaves out:
 ("Registered Nurse" OR "Staff Nurse" OR "Charge Nurse") NOT ("Nursing Assistant" OR "Veterinary")
 ```
 
+## Filling in descriptions automatically (optional)
+
+`radar linkedin-describe` does the pasting for you. For each open Issue labelled
+`needs:description`, it reads the posting's **public page** (the one LinkedIn shows people who
+aren't signed in), writes the description into the Issue, and fills in a company or location
+the card lacked. Saving the Issue starts the scoring, as it does when you paste.
+
+```bash
+radar linkedin-describe --dry-run     # read the postings, change no Issue
+radar linkedin-describe               # fill in up to 15 waiting Issues
+radar linkedin-describe --max 30      # up to 40 in one run
+```
+
+Nothing runs it unless you do. To have your Mac run it every two hours:
+
+```bash
+tools/mac/install-linkedin-describe-agent.sh                          # this checkout's repository
+tools/mac/install-linkedin-describe-agent.sh you/radar-a you/radar-b  # several copies, one agent
+tools/mac/uninstall-linkedin-describe-agent.sh
+```
+
+The agent installs its own copy of `radar` under `~/Library/Application Support/job-radar`, so
+rerun the installer after you update your checkout. It edits Issues as the account `gh` is
+signed in to, which must be able to write to each repository. Logs are in
+`~/Library/Logs/job-radar-linkedin-describe.log`.
+
+What to know before you turn it on:
+
+- **It uses no LinkedIn account.** No sign-in, no cookies, so there is no account for LinkedIn
+  to restrict. **LinkedIn's terms still forbid automated access to its pages**, so this is your
+  call and your risk.
+- It reads one page per waiting job, with 3–8 second pauses, and stops for the run the moment
+  LinkedIn refuses a request (the rest wait for the next run).
+- It refuses to run in GitHub Actions or any CI: LinkedIn blocks GitHub's servers, and it should
+  run from your own connection.
+- A posting LinkedIn no longer shows publicly gets a comment and loses the `needs:description`
+  label, so it isn't tried again. The Issue stays open; paste the description yourself if the
+  job is still open for you.
+- When LinkedIn changes its page, postings are reported as unreadable and the Issues simply keep
+  waiting for you to paste.
+
 ## The Chrome search
 
 `radar linkedin-search` runs a few LinkedIn job searches in **your own signed-in Google Chrome**,
@@ -100,7 +145,7 @@ locations:
 
 New cards whose titles pass the same filter as alert emails become `[LinkedIn Job]` Issues
 labelled `needs:description`; jobs that already have an Issue are skipped. Cards carry no
-description, so paste it in as for an alert.
+description, so paste it in as for an alert, or let `radar linkedin-describe` fill it in.
 
 ```bash
 radar linkedin-search --setup-check      # Chrome control and the LinkedIn sign-in, then stop

@@ -163,6 +163,7 @@ LinkedIn Job Review 表单 ────────┘                   │
 | `radar email-ingest` | 导入 LinkedIn 提醒邮件 |
 | `radar linkedin-search [...]` | 在你已登录的 Chrome 中搜索 LinkedIn（Mac，手动运行）并导入职位卡片 |
 | `radar linkedin-import FILE` | 导入 `linkedin-search --export` 保存的卡片 |
+| `radar linkedin-describe [...]` | 从职位的公开页面读取描述，填入等待描述的 LinkedIn Issue（可选，在你自己的电脑上运行） |
 | `radar scan-slot …`、`radar record-claim …` | `daily-jobs.yml` 的早晚扫描去重 |
 
 离线检查你的评分：按照 `tests/fixtures/sample_jobs.json` 的格式保存几个你想申请的职位，然后对它们运行一次扫描
@@ -202,7 +203,8 @@ pytest && ruff check .
 
 - **遵守各招聘网站的条款是你自己的责任。** 招聘网站通过 [JobSpy](https://pypi.org/project/python-jobspy/) 搜索。
   `radar linkedin-search` 会操作你自己的 LinkedIn 账号，而 LinkedIn 的条款禁止这样做；它被刻意设计得规模小、速度慢，
-  且只能手动运行，但风险由你自行承担。
+  且只能手动运行，但风险由你自行承担。`radar linkedin-describe` 不使用任何账号，但会读取 LinkedIn 的公开职位页面，
+  这同样为其条款所禁止；除非你自己运行，否则它不会启用。
 - **发送前请通读每一份简历。** AI 措辞会对照你的主简历进行事实核查，但投递的人是你。
 - **保持你的副本为私有。** 其中包含你的联系方式和求职记录。
 

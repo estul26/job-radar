@@ -15,7 +15,8 @@ LinkedIn Job Review form ──────────────────�
   LinkedIn: its own alert emails become `[LinkedIn Alert]` Issues, `radar linkedin-search`
   (run by hand on your Mac) reads search results in your signed-in Chrome, and anything else
   can be submitted with the **LinkedIn Job Review** Issue form. LinkedIn jobs wait for you to
-  paste their description before they are scored.
+  paste their description before they are scored, unless you opt in to `radar linkedin-describe`,
+  which reads it from the posting's public page on your own computer.
 - **Scoring.** `matcher.py` scores every posting 0–100 against `config/resume_profile.json`,
   with the field vocabulary from `config/search_config.yaml` (see [scoring.md](scoring.md)), and
   `models.classify()` turns the score into a verdict: good, possible, low or rejected.
@@ -38,6 +39,7 @@ src/job_radar/
     export.py       data/applications.csv and resumes/index.csv from the Issues
     linkedin_search.py   LinkedIn searches in your Chrome, with the account-safety limits
     linkedin_import.py   LinkedIn job cards to [LinkedIn Job] Issues
+    linkedin_describe.py LinkedIn Issues waiting for a description, filled in (opt-in)
   settings.py       config + profile + GOOD_MATCH_THRESHOLD + timezone + all paths
   models.py         Job / ScoredJob shapes, Verdict and classify()
   ids.py            fingerprints and LinkedIn job IDs
@@ -51,6 +53,7 @@ src/job_radar/
   state.py          data/seen_jobs.json
   linkedin_email_ingest.py   LinkedIn alert emails over IMAP
   linkedin_chrome.py         drives a temporary Chrome window through AppleScript
+  linkedin_guest.py          reads one public LinkedIn posting page, signed out
   resume/           tailor (selection), ai (guarded rewording), render (Markdown/DOCX), pipeline
 tools/
   project_sync.py   Project board setup and label <-> board sync (runs on your Mac)
