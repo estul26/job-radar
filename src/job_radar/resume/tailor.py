@@ -20,17 +20,24 @@ def slug(value: str, limit: int = 56) -> str:
 
 
 def tag_relevance(tags: list[str], job_text: str, detected: set[str]) -> int:
+    """How well a line's tags fit the job: 5 per skill the posting asks for, 3 per tag the posting names,
+    and 1 per long word of any other tag that it names.
+
+    Tags and their words match whole words only, as config phrases do, so a short tag such as "ai" doesn't
+    match inside "maintain" or "email".
+    """
     score = 0
-    lower = job_text.lower()
     for tag in tags:
-        tag_l = tag.lower()
+        tag_l = str(tag or "").strip().lower()
+        if not tag_l:
+            continue
         if tag_l in detected:
             score += 5
-        elif tag_l and tag_l in lower:
+        elif phrase_found(job_text, [tag_l]):
             score += 3
         else:
             words = [w for w in re.split(r"[^a-z0-9+#]+", tag_l) if len(w) >= 4]
-            score += sum(1 for word in words if word in lower)
+            score += sum(1 for word in words if phrase_found(job_text, [word]))
     return score
 
 
@@ -92,6 +99,28 @@ def tailored_summary(master: dict[str, Any], job_text: str, detected: set[str]) 
     return " ".join(str(part).strip() for part in parts if str(part or "").strip())
 
 
+def _limit(items: list[Any], limit: Any) -> list[Any]:
+    """The first `limit` items; all of them when no limit is set."""
+    return items if limit in (None, "") else items[: max(int(limit), 0)]
+
+
+def tailored_projects(master: dict[str, Any], job_text: str, detected: set[str]) -> list[dict[str, Any]]:
+    """Your projects with the most relevant first, each with its most relevant bullets.
+
+    A project keeps at most its `max_bullets` bullets (all of them when unset), and the résumé at most
+    `max_projects` projects (all of them when unset). A project's relevance counts each tag of the bullets
+    it keeps once, so a project with many bullets on one topic doesn't outrank one that covers more of
+    the posting; ties keep your order.
+    """
+    tailored = []
+    for project in master.get("projects") or []:
+        bullets = _limit(sorted_items(project.get("bullets") or [], job_text, detected), project.get("max_bullets"))
+        tags = list(dict.fromkeys(str(tag).lower() for item in bullets for tag in item.get("tags") or []))
+        tailored.append(({**project, "bullets": bullets}, tag_relevance(tags, job_text, detected)))
+    ranked = [project for project, _ in sorted(tailored, key=lambda pair: -pair[1])]
+    return _limit(ranked, master.get("max_projects"))
+
+
 def tailor_content(
     master: dict[str, Any], job: dict[str, Any], scored: dict[str, Any], *, vocab: Vocabulary
 ) -> dict[str, Any]:
@@ -125,7 +154,7 @@ def tailor_content(
         "summary": tailored_summary(master, job_text, detected),
         "technical_skills": skills,
         "experience": experiences,
-        "projects": master.get("projects", []),
+        "projects": tailored_projects(master, job_text, detected),
         "education": master.get("education", []),
         "certifications": certifications,
         "matched_skills": scored.get("matched_skills", []),

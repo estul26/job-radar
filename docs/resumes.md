@@ -43,8 +43,8 @@ master résumé + job description
 pass → AI wording        fail or any error → the deterministic résumé
 ```
 
-Deterministic tailoring may reorder skill categories, bullets and certifications, select
-bullets, and compose the summary from capability phrases already in the master. Nothing can
+Deterministic tailoring may reorder skill categories, bullets, projects and certifications, select
+bullets and projects, and compose the summary from capability phrases already in the master. Nothing can
 add a tool, metric, responsibility, certification or year of experience the master doesn't have.
 The rule checks know your field's skills and certifications from `matching` in
 `config/search_config.yaml`, so keep that list complete.
