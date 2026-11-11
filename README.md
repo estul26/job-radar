@@ -188,6 +188,7 @@ For developers, or to check your setup before you push it.
 | `radar publish-scan` | An Issue for each good and possible match, named after its job board |
 | `radar export` | Rebuild `data/applications.csv` and `resumes/index.csv` from the Issues |
 | `radar issue N --event E [--label L] [--publish]` | Handle an Issue being opened, edited or labelled |
+| `radar refresh-resumes [--publish]` | Regenerate the out-of-date résumés of jobs not yet applied to after the master changes |
 | `radar email-ingest` | Import LinkedIn alert emails |
 | `radar linkedin-search [...]` | Search LinkedIn in your signed-in Chrome (Mac, by hand) and import the cards |
 | `radar linkedin-import FILE` | Import cards saved by `linkedin-search --export` |

@@ -37,6 +37,7 @@ src/job_radar/
     slot.py         which morning/evening slot a daily-jobs.yml run is for
     issue.py        what happens when a job Issue is opened, edited or labelled
     export.py       data/applications.csv and resumes/index.csv from the Issues
+    refresh.py      out-of-date résumés regenerated after the master résumé changes
     linkedin_search.py   LinkedIn searches in your Chrome, with the account-safety limits
     linkedin_import.py   LinkedIn job cards to [LinkedIn Job] Issues
     linkedin_describe.py LinkedIn Issues waiting for a description, filled in (opt-in)
@@ -68,6 +69,7 @@ Each workflow is the same three steps: set up, run one `radar` command, commit w
 |---|---|---|
 | `daily-jobs.yml` | 07:13 and 16:13 in your timezone (+30 min fallbacks), Mac trigger, manual | `radar doctor`, then `radar scan`, `publish-scan`, `export` |
 | `issue-events.yml` | Issue opened, edited or labelled | `radar issue` |
+| `refresh-resumes.yml` | a push that changes `resumes/master_resume.json`, manual | `radar refresh-resumes` |
 | `linkedin-email-alerts.yml` | every 4 hours | `radar email-ingest` |
 | `sync-project-dashboard.yml` | manual (needs `PROJECTS_TOKEN`) | cloud fallback for the board sync |
 | `ci.yml` | pushes and pull requests | `pytest`, `ruff` |
