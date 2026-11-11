@@ -8,6 +8,7 @@ from job_radar.resume.ai import (
     apply_ai_payload,
     describe_ai,
     enhance_resume_with_ai,
+    keep_credentials,
     selected_bullet_catalog,
     validate_ai_payload,
 )
@@ -204,3 +205,32 @@ def test_the_editor_is_told_to_cite_every_fact_the_summary_uses():
 
     assert "summary_source_ids must list every master fact the summary draws on" in EDITOR_INSTRUCTIONS
     assert "experience.0.bullet.0" in EDITOR_INSTRUCTIONS
+
+
+CREDENTIALS = MASTER["summary"]["credentials"]
+
+
+def test_a_summary_without_the_credentials_sentence_gets_it_back_second():
+    # In one copy every AI summary (9 of 9) dropped the certifications sentence.
+    summary = "Registered nurse with two years on a surgical ward. Experience includes wound care."
+    assert keep_credentials(summary, CREDENTIALS) == (
+        f"Registered nurse with two years on a surgical ward. {CREDENTIALS} Experience includes wound care."
+    )
+    assert keep_credentials("One sentence only.", CREDENTIALS) == f"One sentence only. {CREDENTIALS}"
+
+
+def test_a_summary_that_keeps_it_or_a_master_without_one_is_unchanged():
+    kept = f"Registered nurse. {CREDENTIALS} Experience includes wound care."
+    assert keep_credentials(kept, CREDENTIALS) == kept
+    assert keep_credentials("Registered nurse.", "") == "Registered nurse."
+
+
+def test_the_applied_ai_summary_keeps_your_credentials():
+    _, baseline = _baseline()
+    payload = _safe_payload(baseline)
+    payload["summary"] = "Registered nurse with surgical ward experience. Experience includes wound care."
+    enhanced = apply_ai_payload(baseline, payload, CREDENTIALS)
+    assert CREDENTIALS in enhanced["summary"]
+    from job_radar.resume.ai import EDITOR_INSTRUCTIONS
+
+    assert "summary.credentials fact word for word" in EDITOR_INSTRUCTIONS
