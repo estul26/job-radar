@@ -4,7 +4,13 @@ from job_radar.ids import linkedin_job_id
 from job_radar.issue_body import parse_job
 from job_radar.matcher import Vocabulary, detect_skills, score_job
 from job_radar.resume.render import markdown_resume
-from job_radar.resume.tailor import sorted_certifications, tailor_content, tailored_summary
+from job_radar.resume.tailor import (
+    sorted_certifications,
+    tag_relevance,
+    tailor_content,
+    tailored_projects,
+    tailored_summary,
+)
 from job_radar.settings import load_json, load_yaml
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -158,3 +164,57 @@ def test_certifications_the_posting_names_come_first_then_your_priority():
         "Registered Nurse, College of Nurses of Ontario",
         "Online Wound Care Certificate",
     ]
+
+
+def test_tags_match_whole_words_only():
+    # "ai" used to match inside "maintain" and "email", lifting an AI line for every posting.
+    assert tag_relevance(["ai"], "Maintain the email system and detail every repair.", set()) == 0
+    assert tag_relevance(["ai"], "Experience with AI tools is an asset.", set()) == 3
+    assert tag_relevance(["comptia security+"], "CompTIA Security+ preferred.", set()) == 3
+    # Words of a tag the posting doesn't name count one each, as whole words too.
+    assert tag_relevance(["log analysis"], "Run root-cause analysis on outages.", set()) == 1
+    assert tag_relevance(["log analysis"], "Analyses of outages.", set()) == 0
+    # A skill the posting asks for (detected through its config phrases) counts most.
+    assert tag_relevance(["wound care"], "Dressings.", {"wound care"}) == 5
+
+
+def _project(name, *bullets, **extra):
+    return {"name": name, "dates": "2026", "bullets": [{"text": t, "tags": tags} for t, tags in bullets], **extra}
+
+
+PROJECTS = {
+    "projects": [
+        _project("Clinic Rota", ("Built a staff rota.", ["scheduling"]), ("Wrote its guide.", ["documentation"])),
+        _project(
+            "Wound Audit",
+            ("Audited wound dressings.", ["wound care"]),
+            ("Charted the results.", ["charting"]),
+            ("Presented them.", ["presenting"]),
+            max_bullets=2,
+        ),
+    ]
+}
+
+
+def test_the_most_relevant_project_comes_first_with_its_most_relevant_bullets():
+    projects = tailored_projects(PROJECTS, "Wound care and charting.", {"wound care", "charting"})
+
+    assert [p["name"] for p in projects] == ["Wound Audit", "Clinic Rota"]
+    assert [b["text"] for b in projects[0]["bullets"]] == ["Audited wound dressings.", "Charted the results."]
+    # Without max_bullets a project keeps every bullet.
+    assert len(projects[1]["bullets"]) == 2
+
+
+def test_ties_keep_your_order_and_max_projects_keeps_the_most_relevant():
+    assert [p["name"] for p in tailored_projects(PROJECTS, "Unrelated.", set())] == ["Clinic Rota", "Wound Audit"]
+    only_one = {**PROJECTS, "max_projects": 1}
+    assert [p["name"] for p in tailored_projects(only_one, "Staff scheduling.", set())] == ["Clinic Rota"]
+    assert tailored_projects({}, "Anything.", set()) == []
+
+
+def test_a_project_with_many_bullets_on_one_topic_does_not_outrank_a_broader_one():
+    narrow = _project("Narrow", *[(f"Wound step {n}.", ["wound care"]) for n in range(4)])
+    broad = _project("Broad", ("Wound check.", ["wound care"]), ("Chart it.", ["charting"]))
+    detected = {"wound care", "charting"}
+    names = [p["name"] for p in tailored_projects({"projects": [narrow, broad]}, "Wound care, charting.", detected)]
+    assert names == ["Broad", "Narrow"]

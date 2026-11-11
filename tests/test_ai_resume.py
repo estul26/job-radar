@@ -196,3 +196,11 @@ def test_reasoning_effort_default_leaves_it_to_the_model(monkeypatch):
     sent = _fake_openai(monkeypatch, [_response({"summary": ""})])
     enhance_resume_with_ai(MASTER, job, baseline, vocab=VOCAB, api_key="k", model="m", enabled=True)
     assert "reasoning" not in sent[0]
+
+
+def test_the_editor_is_told_to_cite_every_fact_the_summary_uses():
+    # Most rejected rewordings cited only summary.* facts and drew a claim from an uncited experience bullet.
+    from job_radar.resume.ai import EDITOR_INSTRUCTIONS
+
+    assert "summary_source_ids must list every master fact the summary draws on" in EDITOR_INSTRUCTIONS
+    assert "experience.0.bullet.0" in EDITOR_INSTRUCTIONS

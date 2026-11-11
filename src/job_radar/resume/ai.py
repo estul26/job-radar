@@ -372,6 +372,9 @@ Return ONLY a JSON object with exactly these fields:
 
 Every selected bullet source_id supplied in the input must appear exactly once in bullet_rewrites.
 Use only supplied source IDs.
+summary_source_ids must list every master fact the summary draws on, including experience bullets
+(for example "experience.0.bullet.0"), not only the summary.* facts: the summary is checked against
+the cited facts alone, so a claim whose fact isn't cited fails the check.
 """.strip()
 
 

@@ -24,13 +24,13 @@ nothing is ever added.
 | `summary.capabilities` | Three to five short phrases with `tags`, each reading well after "Experience includes". The three or four most relevant to a job finish the summary. |
 | `technical_skills` | Skill lines: `category` (optional), `text`, `tags` and `priority` (lower comes first when no tag matches the job). The section is titled "Skills". |
 | `experience` | Jobs: `role`, optional `company`, `dates`, optional `max_bullets` (default 4), and `bullets`, each with `text` and `tags`. |
-| `projects` | Optional. Your own projects: `name`, optional `details` (the line under the name, e.g. a link), `dates`, optional `bullets`. They get their own "Projects" section between experience and education. |
+| `projects` | Optional. Your own projects: `name`, optional `details` (the line under the name, e.g. a link), `dates`, optional `max_bullets` (default: all), optional `bullets`. They get their own "Projects" section between experience and education, the project most relevant to the job first, each with its most relevant bullets. An optional top-level `max_projects` keeps only that many of the most relevant projects. |
 | `education` | `program`, `school`, `dates`, optional `bullets`. |
 | `certifications` | `text`, `tags`, `priority`. Ones the posting names (as `matching.certifications` defines them) come first, the rest in `priority` order; skill tags don't move them. The first four are listed; the rest go on one line. |
 
 **Tags** decide what gets picked for a job. Use the skill names from `matching.skills` in
 `config/search_config.yaml` (a tag equal to a skill the posting asks for counts most), plus any
-words a posting might use. List the same skill names in `config/resume_profile.json`: `radar doctor`
+words a posting might use. Tags match whole words, so a short tag like `ai` won't match inside "email". List the same skill names in `config/resume_profile.json`: `radar doctor`
 warns about a skill tagged here but not listed there, or listed there but tagged nowhere.
 
 Write only what you have done. Hands-on work from training or a course goes in that `education`
