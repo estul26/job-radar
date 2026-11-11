@@ -217,12 +217,27 @@ def validate_ai_payload(
     return errors
 
 
+def keep_credentials(summary: str, credentials: str) -> str:
+    """The summary with your credentials sentence in it, word for word.
+
+    Asked for a 2-3 sentence summary, the editor tends to drop the credentials sentence (your
+    certifications) to save space, and the fact check can't object to a fact left out. A summary
+    without it gets it back as its second sentence, where the deterministic summary has it.
+    """
+    summary, credentials = str(summary or "").strip(), str(credentials or "").strip()
+    if not credentials or credentials in summary:
+        return summary
+    first, *rest = re.split(r"(?<=[.!?])\s+", summary, maxsplit=1)
+    return " ".join([first, credentials, *rest])
+
+
 def apply_ai_payload(
     baseline: dict[str, Any],
     payload: dict[str, Any],
+    credentials: str = "",
 ) -> dict[str, Any]:
     content = copy.deepcopy(baseline)
-    content["summary"] = str(payload["summary"]).strip()
+    content["summary"] = keep_credentials(str(payload["summary"]), credentials)
 
     rewrites = {str(item["source_id"]): str(item["text"]).strip() for item in payload["bullet_rewrites"]}
     for experience in content.get("experience", []):
@@ -372,6 +387,7 @@ Return ONLY a JSON object with exactly these fields:
 
 Every selected bullet source_id supplied in the input must appear exactly once in bullet_rewrites.
 Use only supplied source IDs.
+Keep the summary.credentials fact word for word as the summary's second sentence.
 summary_source_ids must list every master fact the summary draws on, including experience bullets
 (for example "experience.0.bullet.0"), not only the summary.* facts: the summary is checked against
 the cited facts alone, so a claim whose fact isn't cited fails the check.
@@ -569,7 +585,7 @@ def enhance_resume_with_ai(
             audit["proposal"] = proposal
             return baseline, audit
 
-        enhanced = apply_ai_payload(baseline, proposal)
+        enhanced = apply_ai_payload(baseline, proposal, str((master.get("summary") or {}).get("credentials") or ""))
         audit["used"] = True
         audit["status"] = "ai_validated"
         audit["proposal"] = proposal
