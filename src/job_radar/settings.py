@@ -120,6 +120,8 @@ class Paths:
     master_resume: Path
     # Hand-off from `radar issue` (before the commit) to `radar issue --publish` (after it).
     pending_resume: Path
+    # Hand-off from `radar refresh-resumes` (before the commit) to `radar refresh-resumes --publish`.
+    refresh_manifest: Path
 
     @classmethod
     def from_config(cls, output: Mapping[str, str]) -> Paths:
@@ -137,6 +139,7 @@ class Paths:
             resume_index=path("resume_index_path", "resumes/index.csv"),
             master_resume=path("master_resume_path", DEFAULT_MASTER_RESUME),
             pending_resume=path("pending_resume_path", "reports/resume-generation.json"),
+            refresh_manifest=path("refresh_manifest_path", "reports/resume-refresh.json"),
         )
 
 

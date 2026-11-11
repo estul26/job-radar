@@ -8,6 +8,7 @@ radar publish-scan                a job Issue for each good and possible match
 radar export                      rebuild data/applications.csv and resumes/index.csv from the Issues
 radar issue N --event E [--label L] [--publish]
                                   handle an Issue event (prepare before the commit, publish after)
+radar refresh-resumes [--publish] regenerate out-of-date résumés of jobs not yet applied to
 radar email-ingest                import LinkedIn alert emails as review Issues
 radar linkedin-search [...]       search LinkedIn in your signed-in Chrome (Mac, by hand); import the cards
 radar linkedin-import FILE        import job cards saved by linkedin-search --export
@@ -125,6 +126,21 @@ def _issue(args: argparse.Namespace) -> int:
     return 0
 
 
+def _refresh_resumes(args: argparse.Namespace) -> int:
+    from .commands.refresh import prepare_refresh, publish_refresh
+    from .github import GitHub
+    from .settings import load_settings
+
+    gh, settings = GitHub(), load_settings()
+    if args.publish:
+        numbers = publish_refresh(gh, settings)
+        print(f"Linked {len(numbers)} regenerated résumé(s): {numbers}")
+    else:
+        results = prepare_refresh(settings, gh.issues())
+        print(f"Regenerated {len(results)} out-of-date résumé(s): {[int(r['issue_number']) for r in results]}")
+    return 0
+
+
 def _doctor(args: argparse.Namespace) -> int:
     from .commands.doctor import NOT_SET_UP, checkup, render
 
@@ -225,6 +241,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     issue.add_argument("--label", default="", help="github.event.label.name for 'labeled'")
     issue.add_argument("--publish", action="store_true", help="the GitHub side, after the commit")
     issue.set_defaults(handler=_issue)
+
+    refresh = commands.add_parser(
+        "refresh-resumes", help="regenerate the résumés of jobs not yet applied to after the master changes"
+    )
+    refresh.add_argument("--publish", action="store_true", help="the GitHub side, after the commit")
+    refresh.set_defaults(handler=_refresh_resumes)
 
     email = commands.add_parser("email-ingest", help="import LinkedIn alert emails")
     email.add_argument("--dry-run", action="store_true", help="report what would be imported; change nothing")

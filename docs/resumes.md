@@ -11,8 +11,15 @@ job or course, scans still run but no résumé is generated (`radar doctor` list
 
 - **Good LinkedIn matches**, when their Issue is scored.
 - **Good job-board matches** (Indeed, Glassdoor, …), by the scan, before their Issue is opened.
-- **Any job Issue you label `resume:tailor`.** Useful for a possible match, or after you
-  update the master. The label is replaced by `resume:ready` when it's done.
+- **Any job Issue you label `resume:tailor`.** Useful for a possible match, or for a job you
+  already applied to. The label is replaced by `resume:ready` when it's done.
+- **After you change the master.** A résumé is a snapshot of the master version it was made
+  from (`master_version` in its `metadata.json`). When a push changes
+  `resumes/master_resume.json`, `refresh-resumes.yml` regenerates the résumé of every open job
+  at `status:new` or `status:saved` that was made from another version, and updates its Issue
+  comment. Résumés of jobs at `status:applied` or later are kept, because they are what you
+  sent; jobs that never had a résumé are left alone. Run the workflow by hand from the Actions
+  tab to catch up on older changes.
 
 The Issue gets a comment linking the Markdown and DOCX files.
 

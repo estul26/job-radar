@@ -41,6 +41,7 @@ def settings(tmp_path, monkeypatch):
             "resume_index_path": str(tmp_path / "resumes/index.csv"),
             "master_resume_path": str(MASTER),
             "pending_resume_path": str(tmp_path / "reports/resume-generation.json"),
+            "refresh_manifest_path": str(tmp_path / "reports/resume-refresh.json"),
         }
     )
     return replace(base, paths=paths)

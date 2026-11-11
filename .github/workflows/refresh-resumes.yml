@@ -1,0 +1,54 @@
+name: Refresh résumés
+
+# When you change resumes/master_resume.json, regenerates the tailored résumés of the open jobs you
+# haven't applied to yet (status:new or status:saved) that were made from an older master version,
+# so none of them still carries an old fact. Résumés of jobs you applied to are kept: they are what
+# you sent. Run it by hand from the Actions tab to catch up after the fact.
+
+on:
+  push:
+    branches: [main]
+    paths: [resumes/master_resume.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  # A second master edit waits for the first refresh, then regenerates whatever is still out of date.
+  group: refresh-resumes
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up radar
+        uses: ./.github/actions/setup
+
+      - name: Regenerate out-of-date résumés
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOOD_MATCH_THRESHOLD: ${{ vars.GOOD_MATCH_THRESHOLD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_REASONING_EFFORT: ${{ vars.OPENAI_REASONING_EFFORT }}
+          AI_RESUME_ENABLED: ${{ vars.AI_RESUME_ENABLED }}
+        run: radar refresh-resumes
+
+      - name: Commit résumé files
+        uses: ./.github/actions/commit-state
+        with:
+          paths: resumes/jobs
+          message: 'resume: refresh after a master résumé change'
+
+      - name: Update the Issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: radar refresh-resumes --publish
