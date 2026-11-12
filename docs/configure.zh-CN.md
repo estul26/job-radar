@@ -65,6 +65,7 @@ Python 正则表达式；请用单引号括起来，这样 YAML 不会改动反�
 | `max_possible_matches` | 5 | 每次扫描最多为多少个可能匹配职位创建 Issue。 |
 | `fresh_hours` | 24 | 发布时间在这么多小时以内的职位，发布时间一项得满分。 |
 | `remote_score` | 5 | 远程职位的地点分。 |
+| `hard_reject_outside_locations` | true | 排除不是远程、又不在你任何一个非远程 `search.locations` 里的职位（比如别的城市的混合办公职位）。地点只是远程搜索的地区（"Canada"），或者没有地点的，保留。 |
 | `hard_reject_unrelated_titles` | true | 排除既不在 `titles` 里、也和 `matching` 无关的职位名称。 |
 | `hard_reject_title_terms` | | 排除包含这些词的职位名称，例如 `senior`、`manager`。缩写也要加上（`sr`、`snr`）：职位名称里常用。 |
 | `hard_reject_min_years` | 5 | 排除要求这么多年及以上经验的职位。 |

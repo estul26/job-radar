@@ -48,7 +48,7 @@ GOOD = "1 year experience. Patient assessment, medication administration, wound 
 LOW = {
     "description": "4 years of experience required. Epic, Meditech, telemetry and triage. ACLS and PALS required.",
     "title": "Nurse Educator",
-    "location": "Vancouver, BC",
+    "location": "Toronto, ON",
 }
 
 

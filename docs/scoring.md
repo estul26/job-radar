@@ -49,6 +49,11 @@ the limit are listed in the report and come up again in the next scan.
   say), matched on word boundaries, so "lead" doesn't match "Leading".
 - A title that is neither one of `search.titles` nor related through `matching`, when
   `ranking.hard_reject_unrelated_titles` is on.
+- A job that isn't remote and matches none of your on-site `search.locations`, when
+  `ranking.hard_reject_outside_locations` is on (the default). A remote search brings hybrid and
+  on-site jobs from all over the country, and these would otherwise score only a few location
+  points lower. A job counts as remote when the job board flags it or its location says "remote";
+  a location that is only a remote search's region ("Canada"), or no location, is kept.
 - A minimum requirement of `ranking.hard_reject_min_years` (5) or more years. Only experience
   requirements count: ages ("18 years or older"), the company's own history ("serving clients for
   25 years"), contract lengths and numbers above 15 years are left out.

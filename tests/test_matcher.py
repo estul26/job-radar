@@ -4,7 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from job_radar.matcher import Vocabulary, detect_skills, extract_min_years, location_score, score_job
+from job_radar.matcher import (
+    Vocabulary,
+    detect_skills,
+    extract_min_years,
+    location_score,
+    outside_locations,
+    score_job,
+)
 from job_radar.models import Verdict, classify
 from job_radar.normalize import phrase_found
 from job_radar.report import build_report
@@ -135,6 +142,32 @@ def test_location_points_come_from_the_configured_locations():
     assert location_score({"location": "Abbotsford, BC"}, places) == (1, "location needs review")
     assert location_score({"location": "Remote - Oneida"}, places) == (1, "location needs review")
     assert location_score({"location": "Toronto"}, []) == (1, "location needs review")
+
+
+def test_a_job_that_is_neither_remote_nor_in_your_locations_is_outside_them():
+    places = CONFIG["search"]["locations"]
+    # Hybrid and on-site jobs elsewhere: what a remote-Canada search drags in.
+    assert outside_locations({"location": "Vancouver, BC (Hybrid)"}, places)
+    assert outside_locations({"location": "Regina, SK"}, places)
+    assert outside_locations({"location": "Montreal, QC (On-site)"}, places)
+    # Remote, in one of your places, a bare remote region, or no location at all: kept.
+    assert not outside_locations({"location": "Vancouver, BC (Remote)"}, places)
+    assert not outside_locations({"location": "Vancouver, BC", "is_remote": True}, places)
+    assert not outside_locations({"location": "Toronto, ON (Hybrid)"}, places)
+    assert not outside_locations({"location": "Ottawa, ON (On-site)"}, places)
+    assert not outside_locations({"location": "Canada"}, places)
+    assert not outside_locations({"location": ""}, places)
+    assert not outside_locations({"location": "Unknown location"}, places)
+    # With only remote searches, there are no on-site places to be outside of.
+    remote_only = [place for place in places if place.get("remote_only")]
+    assert not outside_locations({"location": "Regina, SK"}, remote_only)
+
+
+def test_a_job_outside_your_locations_is_rejected_unless_turned_off():
+    posting = {**job("Registered Nurse", "Wound care and teamwork required."), "location": "Regina, SK (Hybrid)"}
+    assert "not remote and outside your locations" in score_job(posting, PROFILE, CONFIG)["hard_reject_reasons"]
+    lenient = {**CONFIG, "ranking": {**CONFIG["ranking"], "hard_reject_outside_locations": False}}
+    assert not score_job(posting, PROFILE, lenient)["hard_reject"]
 
 
 def test_phrases_match_whole_words_and_re_prefix_means_regex():

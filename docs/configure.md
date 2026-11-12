@@ -69,6 +69,7 @@ and 1 point if it matches none. Only entries without `remote_only` count for a j
 | `max_possible_matches` | 5 | Possible matches per scan that get an Issue. |
 | `fresh_hours` | 24 | Postings this new get full freshness points. |
 | `remote_score` | 5 | Location points for a remote job. |
+| `hard_reject_outside_locations` | true | Reject jobs that are not remote and match none of your on-site `search.locations` (a hybrid job in another city, say). A location that is only a remote search's region ("Canada"), or no location, is kept. |
 | `hard_reject_unrelated_titles` | true | Reject titles that are neither in `titles` nor related through `matching`. |
 | `hard_reject_title_terms` | | Reject titles containing these, e.g. `senior`, `manager`. Add abbreviations too (`sr`, `snr`): job titles use them. |
 | `hard_reject_min_years` | 5 | Reject postings that ask for this many years or more. |

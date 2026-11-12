@@ -88,6 +88,9 @@ ranking:
   max_possible_matches: 5
   # Location points for a remote job.
   remote_score: 5
+  # Reject jobs that are not remote and match none of your on-site locations (a hybrid job in
+  # another city, say).
+  hard_reject_outside_locations: true
   # Reject titles that are neither in `titles` nor related through matching.related_title_keywords.
   hard_reject_unrelated_titles: true
   # Reject titles containing any of these (seniority you're not ready for, say).
