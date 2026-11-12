@@ -98,7 +98,7 @@ radar linkedin-describe               # fill in up to 15 waiting Issues
 radar linkedin-describe --max 30      # up to 40 in one run
 ```
 
-Nothing runs it unless you do. To have your Mac run it every two hours:
+Nothing runs it unless you do. To have your Mac run it every 30 minutes:
 
 ```bash
 tools/mac/install-linkedin-describe-agent.sh                          # this checkout's repository
