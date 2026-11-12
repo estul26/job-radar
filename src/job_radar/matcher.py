@@ -233,6 +233,42 @@ def location_score(job: dict[str, Any], locations: list[dict[str, Any]], remote_
     return best or (1, "location needs review")
 
 
+_MODE_SUFFIX = re.compile(r"\s*\((?:hybrid|on-?site|in[- ]office)\)\s*$", re.I)
+
+
+def is_remote_job(job: dict[str, Any]) -> bool:
+    """The job board's remote flag, or "remote" in the location ("Toronto, ON (Remote)")."""
+    return bool(job.get("is_remote")) or phrase_found(str(job.get("location", "")), ["remote"])
+
+
+def outside_locations(job: dict[str, Any], locations: list[dict[str, Any]]) -> bool:
+    """True for a job that isn't remote and isn't in any of your on-site `search.locations`.
+
+    A remote search (`remote_only`) brings hybrid and on-site jobs from anywhere in the country, and
+    job boards stretch a city search well past its radius, so these would otherwise score only a few
+    points lower than a job in your city. A location that is only a remote search's region ("Canada")
+    is left alone: job boards list many remote jobs that way. So is a missing location.
+    """
+    if is_remote_job(job):
+        return False
+    loc = str(job.get("location", "")).strip()
+    if not loc or loc.lower().startswith(("unknown", "not listed")):
+        return False
+    onsite = [place for place in locations if not place.get("remote_only")]
+    if not onsite:
+        return False
+    for place in onsite:
+        if phrase_found(loc, _phrases(place.get("match")) or _phrases(place.get("name", ""))):
+            return False
+    region = _MODE_SUFFIX.sub("", loc).strip().lower()
+    for place in locations:
+        if place.get("remote_only"):
+            names = _phrases(place.get("match")) or _phrases(place.get("name", ""))
+            if region in {name.strip().lower() for name in names}:
+                return False
+    return True
+
+
 def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     ranking = config.get("ranking") or {}
     search = config.get("search") or {}
@@ -251,6 +287,9 @@ def score_job(job: dict[str, Any], profile: dict[str, Any], config: dict[str, An
     role_pts, role_reason = title_score(title, search.get("titles") or [], vocab)
     if role_pts == 0 and ranking.get("hard_reject_unrelated_titles", False):
         hard_reject_reasons.append("unrelated title")
+
+    if ranking.get("hard_reject_outside_locations", True) and outside_locations(job, search.get("locations") or []):
+        hard_reject_reasons.append("not remote and outside your locations")
 
     exp_pts, exp_reason, exp_reject = experience_score(
         text,
