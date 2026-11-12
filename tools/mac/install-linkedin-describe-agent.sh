@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Have this Mac fill in LinkedIn job descriptions every two hours (docs/linkedin.md).
+# Have this Mac fill in LinkedIn job descriptions every 30 minutes (docs/linkedin.md).
 #
 #   tools/mac/install-linkedin-describe-agent.sh                      # this checkout's repository
 #   tools/mac/install-linkedin-describe-agent.sh you/radar-a you/radar-b   # several copies at once
@@ -23,7 +23,7 @@ LOG_DIR="$HOME/Library/Logs"
 INSTALL_DIR="$HOME/Library/Application Support/job-radar"
 VENV="$INSTALL_DIR/venv"
 RUNNER="$INSTALL_DIR/linkedin-describe.sh"
-INTERVAL_SECONDS=7200
+INTERVAL_SECONDS=1800
 
 mkdir -p "$HOME/Library/LaunchAgents" "$LOG_DIR" "$INSTALL_DIR"
 
@@ -123,7 +123,7 @@ launchctl bootout "gui/$UID" "$PLIST" 2>/dev/null || true
 launchctl bootstrap "gui/$UID" "$PLIST"
 
 echo "The LinkedIn description agent is installed for: $REPOS (as $GH_USER)"
-echo "Every two hours (and at login) it fills in the Issues labelled needs:description."
+echo "Every 30 minutes (and at login) it fills in the Issues labelled needs:description."
 echo "Rerun this installer after updating the checkout, or to change the repositories."
 echo
 echo "Logs:"

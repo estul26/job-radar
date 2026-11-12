@@ -2,7 +2,7 @@
 # Fill in the LinkedIn Issues waiting for a description, in each of your Job Radar repositories.
 #
 # The installer (install-linkedin-describe-agent.sh) copies this next to its own Python
-# environment and has launchd run it every two hours. By hand:
+# environment and has launchd run it every 30 minutes. By hand:
 #   JOB_RADAR_REPOS="you/job-radar you/job-radar-two" tools/mac/linkedin-describe.sh
 set -uo pipefail
 
